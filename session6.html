@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session 6 — Harris &amp; HOG</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "session6", title: "Session 6 · Harris & HOG", crumb: "Session 6 · Harris & HOG" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Session 6</span>
+      <h1>Harris Corner Detector &amp; HOG</h1>
+      <p class="lead">Corners are the most distinctive local features — stable under rotation, scale and lighting. Harris finds them from the structure tensor's eigenvalues. Then HOG turns local gradient orientations into a descriptor robust enough to detect pedestrians.</p>
+
+      <div class="toc">
+        <h4>On this page</h4>
+        <ul>
+          <li><a href="#why">Why corners?</a></li>
+          <li><a href="#idea">Flat, edge, corner</a></li>
+          <li><a href="#math">Harris mathematics</a></li>
+          <li><a href="#R">The corner response R</a></li>
+          <li><a href="#harris-demo">Harris, live</a></li>
+          <li><a href="#harris-num">Harris numerical</a></li>
+          <li><a href="#hog">HOG descriptor</a></li>
+          <li><a href="#hog-num">HOG numerical</a></li>
+          <li><a href="#takeaways">Key takeaways</a></li>
+        </ul>
+      </div>
+
+      <h2 id="why">Why corners?</h2>
+      <p>A corner is a point where intensity changes significantly in <strong>both</strong> directions — typically where two edges meet. Corners matter because they are <strong>highly distinctive</strong> and <strong>invariant</strong> to rotation, scale and illumination changes, which makes them excellent, repeatable landmarks for image matching, panorama stitching, tracking, camera calibration, 3D reconstruction, SLAM and AR.</p>
+
+      <h2 id="idea">The key idea: flat vs edge vs corner</h2>
+      <p>Slide a small window over the image and ask: <em>how much does the content change if I shift the window a little in any direction?</em></p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Region</th><th>Shift the window…</th><th>Intensity change</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Flat</strong></td><td>in any direction</td><td>No change in any direction</td></tr>
+          <tr><td><strong>Edge</strong></td><td>along the edge / across it</td><td>No change along the edge; big change across it</td></tr>
+          <tr><td><strong>Corner</strong></td><td>in any direction</td><td><strong>Big change in every direction</strong></td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout intuition">
+        <div class="c-head">◆ One line to remember</div>
+        <p>"We should easily recognise a corner by looking through a small window, because shifting the window in <strong>any</strong> direction gives a large change in intensity." That uniqueness is what makes corners matchable.</p>
+      </div>
+
+      <h2 id="math">Harris mathematics</h2>
+      <p>Quantify "change when shifting by \((u,v)\)" as a weighted sum of squared differences:</p>
+      <div class="eq">\[ E(u,v) = \sum_{x,y} w(x,y)\,\big[\,I(x+u,\,y+v) - I(x,y)\,\big]^2 \]</div>
+      <p>For small shifts, a first-order Taylor expansion gives the quadratic form</p>
+      <div class="eq">\[ E(u,v) \approx \begin{bmatrix} u & v \end{bmatrix}\, M\, \begin{bmatrix} u \\ v \end{bmatrix}, \qquad M = \sum_{x,y} w(x,y)\begin{bmatrix} I_x^2 & I_x I_y \\ I_x I_y & I_y^2 \end{bmatrix} \]</div>
+      <p>\(M\) is the <strong>structure tensor</strong> (second-moment matrix). It summarises the distribution of gradients inside the window. Its two <strong>eigenvalues</strong> \(\lambda_1, \lambda_2\) measure how much the intensity varies along the two principal directions:</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Eigenvalues</th><th>Gradient scatter</th><th>Region</th></tr></thead>
+        <tbody>
+          <tr><td>Both small</td><td>clustered at origin</td><td>Flat</td></tr>
+          <tr><td>One large, one small</td><td>spread along a line</td><td>Edge</td></tr>
+          <tr><td>Both large</td><td>spread in 2-D</td><td><strong>Corner</strong></td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="R">The corner response R</h2>
+      <p>Computing eigenvalues at every pixel is expensive, so Harris uses a cheap response that depends only on \(\det\) and \(\text{trace}\):</p>
+      <div class="eq">\[ R = \det(M) - k\,[\,\text{trace}(M)\,]^2 = \lambda_1\lambda_2 - k(\lambda_1 + \lambda_2)^2, \qquad k \in [0.04, 0.06] \]</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Response</th><th>Means</th></tr></thead>
+        <tbody>
+          <tr><td>\(R &gt; 0\) (large)</td><td><strong>Corner</strong> — both eigenvalues large</td></tr>
+          <tr><td>\(R &lt; 0\) (large magnitude)</td><td><strong>Edge</strong> — one eigenvalue dominates</td></tr>
+          <tr><td>\(|R|\) small</td><td><strong>Flat</strong> — both eigenvalues small</td></tr>
+        </tbody>
+      </table></div>
+      <p><strong>The algorithm:</strong> ① compute \(R\) everywhere; ② keep points with \(R &gt; \text{threshold}\); ③ take only the <strong>local maxima</strong> of \(R\) (non-max suppression) so each corner is reported once.</p>
+
+      <h2 id="harris-demo">Harris, live</h2>
+      <p>Move the window across the bright square. Watch the gradient scatter \((I_x, I_y)\) and how \(\lambda_1, \lambda_2\) and \(R\) classify the region:</p>
+      <div data-demo="harris"></div>
+
+      <h2 id="harris-num">Harris numerical</h2>
+      <p>Once the gradient sums in a window are known, \(R\) is a quick plug-in. Compare a corner-like window against an edge-like one (\(k=0.04\)):</p>
+      <div class="grid cols-2">
+        <div class="card"><h4 style="margin-top:0">Corner window</h4>
+          <p>\(\sum I_x^2 = 2,\ \sum I_y^2 = 2,\ \sum I_xI_y = 0\)</p>
+          <p>\(M=\begin{bmatrix}2&0\\0&2\end{bmatrix}\), \(\det=4\), \(\text{trace}=4\)</p>
+          <p>\(R = 4 - 0.04(4)^2 = 4 - 0.64 = \mathbf{3.36} &gt; 0\)</p>
+          <p style="margin-bottom:0">\(\lambda_1=\lambda_2=2\) (both large) → <strong>corner</strong>.</p>
+        </div>
+        <div class="card"><h4 style="margin-top:0">Edge window</h4>
+          <p>\(\sum I_x^2 = 2,\ \sum I_y^2 = 0,\ \sum I_xI_y = 0\)</p>
+          <p>\(M=\begin{bmatrix}2&0\\0&0\end{bmatrix}\), \(\det=0\), \(\text{trace}=2\)</p>
+          <p>\(R = 0 - 0.04(2)^2 = \mathbf{-0.16} &lt; 0\)</p>
+          <p style="margin-bottom:0">\(\lambda_1=2,\lambda_2=0\) (one large) → <strong>edge</strong>.</p>
+        </div>
+      </div>
+      <div class="callout exam">
+        <div class="c-head">✦ Difference between an edge and a corner (Q5b)</div>
+        <p>An <strong>edge</strong> has a strong gradient in <em>one</em> direction only — the structure tensor has one large and one small eigenvalue, so \(R &lt; 0\). A <strong>corner</strong> has strong gradients in <em>two</em> directions — both eigenvalues are large, so \(R &gt; 0\). That's why corners are localizable (well-defined in 2D) while edges suffer the "aperture problem" (you can't tell where you are along the edge).</p>
+      </div>
+
+      <h2 id="hog">Histogram of Oriented Gradients (HOG)</h2>
+      <p>HOG is a <strong>feature descriptor</strong> for object detection (famously pedestrians). The idea: local object shape is well captured by the <strong>distribution of gradient orientations</strong>. Steps:</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">Gradients</div>Compute \(g_x, g_y\) (filter masks \([-1,0,1]\) and its transpose), then magnitude \(\sqrt{g_x^2+g_y^2}\) and orientation \(\tan^{-1}(g_y/g_x)\) at each pixel.</div>
+        <div class="step"><div class="s-title">Cells</div>Over a detection patch of <strong>64×128</strong>, divide into <strong>8×8-pixel cells</strong>. For each cell, build a histogram of gradient orientations into <strong>9 bins</strong> (0–180°), each pixel voting by its magnitude.</div>
+        <div class="step"><div class="s-title">Blocks &amp; normalization</div>Group cells into <strong>2×2 blocks</strong> that slide with overlap. Normalise each block's concatenated histogram (e.g. L2-norm) to cancel lighting/contrast changes.</div>
+        <div class="step"><div class="s-title">Concatenate</div>Stack all normalised block histograms into one feature vector. For 64×128: <strong>7×15 blocks × 4 cells × 9 bins = 3780</strong> dimensions. Feed to a classifier (e.g. SVM).</div>
+      </div>
+
+      <h2 id="hog-num">HOG numerical — the class 5×5 example</h2>
+      <p>A tiny illustrative cell. Image patch (grayscale):</p>
+      <div class="matrix-row">
+        <span class="matrix" style="grid-template-columns:repeat(5,40px)">
+          <span class="cell">80</span><span class="cell">70</span><span class="cell">50</span><span class="cell">70</span><span class="cell">90</span>
+          <span class="cell">85</span><span class="cell">75</span><span class="cell">55</span><span class="cell">75</span><span class="cell">95</span>
+          <span class="cell">90</span><span class="cell">85</span><span class="cell">60</span><span class="cell">80</span><span class="cell">100</span>
+          <span class="cell">95</span><span class="cell">90</span><span class="cell">65</span><span class="cell">85</span><span class="cell">105</span>
+          <span class="cell">100</span><span class="cell">95</span><span class="cell">70</span><span class="cell">90</span><span class="cell">110</span>
+        </span>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="s-title">Gradients on the central 3×3 (filters [-1,0,1])</div>
+          \(G_x=\begin{bmatrix}20&20&20\\25&20&25\\25&20&25\end{bmatrix}\quad G_y=\begin{bmatrix}15&15&15\\10&10&10\\5&5&5\end{bmatrix}\)
+          <br><small>e.g. at centre 60: \(G_x=80-60=20\)? &nbsp;Using neighbours: \(G_x=(55\cdot(-1)+75\cdot1)=20\), \(G_y=(70\cdot(-1)+85\cdot1)=15\) at the (1,1) pixel.</small>
+        </div>
+        <div class="step"><div class="s-title">Magnitude = √(Gx²+Gy²)</div>
+          \(\begin{bmatrix}25&25&25\\26.9&22.4&26.9\\25.5&20.6&25.5\end{bmatrix}\) &nbsp;(e.g. \(\sqrt{20^2+15^2}=25\))
+        </div>
+        <div class="step"><div class="s-title">Orientation = tan⁻¹(Gy/Gx) in degrees</div>
+          \(\begin{bmatrix}36.87&36.87&36.87\\21.8&26.57&21.8\\11.31&14.04&11.31\end{bmatrix}\)
+        </div>
+        <div class="step"><div class="s-title">Accumulate into 9 bins (0–180°, width 20°), voting by magnitude</div>
+          <b>Bin 0–20°</b> (angles 11.31, 14.04, 11.31): \(25.5+20.6+25.5 = 71.6\)<br>
+          <b>Bin 20–40°</b> (angles 36.87×3, 21.8, 26.57, 21.8): \(25+25+25+26.9+22.4+26.9 = 151.2\)<br>
+          <b>Bins 40–180°</b>: 0
+        </div>
+      </div>
+      <div class="answer-box"><span class="a-tag">9-bin histogram</span><p style="margin:4px 0">\([\,71.6,\ 151.2,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0,\ 0\,]\) — then L2-normalise within the block.</p></div>
+
+      <div class="callout warn">
+        <div class="c-head">▲ Simple binning vs interpolated binning</div>
+        <p>Above, each pixel dumps its <em>whole</em> magnitude into the one bin its angle falls in (the class's simple method). The more standard HOG (and <a href="exam-q6.html">Midsem Q6a</a>) splits each vote between the <strong>two nearest bin centres by distance</strong> (bilinear interpolation). Try both ideas in the demo:</p>
+      </div>
+      <div data-demo="hog"></div>
+
+      <h2 id="takeaways">Key takeaways</h2>
+      <div class="callout key">
+        <div class="c-head">◆ Remember these</div>
+        <ul>
+          <li>Structure tensor \(M=\sum w\begin{bmatrix}I_x^2&I_xI_y\\I_xI_y&I_y^2\end{bmatrix}\); eigenvalues classify flat/edge/corner.</li>
+          <li>Corner response \(R=\det M - k(\text{trace }M)^2\), \(k\approx0.04\!-\!0.06\): \(R{&gt;}0\) corner, \(R{&lt;}0\) edge, \(|R|\) small flat.</li>
+          <li>HOG: 8×8 cells → 9 orientation bins → 2×2 blocks (overlapping) → normalise → concatenate → <strong>3780</strong>-D for 64×128.</li>
+          <li>Edge = 1 dominant gradient direction; corner = 2 → corners are uniquely localizable.</li>
+        </ul>
+      </div>
+
+      <div class="pager">
+        <a href="session5.html"><div class="pg-dir">← Previous</div><div class="pg-title">Session 5 · Canny &amp; Hough</div></a>
+        <a class="next" href="session7.html"><div class="pg-dir">Next →</div><div class="pg-title">Session 7 · SIFT &amp; RANSAC</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

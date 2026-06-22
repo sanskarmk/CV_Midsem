@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session 3 — Low-Level Vision &amp; Color</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "session3", title: "Session 3 · Low-Level Vision & Color", crumb: "Session 3 · Low-Level Vision & Color" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Session 3</span>
+      <h1>Low-Level Vision &amp; Color</h1>
+      <p class="lead">Histograms and histogram equalization, spatial filtering (the convolution/correlation that powers everything later), box vs Gaussian smoothing, and the color models — RGB, CMYK, HSI, YCbCr — with the trichromacy story behind them.</p>
+
+      <div class="toc">
+        <h4>On this page</h4>
+        <ul>
+          <li><a href="#hist">The image histogram</a></li>
+          <li><a href="#histeq">Histogram equalization</a></li>
+          <li><a href="#filtering">Spatial filtering</a></li>
+          <li><a href="#smoothing">Box vs Gaussian smoothing</a></li>
+          <li><a href="#color">Color &amp; color spaces</a></li>
+          <li><a href="#rgbcmyk">RGB vs CMYK</a></li>
+          <li><a href="#takeaways">Key takeaways</a></li>
+        </ul>
+      </div>
+
+      <h2 id="hist">The image histogram</h2>
+      <p>A histogram counts how many pixels take each intensity. For levels \(r_k\):</p>
+      <div class="eq">\[ \text{un-normalised: } h(r_k) = n_k, \qquad \text{normalised: } p(r_k) = \frac{n_k}{MN} \]</div>
+      <p>where \(n_k\) is the number of pixels with intensity \(r_k\), and \(M,N\) are the image dimensions. The normalised histogram is a probability distribution: \(\sum_k p(r_k) = 1\). Its <strong>shape encodes appearance</strong> — a dark image piles up near 0, a low-contrast image is squeezed into a narrow band, a good image uses the whole range.</p>
+
+      <h2 id="histeq">Histogram equalization</h2>
+      <p>Often an image uses only part of the available range, so it looks flat and low-contrast. Equalization <strong>spreads the histogram out</strong> to use the full scale. The transformation is the (scaled) cumulative distribution function — this is the key result:</p>
+      <div class="eq">\[ s_k = T(r_k) = (L-1)\sum_{j=0}^{k} p(r_j) = (L-1)\,\text{CDF}(r_k) \]</div>
+      <div class="callout intuition">
+        <div class="c-head">◆ Why the CDF?</div>
+        <p>Pushing pixels through their own CDF makes the output distribution approximately <strong>uniform</strong> — intensities that were crowded together get pulled apart, low-contrast detail becomes visible. Where the histogram is dense, the CDF is steep, so those levels are spread the most.</p>
+      </div>
+
+      <h3>Worked example — the class 5×5 image</h3>
+      <p>Take the 5×5, 3-bit (\(L=8\), so levels 0–7) image used in class, with 25 pixels. Only levels 3, 4, 5 occur:</p>
+      <div class="matrix-row">
+        <span class="mlabel">Counts:</span>
+        <span>level 3 → 6 pixels,&nbsp; level 4 → 14 pixels,&nbsp; level 5 → 5 pixels &nbsp;(total 25)</span>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="s-title">CDF at each occupied level</div>
+          \(\text{CDF}(3)=\tfrac{6}{25}=0.24,\quad \text{CDF}(4)=\tfrac{20}{25}=0.80,\quad \text{CDF}(5)=\tfrac{25}{25}=1.0\)
+        </div>
+        <div class="step"><div class="s-title">Scale by (L−1) = 7 and round</div>
+          \(s_3 = 7(0.24)=1.68 \to \mathbf{2}, \quad s_4 = 7(0.80)=5.6 \to \mathbf{6}, \quad s_5 = 7(1.0)=7 \to \mathbf{7}\)
+        </div>
+        <div class="step"><div class="s-title">Remap every pixel</div>
+          \(3 \to 2,\ \ 4 \to 6,\ \ 5 \to 7\). The three crowded levels (3,4,5) are pushed apart to (2,6,7), using more of the range.
+        </div>
+      </div>
+      <p>Play with it below — switch to the Gonzalez 3-bit (4096-pixel) dataset to see the textbook version too:</p>
+      <div data-demo="histeq" data-set="class5"></div>
+
+      <h2 id="filtering">Spatial filtering — convolution &amp; correlation</h2>
+      <p>A spatial filter slides a small <strong>kernel</strong> (mask) over the image and computes a weighted sum of the neighbourhood at every pixel. This single operation underlies smoothing, sharpening, edges, gradients — almost everything ahead.</p>
+      <div class="eq">\[ \text{Correlation: } g(x,y) = \sum_{s=-a}^{a}\sum_{t=-b}^{b} w(s,t)\,f(x+s,\,y+t) \]</div>
+      <div class="eq">\[ \text{Convolution: } g(x,y) = \sum_{s=-a}^{a}\sum_{t=-b}^{b} w(s,t)\,f(x-s,\,y-t) \quad(\text{kernel flipped } 180^\circ) \]</div>
+      <div class="callout key">
+        <div class="c-head">◆ Correlation vs convolution</div>
+        <p>They differ only by a <strong>180° flip of the kernel</strong>. For symmetric kernels (box, Gaussian) they are identical. Convolution is the one with the nice maths properties — it is <strong>commutative and associative</strong>, which lets us pre-combine filters (used in Canny to merge "blur then differentiate" into one derivative-of-Gaussian step). Note: the kernel's origin is its <em>centre</em>, even though the image origin is the top-left.</p>
+      </div>
+      <p>Drag the window across the image and watch the multiply-and-add. Switch the kernel to a box or Gaussian to preview smoothing:</p>
+      <div data-demo="convolution" data-preset="box" data-image="spot"></div>
+
+      <h2 id="smoothing">Smoothing: box vs Gaussian</h2>
+      <p>Smoothing (low-pass filtering) averages out noise and fine detail. Two common kernels:</p>
+      <div class="grid cols-2">
+        <div class="card"><h4 style="margin-top:0">Box / average filter</h4>
+          <div class="eq" style="margin:8px 0">\[ \tfrac{1}{9}\begin{bmatrix}1&1&1\\1&1&1\\1&1&1\end{bmatrix} \]</div>
+          <p style="margin-bottom:0">Every neighbour weighted equally. Simple and fast, but produces blocky artefacts and "ringing" because its frequency response has side-lobes.</p>
+        </div>
+        <div class="card"><h4 style="margin-top:0">Gaussian filter</h4>
+          <div class="eq" style="margin:8px 0">\[ G(s,t)=K\,e^{-\frac{s^2+t^2}{2\sigma^2}} \]</div>
+          <p style="margin-bottom:0">Weights fall off smoothly with distance from the centre. \(\sigma\) sets the amount of blur; larger \(\sigma\) (or larger kernel) → more smoothing.</p>
+        </div>
+      </div>
+
+      <div class="callout exam">
+        <div class="c-head">✦ Why is a Gaussian preferred over a simple average? (Midsem Q2c)</div>
+        <ul style="margin:6px 0">
+          <li><strong>Smoother result, no blocky artefacts.</strong> Distance-weighted averaging avoids the harsh box edges and ringing of the average filter.</li>
+          <li><strong>Isotropic &amp; rotationally symmetric.</strong> It blurs equally in all directions; the box filter favours the axes.</li>
+          <li><strong>Separable.</strong> A 2D Gaussian = a 1D Gaussian applied along rows then columns, so an \(n\times n\) filter costs \(2n\) multiplies per pixel instead of \(n^2\).</li>
+          <li><strong>Better frequency behaviour.</strong> Its Fourier transform is another Gaussian (no negative side-lobes), giving clean low-pass filtering. Weighting the centre more also preserves the central pixel's identity better.</li>
+        </ul>
+      </div>
+
+      <h2 id="color">Color &amp; color spaces</h2>
+      <p>Light is an electromagnetic wave; the human-visible band is ~<strong>400–700 nm</strong>. We don't see objects directly — we see the light they <em>reflect or transmit</em>. So perceived color depends on three things: the light source's spectrum, the object's reflectance, and the sensor's spectral sensitivity.</p>
+      <p><strong>Trichromacy:</strong> the human retina has three cone types — S, M, L (peaks ≈ 430, 560, 610 nm), loosely "blue, green, red". Rods handle low-light monochrome vision. Because we have three sensor types, any color can be matched by mixing three primaries — the foundation of all color models.</p>
+
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Model</th><th>Type</th><th>Idea</th><th>Used in</th></tr></thead>
+        <tbody>
+          <tr><td><strong>RGB</strong></td><td>Device, additive</td><td>Add red+green+blue light. 24-bit RGB = \((2^8)^3 = 16{,}777{,}216\) colors.</td><td>Monitors, cameras, displays</td></tr>
+          <tr><td><strong>CMYK</strong></td><td>Device, subtractive</td><td>Inks subtract light. \(C=1-R,\ M=1-G,\ Y=1-B\); add blac<strong>K</strong> with \(K=\min(C,M,Y)\) to save ink.</td><td>Color printing</td></tr>
+          <tr><td><strong>HSI / HSV</strong></td><td>Perceptual</td><td>Decouples color (Hue, Saturation) from brightness (Intensity). Matches how we describe color.</td><td>Image analysis, color selection</td></tr>
+          <tr><td><strong>YCbCr / YUV / YIQ</strong></td><td>Luminance + chroma</td><td>\(Y\) = luminance, \(Cb,Cr\) = chroma. Eye is less sensitive to chroma → compress it harder.</td><td>TV, JPEG/MPEG compression</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout intuition">
+        <div class="c-head">◆ Why so many color spaces?</div>
+        <p>Each is tuned to a task. Hardware spaces (RGB, CMYK) match how devices <em>emit</em> or <em>print</em> light. Perceptual spaces (HSI) match how we <em>describe</em> color — handy when you want "all reddish pixels regardless of brightness". Luminance/chroma spaces (YCbCr) match how we <em>compress</em>, putting more bits on brightness (which the eye cares about) than on color.</p>
+      </div>
+
+      <h2 id="rgbcmyk">RGB vs CMYK — the comparison</h2>
+      <p>This is <a href="exam-q3.html">Midsem Q3(c)</a>. The crux is <em>additive light</em> vs <em>subtractive ink</em>:</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th></th><th>RGB</th><th>CMYK</th></tr></thead>
+        <tbody>
+          <tr><td>Mechanism</td><td><strong>Additive</strong> — emit &amp; add colored light</td><td><strong>Subtractive</strong> — inks absorb (subtract) light</td></tr>
+          <tr><td>Primaries</td><td>Red, Green, Blue</td><td>Cyan, Magenta, Yellow (+ blacK)</td></tr>
+          <tr><td>"All on" gives</td><td>White (all light)</td><td>Black (all light absorbed)</td></tr>
+          <tr><td>"All off" gives</td><td>Black (no light)</td><td>White (paper, no ink)</td></tr>
+          <tr><td>Used for</td><td>Screens / displays / cameras</td><td>Printing on paper</td></tr>
+          <tr><td>Relation</td><td colspan="2">Complementary: \(C=1-R,\ M=1-G,\ Y=1-B\)</td></tr>
+        </tbody>
+      </table></div>
+      <p>Different models are used because the <em>physical process differs</em>: a screen makes color by emitting light (start from black, add light → RGB), while print makes color by putting ink on white paper (start from white, subtract light → CMYK). The \(K\) channel saves colored ink and gives deeper blacks.</p>
+
+      <h2 id="takeaways">Key takeaways</h2>
+      <div class="callout key">
+        <div class="c-head">◆ Remember these</div>
+        <ul>
+          <li>Histogram equalization maps pixels through the scaled CDF: \(s_k=(L-1)\,\text{CDF}(r_k)\), rounded.</li>
+          <li>Filtering = slide a kernel, weighted-sum the neighbourhood. <strong>Convolution flips the kernel</strong>; it's commutative/associative.</li>
+          <li><strong>Gaussian &gt; box</strong>: smoother, isotropic, separable, clean frequency response.</li>
+          <li><strong>RGB additive</strong> (screens, "all on"=white) vs <strong>CMYK subtractive</strong> (print, "all on"=black); \(C=1-R\) etc.</li>
+        </ul>
+      </div>
+
+      <div class="pager">
+        <a href="session2.html"><div class="pg-dir">← Previous</div><div class="pg-title">Session 2 · Digital Image Fundamentals</div></a>
+        <a class="next" href="session4.html"><div class="pg-dir">Next →</div><div class="pg-title">Session 4 · Edge Detection &amp; Gradients</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session 1 — Introduction</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "session1", title: "Session 1 · Introduction to CV", crumb: "Session 1 · Introduction" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Session 1</span>
+      <h1>Introduction to Computer Vision</h1>
+      <p class="lead">What computer vision is trying to do, why it is genuinely hard, where it already works, and how a picture becomes numbers a computer can reason about.</p>
+
+      <div class="toc">
+        <h4>On this page</h4>
+        <ul>
+          <li><a href="#what">What is computer vision?</a></li>
+          <li><a href="#story">"Every image tells a story"</a></li>
+          <li><a href="#hard">Why is CV hard?</a></li>
+          <li><a href="#apps">Applications</a></li>
+          <li><a href="#repr">Image representation</a></li>
+          <li><a href="#takeaways">Key takeaways</a></li>
+        </ul>
+      </div>
+
+      <h2 id="what">What is computer vision?</h2>
+      <p>Computer vision is the science of getting machines to <strong>extract meaning from images and video</strong> — to recover, from a flat grid of brightness values, the 3D structure, the objects, the people, and the events that produced that image. It sits at the intersection of optics, signal processing, geometry, machine learning and neuroscience, which is why the course calls vision <em>multi-disciplinary</em>.</p>
+
+      <div class="callout intuition">
+        <div class="c-head">◆ The one-sentence intuition</div>
+        <p>A camera throws away information — it flattens a rich 3D world into a 2D array of numbers. Computer vision is the <strong>inverse problem</strong>: trying to climb back up from those numbers to the world that created them. Because many different scenes can produce the same image, this climb is fundamentally ambiguous.</p>
+      </div>
+
+      <h3>Can computers match human perception?</h3>
+      <p>The honest answer from the course: <strong>yes and no — mainly no</strong>. Computers are already better than us at "easy" things (counting pixels, measuring precise distances, searching millions of images). Humans remain better at "hard" things (understanding a messy scene, reasoning about context). But the line keeps moving: deep learning has produced huge progress in the last several years, and <em>what counts as "hard" keeps changing</em>.</p>
+
+      <h2 id="story">"Every image tells a story"</h2>
+      <p>The goal of vision is to perceive the story behind a picture — to compute properties of the world such as:</p>
+      <ul>
+        <li><strong>3D shape</strong> — the geometry of surfaces and objects (e.g. a stereo/depth camera like the ZED 2i).</li>
+        <li><strong>Identity</strong> — the names of people and objects present.</li>
+        <li><strong>Events</strong> — what is happening, what just happened, what will happen next.</li>
+      </ul>
+      <p>A striking fact the lecture highlights: humans can tell an enormous amount about a scene from <em>very little</em> information (the "80 million tiny images" point) — a tiny, blurry thumbnail is often enough for us. Reproducing that effortless inference is the grand challenge.</p>
+
+      <h2 id="hard">Why is computer vision hard?</h2>
+      <p>The same object can produce wildly different pixel arrays. The course groups the difficulties into a checklist worth memorising — these are exactly the "nuisance factors" that good features (later sessions) try to be <em>invariant</em> to:</p>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Challenge</th><th>What changes in the image</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Viewpoint variation</strong></td><td>The same object from another angle projects to a totally different pixel pattern.</td></tr>
+            <tr><td><strong>Illumination</strong></td><td>Lighting changes brightness, shadows and color dramatically.</td></tr>
+            <tr><td><strong>Scale</strong></td><td>Objects appear at many sizes depending on distance.</td></tr>
+            <tr><td><strong>Intra-class variation</strong></td><td>"Chairs" or "dogs" look hugely different from one another.</td></tr>
+            <tr><td><strong>Background clutter</strong></td><td>Objects blend into busy backgrounds.</td></tr>
+            <tr><td><strong>Occlusion</strong></td><td>Objects are partly hidden behind other things.</td></tr>
+            <tr><td><strong>Motion</strong></td><td>Moving subjects blur and change between frames.</td></tr>
+            <tr><td><strong>Local ambiguity</strong></td><td>A small patch on its own is often meaningless; meaning comes from context.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout key">
+        <div class="c-head">◆ The bottom line (a likely theory question)</div>
+        <p>Perception is an <strong>inherently ambiguous</strong> problem: many different 3D scenes could have produced a given 2D image. To resolve the ambiguity, vision systems must use <strong>prior knowledge</strong> about how the world is structured. (The anamorphic sidewalk-art illusions are the classic demonstration — they only "work" from one special viewpoint.)</p>
+      </div>
+
+      <h2 id="apps">Applications of computer vision</h2>
+      <p>Billions of images and videos are captured every day, so the application surface is enormous. The lecture's tour included:</p>
+      <ul>
+        <li><strong>Optical Character Recognition (OCR)</strong> — digit recognition, license-plate readers, document scanning, even Sudoku grabbers.</li>
+        <li><strong>Face detection / recognition</strong> — nearly every camera detects faces in real time; biometrics (the famous "Afghan Girl" iris identification); Face ID / fingerprint login.</li>
+        <li><strong>Special effects &amp; capture</strong> — shape capture and motion capture for film; real-time 3D face tracking (Snapchat lenses, Face2Face).</li>
+        <li><strong>Image synthesis</strong> — GANs and text-to-image models (DALL·E 2, Imagen); "which face is real?" deepfake-era questions.</li>
+        <li><strong>Smart cars</strong> — Mobileye, Tesla Autopilot, and driver-assist safety features.</li>
+        <li><strong>Robotics</strong> — Mars rovers, Amazon picking/Scout/Prime Air.</li>
+        <li><strong>Medical imaging</strong> — 3D MRI/CT reconstruction, skin-cancer classification with deep nets.</li>
+      </ul>
+      <div class="callout intuition">
+        <div class="c-head">◆ Why this matters for the course</div>
+        <p>Most of these are <strong>less than ~5 years old</strong> and powered by deep learning. The course teaches the <em>classic building blocks</em> (filtering, edges, features) first, because modern systems are still built on — or best understood through — these fundamentals.</p>
+      </div>
+
+      <h2 id="repr">Image representation &amp; analysis tasks</h2>
+      <p>Before any algorithm runs, we must agree on what an image <em>is</em> to a computer. The course's answer, which carries straight into Session 2:</p>
+      <div class="card">
+        <p style="margin-top:0">An image is a <strong>grid (matrix) of intensity values</strong>. A grayscale image is a function</p>
+        <div class="eq">\[ f : \mathbb{R}^2 \to \mathbb{R}, \qquad f(x,y) = \text{intensity (brightness) at position } (x,y). \]</div>
+        <p style="margin-bottom:0">Because it is "just a function", we can apply mathematical <strong>operators</strong> to it — shift it, scale it, filter it, differentiate it. That single idea unlocks the entire low-level vision toolbox in the coming sessions.</p>
+      </div>
+      <p>Analysis tasks then form a rough hierarchy: <strong>low-level</strong> (pixels, filtering, edges), <strong>mid-level</strong> (grouping, segmentation, features), and <strong>high-level</strong> (recognition, 3D understanding). This course spends its first block on low- and mid-level vision — the most reliably examinable, numerical part.</p>
+
+      <h2 id="takeaways">Key takeaways</h2>
+      <div class="callout key">
+        <div class="c-head">◆ Remember these</div>
+        <ul>
+          <li>CV = recovering the world (3D shape, identity, events) from 2D images — an <strong>inverse, ill-posed</strong> problem.</li>
+          <li>It is hard because of <strong>viewpoint, illumination, scale, intra-class variation, clutter, occlusion, motion</strong> and local ambiguity.</li>
+          <li>Ambiguity is resolved using <strong>priors</strong> about the world.</li>
+          <li>An image is a <strong>matrix of intensities</strong>, equivalently a function \(f(x,y)\) — which lets us treat vision as applying operators to functions.</li>
+        </ul>
+      </div>
+
+      <div class="pager">
+        <a href="index.html"><div class="pg-dir">← Back</div><div class="pg-title">★ Home</div></a>
+        <a class="next" href="session2.html"><div class="pg-dir">Next →</div><div class="pg-title">Session 2 · Digital Image Fundamentals</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

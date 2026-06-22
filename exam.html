@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Midsem — Overview</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "exam", title: "Midsem Exam Prep", crumb: "Midsem · Overview" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Exam Prep · Midsem (Dubai)</span>
+      <h1>Midsem — fully solved + practice</h1>
+      <p class="lead">The complete Dubai midsem paper, every question worked step-by-step, each followed by 3–5 similar practice problems with full answers. Click any question to open its solution page.</p>
+
+      <div class="callout exam">
+        <div class="c-head">✦ Format reminder</div>
+        <p>The midsem is <strong>4–5 questions, unequal weightage, theory + numericals with emphasis on numerical understanding</strong>. This paper has 6 questions (5 marks each) spanning Sessions 2–6. Practice re-deriving the numericals under time pressure.</p>
+      </div>
+
+      <h2>The paper at a glance</h2>
+      <div class="grid cols-2">
+        <a class="session-card" href="exam-q1.html">
+          <span class="sc-num">QUESTION 1 · 5M</span>
+          <span class="sc-title">Sampling &amp; Contrast Stretching</span>
+          <span class="sc-desc">(a) Explain sampling &amp; quantization [2M]. (b) Contrast-stretch [50,150]→[0,255]; find s for r=100 [3M].</span>
+          <span class="sc-tags"><span class="badge blue">Session 2</span></span>
+        </a>
+        <a class="session-card" href="exam-q2.html">
+          <span class="sc-num">QUESTION 2 · 5M</span>
+          <span class="sc-title">Transforms · Hough map · Gaussian</span>
+          <span class="sc-desc">(a) Combine 2 intensity transforms for low-contrast+noise [2M]. (b) Hough: c=−x₀m+y₀ at (3,4) [2M]. (c) Gaussian vs average [1M].</span>
+          <span class="sc-tags"><span class="badge blue">S2</span><span class="badge blue">S3</span><span class="badge blue">S5</span></span>
+        </a>
+        <a class="session-card" href="exam-q3.html">
+          <span class="sc-num">QUESTION 3 · 5M</span>
+          <span class="sc-title">Edge Kernel &amp; Color Models</span>
+          <span class="sc-desc">(a) What edges does [-1,0,1;…] detect? [1M] (b) Apply to a 3×3 patch [2M]. (c) RGB vs CMYK [2M].</span>
+          <span class="sc-tags"><span class="badge blue">S3</span><span class="badge blue">S4</span></span>
+        </a>
+        <a class="session-card" href="exam-q4.html">
+          <span class="sc-num">QUESTION 4 · 5M</span>
+          <span class="sc-title">Laplacian &amp; Edge Operators</span>
+          <span class="sc-desc">(a) 4- vs 8-neighbour Laplacian at an edge in a 5×5 image [3M]. (b) Compare edge-detection operators [2M].</span>
+          <span class="sc-tags"><span class="badge blue">S3</span><span class="badge blue">S4</span></span>
+        </a>
+        <a class="session-card" href="exam-q5.html">
+          <span class="sc-num">QUESTION 5 · 5M</span>
+          <span class="sc-title">Hough Spaces &amp; Edge vs Corner</span>
+          <span class="sc-desc">(a) (m,c) and (ρ,θ) for points (2,0),(2,5) [3M]. (b) Edge vs corner [2M].</span>
+          <span class="sc-tags"><span class="badge blue">S5</span><span class="badge blue">S6</span></span>
+        </a>
+        <a class="session-card" href="exam-q6.html">
+          <span class="sc-num">QUESTION 6 · 5M</span>
+          <span class="sc-title">HOG Binning &amp; RANSAC</span>
+          <span class="sc-desc">(a) 9-bin HOG: boundaries, levels, histogram for θ=57° [3M]. (b) RANSAC algorithm &amp; applications [2M].</span>
+          <span class="sc-tags"><span class="badge blue">S6</span><span class="badge blue">S7</span></span>
+        </a>
+      </div>
+
+      <h2>Topic → question map</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>If you're shaky on…</th><th>Drill these</th></tr></thead>
+        <tbody>
+          <tr><td>Sampling, quantization, resolution</td><td><a href="exam-q1.html">Q1a</a></td></tr>
+          <tr><td>Intensity transforms (stretch, log, gamma, histeq)</td><td><a href="exam-q1.html">Q1b</a>, <a href="exam-q2.html">Q2a</a></td></tr>
+          <tr><td>Spatial filtering / convolution arithmetic</td><td><a href="exam-q3.html">Q3b</a>, <a href="exam-q4.html">Q4a</a></td></tr>
+          <tr><td>Smoothing (Gaussian vs box)</td><td><a href="exam-q2.html">Q2c</a></td></tr>
+          <tr><td>Edges, gradients, Laplacian, operators</td><td><a href="exam-q3.html">Q3a</a>, <a href="exam-q4.html">Q4</a></td></tr>
+          <tr><td>Color models</td><td><a href="exam-q3.html">Q3c</a></td></tr>
+          <tr><td>Hough transform (both spaces)</td><td><a href="exam-q2.html">Q2b</a>, <a href="exam-q5.html">Q5a</a></td></tr>
+          <tr><td>Corners (Harris), edge vs corner</td><td><a href="exam-q5.html">Q5b</a></td></tr>
+          <tr><td>HOG descriptor &amp; binning</td><td><a href="exam-q6.html">Q6a</a></td></tr>
+          <tr><td>RANSAC</td><td><a href="exam-q6.html">Q6b</a></td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="pager">
+        <a href="session7.html"><div class="pg-dir">← Back</div><div class="pg-title">Session 7 · SIFT &amp; RANSAC</div></a>
+        <a class="next" href="exam-q1.html"><div class="pg-dir">Start solving →</div><div class="pg-title">Question 1</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

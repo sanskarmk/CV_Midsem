@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Midsem Q1 — Sampling &amp; Contrast Stretching</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "exam-q1", title: "Midsem Q1", crumb: "Midsem · Q1" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Question 1 · 5 Marks</span>
+      <h1>Sampling, Quantization &amp; Contrast Stretching</h1>
+
+      <div class="card">
+        <h4 style="margin-top:0">📄 Original question</h4>
+        <p><span class="q-num">Q1(a)</span> Explain the concept of "Sampling" and "Quantization" in the context of digital image processing. <span class="badge marks">2M</span></p>
+        <p><span class="q-num">Q1(b)</span> Given an image with pixel values ranging from 50 to 150, perform contrast stretching to expand the range to the full 8-bit range (0 to 255). What is the new value of a pixel with an original intensity of 100? <span class="badge marks">3M</span></p>
+      </div>
+
+      <h2>Solution — Q1(a)</h2>
+      <p>A continuous scene must be discretized in two independent ways to become a digital image:</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th></th><th>Sampling</th><th>Quantization</th></tr></thead>
+        <tbody>
+          <tr><td>Digitizes the…</td><td><strong>spatial coordinates</strong> (x, y)</td><td><strong>amplitude / intensity</strong></td></tr>
+          <tr><td>Decides</td><td>how many <strong>pixels</strong> (the grid size, spatial resolution)</td><td>how many <strong>gray levels</strong> \(L=2^b\) (bit depth)</td></tr>
+          <tr><td>Analogy</td><td>where you place the measuring points along a scan line</td><td>rounding each measured brightness to the nearest allowed level</td></tr>
+          <tr><td>Too little →</td><td>blocky <strong>pixelation</strong></td><td><strong>false contouring</strong> (banding)</td></tr>
+        </tbody>
+      </table></div>
+      <div class="answer-box"><span class="a-tag">Model answer</span><p style="margin:4px 0"><strong>Sampling</strong> is digitizing the spatial coordinates of an image (choosing the pixel grid); <strong>quantization</strong> is digitizing the intensity values (choosing how many gray levels each pixel may take). Sampling fixes spatial resolution; quantization fixes intensity resolution. Together they convert the continuous function \(f(x,y)\) into a finite matrix of integers.</p></div>
+
+      <h2>Solution — Q1(b)</h2>
+      <p>Full-range linear contrast stretching maps \([r_{\min}, r_{\max}] \to [0, L-1]\):</p>
+      <div class="eq">\[ s = (r - r_{\min})\cdot\frac{L-1}{r_{\max}-r_{\min}} \]</div>
+      <div class="steps">
+        <div class="step"><div class="s-title">Identify values</div>\(r_{\min}=50,\ r_{\max}=150,\ L-1=255,\ r=100\)</div>
+        <div class="step"><div class="s-title">Slope</div>\(\dfrac{255}{150-50}=\dfrac{255}{100}=2.55\)</div>
+        <div class="step"><div class="s-title">Apply</div>\(s=(100-50)\times 2.55 = 50\times 2.55 = 127.5\)</div>
+        <div class="step"><div class="s-title">Round</div>\(s\approx \mathbf{128}\)</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(s = 127.5 \approx 128\). (A mid-range input maps to mid-range output — the hallmark of a linear stretch.)</p></div>
+
+      <h2>Practice questions</h2>
+      <p>Try each before revealing the worked answer.</p>
+
+      <details class="qa"><summary><span class="q-num">P1.1</span> Contrast-stretch an image whose values span [30, 200] to full 8-bit range. Find the output for an input of 100. <span class="badge marks">3M</span></summary>
+        <div class="qa-body">
+          <div class="steps">
+            <div class="step"><div class="s-title">Slope</div>\(\dfrac{255}{200-30}=\dfrac{255}{170}=1.5\)</div>
+            <div class="step"><div class="s-title">Apply to r=100</div>\(s=(100-30)\times 1.5 = 70\times 1.5 = 105\)</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(s = 105\).</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P1.2</span> A grayscale image is 1024 × 768 at 8 bits/pixel. How much uncompressed storage does it need? What if it were 24-bit color? <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="steps">
+            <div class="step"><div class="s-title">Bits</div>\(1024\times768\times8 = 6{,}291{,}456\) bits</div>
+            <div class="step"><div class="s-title">Bytes / KB</div>\(\div 8 = 786{,}432\) bytes \(= 768\) KB (\(=0.75\) MB)</div>
+            <div class="step"><div class="s-title">24-bit color</div>\(\times 3 = 2{,}359{,}296\) bytes \(= 2304\) KB \(= 2.25\) MB</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">768 KB grayscale; 2304 KB (2.25 MB) for 24-bit color. (General formula: bytes \(=M\cdot N\cdot b/8\).)</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P1.3</span> After stretching [50, 150] → [0, 255], a pixel reads 153. What was its original intensity? <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <p>Invert \(s=(r-50)\cdot2.55\) → \(r = \dfrac{s}{2.55}+50\).</p>
+          <div class="steps">
+            <div class="step"><div class="s-title">Plug s=153</div>\(r = \dfrac{153}{2.55}+50 = 60 + 50 = 110\)</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Original intensity \(= 110\).</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P1.4</span> (i) How many gray levels does a 4-bit image have? (ii) How many bits are needed for 32 levels? (iii) Explain "false contouring". <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span>
+            <p style="margin:4px 0">(i) \(L=2^4 = \mathbf{16}\) levels. &nbsp;(ii) \(2^b=32 \Rightarrow b=\mathbf{5}\) bits.</p>
+            <p style="margin:4px 0">(iii) <strong>False contouring</strong> is the banding that appears in smooth-gradient regions when too few quantization levels are used — the eye sees abrupt steps where the original had a continuous ramp. It's the visual symptom of <em>insufficient intensity resolution</em>.</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P1.5</span> Distinguish <em>spatial resolution</em> from <em>intensity resolution</em>, and state what happens to a smooth gradient image if each is reduced. <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span>
+            <p style="margin:4px 0"><strong>Spatial resolution</strong> = the smallest spatial detail that can be resolved, set by the number of samples/pixels (dpi). Reducing it makes the image <em>pixelated / blocky</em>; fine detail and edges become jagged.</p>
+            <p style="margin:4px 0"><strong>Intensity resolution</strong> = the smallest distinguishable change in brightness, set by the number of gray levels \(L=2^b\). Reducing it causes <em>false contouring</em> — a smooth gradient breaks into visible bands.</p>
+          </div>
+        </div>
+      </details>
+
+      <div class="callout intuition">
+        <div class="c-head">◆ Want to feel it?</div>
+        <p>Open the <a href="session2.html#sampquant">Sampling &amp; Quantization demo</a> and drag the two sliders — you'll see pixelation appear as you cut samples and banding appear as you cut levels.</p>
+      </div>
+
+      <div class="pager">
+        <a href="exam.html"><div class="pg-dir">← Overview</div><div class="pg-title">✦ Midsem Hub</div></a>
+        <a class="next" href="exam-q2.html"><div class="pg-dir">Next →</div><div class="pg-title">Q2 · Transforms &amp; Hough</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

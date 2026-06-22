@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Computer Vision — Exam Companion</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "index", title: "Home", crumb: "Home" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <div class="hero">
+        <span class="page-tag">AIMLCZG525 · M.Tech (AIML)</span>
+        <h1>Computer Vision — your exam-ready companion</h1>
+        <p class="lead">Everything from Sessions 1–7 rebuilt as an interactive study site: concepts explained for intuition, every numerical solved in class, live simulations you can poke at, and the full midsem paper solved with extra practice questions.</p>
+        <div class="btn-row">
+          <a class="btn primary" href="session1.html">Start from Session 1 →</a>
+          <a class="btn" href="exam.html">Jump to Midsem Prep ✦</a>
+          <a class="btn" href="numericals.html">All Numericals ∑</a>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="k-num">7</div><div class="k-label">Session deep-dives</div></div>
+        <div class="kpi"><div class="k-num">8</div><div class="k-label">Live interactive demos</div></div>
+        <div class="kpi"><div class="k-num">6</div><div class="k-label">Midsem questions solved</div></div>
+        <div class="kpi"><div class="k-num">25+</div><div class="k-label">Practice problems w/ answers</div></div>
+      </div>
+
+      <h2>Course map</h2>
+      <p>Each session page follows the same rhythm: <strong>intuition first</strong> → core theory and formulas → worked numericals → an interactive demo to build a feel → exam tips. Work top to bottom, or jump to what you need.</p>
+
+      <div class="grid cols-2">
+        <a class="session-card" href="session1.html">
+          <span class="sc-num">SESSION 1</span>
+          <span class="sc-title">Introduction to Computer Vision</span>
+          <span class="sc-desc">What CV is, why it's hard (viewpoint, illumination, occlusion…), applications, and how images are represented.</span>
+          <span class="sc-tags"><span class="badge blue">Concepts</span></span>
+        </a>
+        <a class="session-card" href="session2.html">
+          <span class="sc-num">SESSION 2</span>
+          <span class="sc-title">Digital Image Fundamentals</span>
+          <span class="sc-desc">Image formation, sampling &amp; quantization, spatial/intensity resolution, and intensity transforms (negative, log, gamma, contrast stretch).</span>
+          <span class="sc-tags"><span class="badge blue">Concepts</span><span class="badge teal">Demo</span><span class="badge amber">Numericals</span></span>
+        </a>
+        <a class="session-card" href="session3.html">
+          <span class="sc-num">SESSION 3</span>
+          <span class="sc-title">Low-Level Vision &amp; Color</span>
+          <span class="sc-desc">Histogram equalization, spatial filtering (convolution vs correlation), box vs Gaussian smoothing, and color spaces (RGB, CMYK, HSI, YCbCr).</span>
+          <span class="sc-tags"><span class="badge teal">Demo</span><span class="badge amber">Numericals</span></span>
+        </a>
+        <a class="session-card" href="session4.html">
+          <span class="sc-num">SESSION 4</span>
+          <span class="sc-title">Edge Detection &amp; Gradients</span>
+          <span class="sc-desc">Edge profiles, image gradients via finite differences, Prewitt &amp; Sobel operators, magnitude and direction.</span>
+          <span class="sc-tags"><span class="badge teal">Demo</span><span class="badge amber">Numericals</span></span>
+        </a>
+        <a class="session-card" href="session5.html">
+          <span class="sc-num">SESSION 5</span>
+          <span class="sc-title">Canny &amp; Hough Transform</span>
+          <span class="sc-desc">The 4-stage Canny pipeline and the Hough voting scheme for lines — both (m, c) and (ρ, θ) parameterisations.</span>
+          <span class="sc-tags"><span class="badge teal">Demo</span><span class="badge amber">Numericals</span></span>
+        </a>
+        <a class="session-card" href="session6.html">
+          <span class="sc-num">SESSION 6</span>
+          <span class="sc-title">Harris Corners &amp; HOG</span>
+          <span class="sc-desc">Structure tensor, eigenvalue intuition and the corner response R; plus the Histogram of Oriented Gradients descriptor.</span>
+          <span class="sc-tags"><span class="badge teal">Demo</span><span class="badge amber">Numericals</span></span>
+        </a>
+        <a class="session-card" href="session7.html">
+          <span class="sc-num">SESSION 7</span>
+          <span class="sc-title">SIFT &amp; RANSAC</span>
+          <span class="sc-desc">Scale-space, Difference-of-Gaussians, keypoints &amp; descriptors that survive scale/rotation — and robust fitting with RANSAC.</span>
+          <span class="sc-tags"><span class="badge blue">Concepts</span></span>
+        </a>
+        <a class="session-card" href="exam.html" style="border-color:var(--pink)">
+          <span class="sc-num" style="color:var(--pink)">EXAM PREP</span>
+          <span class="sc-title">Midsem — fully solved + practice</span>
+          <span class="sc-desc">All 6 questions of the Dubai midsem worked step-by-step, each followed by 3–5 similar practice problems with answers.</span>
+          <span class="sc-tags"><span class="badge marks">Solved</span><span class="badge marks">Practice</span></span>
+        </a>
+      </div>
+
+      <h2>What the exam looks like</h2>
+      <div class="callout exam">
+        <div class="c-head">✦ From the Session 8 revision slide</div>
+        <p>The instructor stated the pattern directly: <strong>4–5 questions of unequal weightage</strong>, drawn across all content covered so far, and a <strong>mix of theory and numericals with more focus on numerical understanding</strong>. That means the highest-leverage prep is being fast and correct on the worked problems — which is exactly what the <a href="numericals.html">Numericals</a> and <a href="exam.html">Exam Prep</a> sections drill.</p>
+      </div>
+
+      <h2>How to use this site</h2>
+      <div class="grid cols-3">
+        <div class="card"><h4 style="margin-top:0">① Read for intuition</h4><p style="margin-bottom:0">Start each topic with the <span class="badge teal">Intuition</span> callouts. If you can explain the idea in one sentence, the formula will stick.</p></div>
+        <div class="card"><h4 style="margin-top:0">② Play the demos</h4><p style="margin-bottom:0">Drag a kernel across an image, watch Hough votes pile up, step through Canny. Seeing it move beats memorizing.</p></div>
+        <div class="card"><h4 style="margin-top:0">③ Re-derive numericals</h4><p style="margin-bottom:0">Cover the solution, try it, then check. Speed on these is what the midsem rewards.</p></div>
+      </div>
+
+      <div class="callout key">
+        <div class="c-head">◆ A note on sources</div>
+        <p>Content is reconstructed from your Session 1–7 slide decks and PDFs and the Dubai midsem paper. Some slides were image-only (diagrams, hand-written numericals); those are re-derived here from the underlying theory so the math is complete and checkable. Tip: toggle light/dark with the ◐ button, top-right.</p>
+      </div>
+
+      <div class="pager">
+        <a href="formulas.html"><div class="pg-dir">Quick revision</div><div class="pg-title">ƒ Formula Cheat-Sheet</div></a>
+        <a class="next" href="session1.html"><div class="pg-dir">Begin →</div><div class="pg-title">Session 1 · Introduction</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

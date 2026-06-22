@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session 4 — Edge Detection &amp; Gradients</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "session4", title: "Session 4 · Edge Detection & Gradients", crumb: "Session 4 · Edge Detection & Gradients" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Session 4</span>
+      <h1>Edge Detection &amp; Gradients</h1>
+      <p class="lead">Edges are where intensity changes abruptly. We find them with derivatives — approximated by finite differences and computed with the Prewitt and Sobel operators — then read off edge strength and orientation from the gradient.</p>
+
+      <div class="toc">
+        <h4>On this page</h4>
+        <ul>
+          <li><a href="#what">What is an edge?</a></li>
+          <li><a href="#profiles">Edge profiles</a></li>
+          <li><a href="#gradient">The image gradient</a></li>
+          <li><a href="#operators">Prewitt &amp; Sobel operators</a></li>
+          <li><a href="#worked">Worked numericals</a></li>
+          <li><a href="#objectives">What makes a good detector</a></li>
+          <li><a href="#takeaways">Key takeaways</a></li>
+        </ul>
+      </div>
+
+      <h2 id="what">What is an edge?</h2>
+      <p>An <strong>edge is a place of rapid change in the image intensity function</strong>. Treating the image as a surface \(f(x,y)\), edges look like steep cliffs. They arise from depth discontinuities, surface-orientation changes, reflectance/texture changes, and illumination/shadow boundaries. The task of edge detection: <em>convert a 2D image into a set of curves</em>.</p>
+      <div class="callout intuition">
+        <div class="c-head">◆ Derivatives find change</div>
+        <p>Where intensity jumps, its <strong>first derivative has a peak</strong> and its <strong>second derivative crosses zero</strong>. So differentiating the image and looking for large responses localizes edges. Since digital images are discrete, we approximate derivatives by <strong>differences</strong> between neighbouring pixels.</p>
+      </div>
+
+      <h2 id="profiles">Edge profiles</h2>
+      <div class="grid cols-3">
+        <div class="card"><h4 style="margin-top:0">Step edge</h4><p style="margin-bottom:0">Intensity jumps instantly from one level to another (≈2 pixels wide). The ideal, sharp edge.</p></div>
+        <div class="card"><h4 style="margin-top:0">Ramp edge</h4><p style="margin-bottom:0">Intensity changes gradually over several pixels (e.g. 9 px) — what real, slightly-blurred edges look like.</p></div>
+        <div class="card"><h4 style="margin-top:0">Roof edge</h4><p style="margin-bottom:0">Intensity rises then falls (a thin line/ridge), like a bright wire on a dark background.</p></div>
+      </div>
+      <p>Real edges are corrupted by noise. Because differentiation <em>amplifies</em> noise, we almost always <strong>smooth first</strong> (Gaussian) and differentiate second — the seed of the Canny pipeline.</p>
+
+      <h2 id="gradient">The image gradient</h2>
+      <p>The gradient bundles the two partial derivatives into a vector:</p>
+      <div class="eq">\[ \nabla f = \begin{bmatrix} g_x \\ g_y \end{bmatrix} = \begin{bmatrix} \partial f/\partial x \\ \partial f/\partial y \end{bmatrix} \]</div>
+      <p>Three things we read off it:</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Quantity</th><th>Formula</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Gradient direction</td><td>\(\theta = \tan^{-1}\!\big(g_y/g_x\big)\)</td><td>Direction of <strong>fastest intensity increase</strong> — points across the edge.</td></tr>
+          <tr><td>Edge strength</td><td>\(\|\nabla f\| = \sqrt{g_x^2 + g_y^2}\)</td><td>How strong the edge is (often approximated by \(|g_x|+|g_y|\)).</td></tr>
+          <tr><td>Edge direction</td><td>\(\theta_{\text{edge}} = \theta \pm 90^\circ\)</td><td><strong>Orthogonal</strong> to the gradient — runs along the edge.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout key">
+        <div class="c-head">◆ The orthogonality rule</div>
+        <p>The gradient points <em>across</em> the edge (up the cliff); the edge itself runs <em>perpendicular</em> to the gradient. If the gradient direction is 135°, the edge direction is 45°.</p>
+      </div>
+
+      <h2 id="operators">Prewitt &amp; Sobel operators</h2>
+      <p>We estimate \(g_x, g_y\) by convolving with small kernels. Both subtract one side from the other; <strong>Sobel</strong> additionally weights the centre row/column by 2, giving a little built-in smoothing (so it's more noise-robust than Prewitt).</p>
+      <div class="grid cols-2">
+        <div class="card"><h4 style="margin-top:0">Prewitt</h4>
+          <div class="eq" style="margin:6px 0">\[ g_x:\begin{bmatrix}-1&0&1\\-1&0&1\\-1&0&1\end{bmatrix}\quad g_y:\begin{bmatrix}-1&-1&-1\\0&0&0\\1&1&1\end{bmatrix} \]</div>
+          <p style="margin-bottom:0">Plain difference of columns / rows.</p>
+        </div>
+        <div class="card"><h4 style="margin-top:0">Sobel</h4>
+          <div class="eq" style="margin:6px 0">\[ g_x:\begin{bmatrix}-1&0&1\\-2&0&2\\-1&0&1\end{bmatrix}\quad g_y:\begin{bmatrix}-1&-2&-1\\0&0&0\\1&2&1\end{bmatrix} \]</div>
+          <p style="margin-bottom:0">Centre weighted ×2 → smoother, less noise-sensitive.</p>
+        </div>
+      </div>
+      <p>Notice the \(g_x\) kernels respond to <strong>vertical edges</strong> (a horizontal change in x), and \(g_y\) kernels respond to <strong>horizontal edges</strong>. Slide the operator over different image patterns:</p>
+      <div data-demo="convolution" data-preset="sobelx" data-image="vedge"></div>
+
+      <h2 id="worked">Worked numericals</h2>
+
+      <h3>① Gradient on a clean vertical edge</h3>
+      <div class="card">
+        <p style="margin-top:0">Patch (a vertical edge — dark left, bright right), using <strong>Prewitt</strong>:</p>
+        <div class="matrix-row">
+          <span class="matrix" style="grid-template-columns:repeat(3,38px)">
+            <span class="cell">10</span><span class="cell">10</span><span class="cell">200</span>
+            <span class="cell">10</span><span class="cell center">10</span><span class="cell">200</span>
+            <span class="cell">10</span><span class="cell">10</span><span class="cell">200</span>
+          </span>
+        </div>
+        <div class="steps">
+          <div class="step"><div class="s-title">g<sub>x</sub> = (right column − left column)</div>\((200-10)+(200-10)+(200-10) = 190\times 3 = 570\)</div>
+          <div class="step"><div class="s-title">g<sub>y</sub> = (bottom row − top row)</div>\((10+10+200)-(10+10+200) = 0\)</div>
+          <div class="step"><div class="s-title">Magnitude &amp; direction</div>\(\|\nabla f\| = \sqrt{570^2+0^2}=570;\quad \theta=\tan^{-1}(0/570)=0^\circ\)</div>
+          <div class="step"><div class="s-title">Interpret</div>Gradient points along +x (across the edge); the <strong>edge is vertical</strong> (\(0^\circ+90^\circ=90^\circ\)). Strong response — exactly what \(g_x\) is for.</div>
+        </div>
+      </div>
+
+      <h3>② Diagonal edge — direction from the class example</h3>
+      <div class="card">
+        <p style="margin-top:0">In the class "shaded pixels are 0's, white are 2's" example, the differences came out to \(g_x=-2,\ g_y=2\).</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Gradient direction</div>\(\theta=\tan^{-1}\!\big(\tfrac{g_y}{g_x}\big)=\operatorname{atan2}(2,-2)=135^\circ\)</div>
+          <div class="step"><div class="s-title">Magnitude</div>\(\|\nabla f\|=\sqrt{(-2)^2+2^2}=\sqrt 8 = 2\sqrt2 \approx 2.83\)</div>
+          <div class="step"><div class="s-title">Edge direction (orthogonal)</div>\(135^\circ - 90^\circ = \mathbf{45^\circ}\) — the edge runs along the 45° diagonal.</div>
+        </div>
+      </div>
+
+      <h3>③ The exam's vertical-edge kernel</h3>
+      <p>The kernel \(\begin{bmatrix}-1&0&1\\-1&0&1\\-1&0&1\end{bmatrix}\) (a Prewitt \(g_x\)) appears in <a href="exam-q3.html">Midsem Q3</a>. It computes a horizontal intensity difference, so it detects <strong>vertical edges</strong>. Applied to a symmetric patch it can give 0 (no net horizontal change) — try it in the demo with the "Exam Q3 patch".</p>
+
+      <h2 id="objectives">What makes a good edge detector?</h2>
+      <div class="grid cols-3">
+        <div class="card"><h4 style="margin-top:0">Good detection</h4><p style="margin-bottom:0">Respond to real edges, not to noise (few false positives/negatives).</p></div>
+        <div class="card"><h4 style="margin-top:0">Good localization</h4><p style="margin-bottom:0">The detected edge sits as close as possible to the true edge.</p></div>
+        <div class="card"><h4 style="margin-top:0">Single response</h4><p style="margin-bottom:0">One detection per true edge point — no thick or doubled edges.</p></div>
+      </div>
+      <p>These three criteria are exactly what <strong>Canny</strong> (next session) was designed to optimise.</p>
+
+      <h2 id="takeaways">Key takeaways</h2>
+      <div class="callout key">
+        <div class="c-head">◆ Remember these</div>
+        <ul>
+          <li>Edges = rapid intensity change → peaks in the 1st derivative.</li>
+          <li>\(\nabla f=(g_x,g_y)\): strength \(=\sqrt{g_x^2+g_y^2}\), direction \(=\tan^{-1}(g_y/g_x)\); the <strong>edge is perpendicular</strong> to the gradient.</li>
+          <li><strong>Prewitt</strong> = plain difference; <strong>Sobel</strong> = centre-weighted (×2) → smoother / less noisy.</li>
+          <li>\(g_x\) kernels detect <strong>vertical</strong> edges, \(g_y\) kernels detect <strong>horizontal</strong> edges.</li>
+        </ul>
+      </div>
+
+      <div class="pager">
+        <a href="session3.html"><div class="pg-dir">← Previous</div><div class="pg-title">Session 3 · Low-Level Vision &amp; Color</div></a>
+        <a class="next" href="session5.html"><div class="pg-dir">Next →</div><div class="pg-title">Session 5 · Canny &amp; Hough</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

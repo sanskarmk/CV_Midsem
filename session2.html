@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session 2 — Digital Image Fundamentals</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "session2", title: "Session 2 · Digital Image Fundamentals", crumb: "Session 2 · Digital Image Fundamentals" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Session 2</span>
+      <h1>Digital Image Fundamentals</h1>
+      <p class="lead">How light becomes a number, how a continuous scene becomes a finite grid (sampling &amp; quantization), what "resolution" really means, and the point-wise intensity transforms that brighten, stretch and threshold an image.</p>
+
+      <div class="toc">
+        <h4>On this page</h4>
+        <ul>
+          <li><a href="#formation">Image formation model</a></li>
+          <li><a href="#pinhole">Pinhole vs lens</a></li>
+          <li><a href="#sampquant">Sampling &amp; quantization</a></li>
+          <li><a href="#res">Spatial vs intensity resolution</a></li>
+          <li><a href="#intensity">Intensity transformations</a></li>
+          <li><a href="#stretch">Contrast stretching (worked)</a></li>
+          <li><a href="#takeaways">Key takeaways</a></li>
+        </ul>
+      </div>
+
+      <h2 id="formation">The simple image-formation model</h2>
+      <p>We write an image as a 2D function \(f(x,y)\). Its value is proportional to the energy radiated from the scene at that point, and it factors into two physically meaningful parts:</p>
+      <div class="eq">\[ f(x,y) = i(x,y)\,\cdot\,r(x,y) \]</div>
+      <ul>
+        <li>\(i(x,y)\) — <strong>illumination</strong>: the amount of source light falling on the scene, \(0 \le i(x,y) &lt; \infty\).</li>
+        <li>\(r(x,y)\) — <strong>reflectance</strong>: the fraction of light the surface bounces back, \(0 \le r(x,y) \le 1\), where <strong>0 is total absorption</strong> (black) and <strong>1 is total reflectance</strong> (white).</li>
+      </ul>
+      <p>For a monochrome (grayscale) image the intensity at \((x,y)\) is called the <strong>gray level</strong> \(\ell\), scaled to the range \([0, L-1]\). All values in between are shades of gray from black (0) to white (\(L-1\)). For an 8-bit image, \(L = 256\) so levels run \(0\ldots255\).</p>
+
+      <div class="callout intuition">
+        <div class="c-head">◆ Why the split matters</div>
+        <p>Separating illumination from reflectance is the basis of many corrections: if uneven <em>lighting</em> \(i(x,y)\) is the problem, you can estimate and divide it out to recover the true <em>reflectance</em> — which is the property of the object you actually care about.</p>
+      </div>
+
+      <h2 id="pinhole">Pinhole camera vs lens</h2>
+      <p>The simplest camera is a <strong>pinhole</strong>: a single tiny hole projects an inverted image. It has perfect "focus" everywhere but lets in almost no light. So why do real cameras use <strong>lenses</strong>?</p>
+      <div class="callout key">
+        <div class="c-head">◆ The quiz answer</div>
+        <p>Because <strong>lenses gather far more light than a pinhole</strong>, dramatically reducing the exposure time needed for a bright, low-noise image. (The trade-off: lenses introduce focus/depth-of-field limits and optical distortions — topics for camera-calibration later.)</p>
+      </div>
+
+      <h2 id="sampquant">Sampling &amp; quantization</h2>
+      <p>A real scene is continuous in both <em>position</em> and <em>brightness</em>. To store it digitally we discretize both:</p>
+      <div class="grid cols-2">
+        <div class="card"><h4 style="margin-top:0">Sampling</h4><p style="margin-bottom:0">Digitizing the <strong>coordinate</strong> values — deciding <em>how many pixels</em> (the spatial grid). Take a scan line through the scene and read it at evenly spaced positions.</p></div>
+        <div class="card"><h4 style="margin-top:0">Quantization</h4><p style="margin-bottom:0">Digitizing the <strong>amplitude</strong> values — deciding <em>how many gray levels</em> each sample may take (the bit depth, \(L = 2^b\)).</p></div>
+      </div>
+      <p>The continuous image projected onto a sensor array is sampled (one value per sensor cell) and each value is then rounded to the nearest available level. The result is the matrix of integers we call a digital image.</p>
+
+      <div data-demo="sampling"></div>
+
+      <div class="callout warn">
+        <div class="c-head">▲ Exam-style definition</div>
+        <p>If asked to "explain sampling and quantization" (this is literally <a href="exam-q1.html">Midsem Q1a</a>): <strong>Sampling = discretizing spatial coordinates (x, y); Quantization = discretizing the intensity/amplitude.</strong> Too little sampling → blocky pixelation; too little quantization → <em>false contouring</em> (visible banding in smooth regions).</p>
+      </div>
+
+      <h3>Matrix representation</h3>
+      <p>After sampling and quantization, an \(M \times N\) image is the matrix</p>
+      <div class="eq">\[ f = \begin{bmatrix} f(0,0) & \cdots & f(0,N-1)\\ \vdots & \ddots & \vdots \\ f(M-1,0) & \cdots & f(M-1,N-1) \end{bmatrix} \]</div>
+      <p>Storage (uncompressed) is simply \(M \times N \times b\) bits. This is a common sub-question: a \(512\times512\), 8-bit image needs \(512\cdot512\cdot8 = 2{,}097{,}152\) bits \(= 256\) KB.</p>
+
+      <h2 id="res">Spatial vs intensity resolution</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th></th><th>Spatial resolution</th><th>Intensity resolution</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Controls</strong></td><td>Smallest discernible spatial <em>detail</em></td><td>Smallest discernible <em>change in brightness</em></td></tr>
+          <tr><td><strong>Set by</strong></td><td>Number of samples (e.g. dpi: 300, 150, 72…)</td><td>Number of gray levels \(L=2^b\) (256, 64, 16, 2…)</td></tr>
+          <tr><td><strong>Too low looks like</strong></td><td>Pixelation / blockiness</td><td>False contours (banding)</td></tr>
+        </tbody>
+      </table></div>
+      <p>A classic demonstration keeps spatial resolution fixed (e.g. 2022×1800) while dropping levels 256 → 128 → … → 2: smooth gradients break into visible bands. Conversely, fixing levels and dropping dpi makes edges turn jagged. The demo above lets you trade both off live.</p>
+
+      <h2 id="intensity">Elementary intensity transformations</h2>
+      <p>These are <strong>point operations</strong>: the output pixel depends only on the input pixel through a mapping \(s = T(r)\), where \(r\) is input intensity and \(s\) is output. The transformation <em>curve</em> is the whole story.</p>
+
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Transform</th><th>Formula</th><th>Use</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Negative</strong></td><td>\(s = (L-1) - r\)</td><td>Reveal detail in bright regions (e.g. mammograms).</td></tr>
+          <tr><td><strong>Log</strong></td><td>\(s = c\,\log(1+r)\)</td><td>Compress huge dynamic range; expand dark values. Used to display Fourier spectra.</td></tr>
+          <tr><td><strong>Power-law (gamma)</strong></td><td>\(s = c\,r^{\gamma}\)</td><td>Gamma correction for displays; \(\gamma&lt;1\) brightens, \(\gamma&gt;1\) darkens.</td></tr>
+          <tr><td><strong>Contrast stretch</strong></td><td>piecewise-linear</td><td>Spread a narrow intensity range over the full scale.</td></tr>
+          <tr><td><strong>Thresholding</strong></td><td>\(s = (L-1)\) if \(r \ge T\) else 0</td><td>Binarize; limiting case of contrast stretch.</td></tr>
+          <tr><td><strong>Intensity-level slicing</strong></td><td>highlight \([A,B]\)</td><td>Emphasise a specific band of intensities.</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="callout intuition">
+        <div class="c-head">◆ Gamma, intuitively</div>
+        <p>CRT displays respond to voltage by a power law with exponent ≈ 1.8–2.5, so an uncorrected image looks too dark. <strong>Gamma correction</strong> pre-applies the inverse power so the displayed image looks right. Same maths is used to brighten dark MRI detail (\(\gamma&lt;1\)) or tame washed-out aerial photos (\(\gamma&gt;1\)).</p>
+      </div>
+
+      <div data-demo="intensity"></div>
+
+      <h2 id="stretch">Worked numerical — contrast stretching</h2>
+      <p>This is exactly <a href="exam-q1.html">Midsem Q1(b)</a>. A linear (full-range) contrast stretch maps an input range \([r_{\min}, r_{\max}]\) onto \([0, L-1]\):</p>
+      <div class="eq">\[ s = (r - r_{\min}) \cdot \frac{L-1}{\,r_{\max} - r_{\min}\,} \]</div>
+
+      <div class="card">
+        <p style="margin-top:0"><strong>Problem.</strong> An image has pixel values in \([50, 150]\). Stretch to the full 8-bit range \([0, 255]\). What is the new value of a pixel originally at \(r = 100\)?</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Set up the slope</div>\(\dfrac{L-1}{r_{\max}-r_{\min}} = \dfrac{255}{150-50} = \dfrac{255}{100} = 2.55\)</div>
+          <div class="step"><div class="s-title">Apply to r = 100</div>\(s = (100 - 50)\times 2.55 = 50 \times 2.55 = 127.5\)</div>
+          <div class="step"><div class="s-title">Round to an integer level</div>\(s \approx \mathbf{128}\) (or 127). The mid-range input lands at mid-range output — as expected for a linear stretch.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span> <p style="margin:4px 0">New intensity \(= 127.5 \approx 128\).</p></div>
+      </div>
+
+      <h2 id="takeaways">Key takeaways</h2>
+      <div class="callout key">
+        <div class="c-head">◆ Remember these</div>
+        <ul>
+          <li>\(f(x,y) = i(x,y)\,r(x,y)\): illumination × reflectance, with \(r \in [0,1]\).</li>
+          <li><strong>Sampling</strong> = discretize position; <strong>quantization</strong> = discretize intensity (\(L=2^b\)).</li>
+          <li><strong>Spatial</strong> resolution = detail (pixels); <strong>intensity</strong> resolution = brightness steps (levels).</li>
+          <li>Point transforms: negative \((L{-}1){-}r\), log \(c\log(1{+}r)\), gamma \(c\,r^{\gamma}\), linear stretch \((r-r_{\min})\frac{L-1}{r_{\max}-r_{\min}}\).</li>
+        </ul>
+      </div>
+
+      <div class="pager">
+        <a href="session1.html"><div class="pg-dir">← Previous</div><div class="pg-title">Session 1 · Introduction</div></a>
+        <a class="next" href="session3.html"><div class="pg-dir">Next →</div><div class="pg-title">Session 3 · Low-Level Vision &amp; Color</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

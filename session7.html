@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session 7 — SIFT &amp; RANSAC</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "session7", title: "Session 7 · SIFT & RANSAC", crumb: "Session 7 · SIFT & RANSAC" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Session 7</span>
+      <h1>SIFT &amp; RANSAC</h1>
+      <p class="lead">How to extract local features that survive scale and rotation (SIFT), and how to fit a model when half your matches are wrong (RANSAC). Together they power panorama stitching, object recognition and visual SLAM.</p>
+
+      <div class="toc">
+        <h4>On this page</h4>
+        <ul>
+          <li><a href="#why">Why local features?</a></li>
+          <li><a href="#invariance">Invariance &amp; the 3 components</a></li>
+          <li><a href="#sift">SIFT pipeline</a></li>
+          <li><a href="#scalespace">Scale-space &amp; DoG</a></li>
+          <li><a href="#descriptor">Orientation &amp; descriptor</a></li>
+          <li><a href="#ransac">RANSAC</a></li>
+          <li><a href="#exam">Exam pattern</a></li>
+          <li><a href="#takeaways">Key takeaways</a></li>
+        </ul>
+      </div>
+
+      <h2 id="why">Why extract local features?</h2>
+      <p>Take panorama stitching: we have two overlapping photos — how do we combine them? The recipe is <strong>extract features → match features → align images</strong>. The same three-step recipe drives 3D reconstruction, motion tracking for AR, object recognition, image retrieval, and robot/car navigation (visual SLAM).</p>
+      <div class="callout intuition">
+        <div class="c-head">◆ Advantages of local features</div>
+        <ul style="margin:6px 0">
+          <li><strong>Locality</strong> — local patches are robust to occlusion and clutter.</li>
+          <li><strong>Quantity</strong> — hundreds or thousands per image, so matching is redundant and reliable.</li>
+          <li><strong>Distinctiveness</strong> — a good descriptor can be told apart across a huge database.</li>
+          <li><strong>Efficiency</strong> — fast enough for real-time use.</li>
+        </ul>
+      </div>
+
+      <h2 id="invariance">Invariance and the three components</h2>
+      <p>A good feature should be detectable again after the image changes. We want:</p>
+      <ul>
+        <li><strong>Geometric invariance:</strong> translation, rotation, scale.</li>
+        <li><strong>Photometric invariance:</strong> brightness, exposure, contrast.</li>
+      </ul>
+      <p>Every local-feature method has the same three components:</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Component</th><th>Job</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Detection</strong></td><td>Find the interest points (where? — repeatably).</td></tr>
+          <tr><td><strong>Description</strong></td><td>Extract a vector descriptor around each interest point (what does it look like?).</td></tr>
+          <tr><td><strong>Matching</strong></td><td>Find correspondences between descriptors in two views.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Harris (Session 6) is a great <em>detector</em> but is not scale-invariant. SIFT solves detection <em>and</em> description across scale and rotation.</p>
+
+      <h2 id="sift">SIFT — Scale-Invariant Feature Transform</h2>
+      <p>Introduced by <strong>David Lowe (UBC, 2004)</strong>. Its goal: extract distinctive features that can be matched against a large database, with <strong>invariance to scale and rotation</strong> and robustness to affine distortion, 3D-viewpoint change, noise, and illumination change. The pipeline has four stages:</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">Scale-space extrema detection</div>Search over <strong>both location and scale</strong> for stable keypoints, using a Difference-of-Gaussians pyramid.</div>
+        <div class="step"><div class="s-title">Keypoint localization</div>Refine each candidate's position/scale and reject low-contrast points and points lying on edges (poorly localized).</div>
+        <div class="step"><div class="s-title">Orientation assignment</div>Assign a dominant orientation from the local gradient histogram so the descriptor can be measured <em>relative</em> to it → rotation invariance.</div>
+        <div class="step"><div class="s-title">Keypoint descriptor</div>Build a gradient-orientation descriptor in the rotated, scaled frame — the famous <strong>128-D</strong> vector (4×4 spatial grid × 8 orientation bins).</div>
+      </div>
+
+      <h2 id="scalespace">Scale-space &amp; Difference of Gaussians</h2>
+      <p>An object's "right" amount of blur depends on how big it appears. SIFT builds a <strong>scale-space</strong>: the image repeatedly blurred by Gaussians of increasing \(\sigma\), grouped into octaves (each octave halves the resolution).</p>
+      <div class="eq">\[ D(x,y,\sigma) = \big(G(x,y,k\sigma) - G(x,y,\sigma)\big) * I(x,y) \]</div>
+      <p>The <strong>Difference of Gaussians (DoG)</strong> — subtracting adjacent blur levels — is a cheap approximation to the scale-normalised Laplacian-of-Gaussian, a strong blob detector. A pixel that is a <strong>local extremum among its 26 neighbours</strong> (8 in its scale + 9 above + 9 below in scale) is a candidate keypoint. Its scale tells you the blob's <em>characteristic size</em> — the foundation of scale invariance.</p>
+      <div class="callout key">
+        <div class="c-head">◆ Why DoG instead of LoG?</div>
+        <p>The LoG is the ideal blob detector but expensive. DoG ≈ LoG and is almost free once you have the Gaussian pyramid (just subtractions). Extrema in the 3-D \((x, y, \sigma)\) volume are blobs at their natural scale.</p>
+      </div>
+
+      <h2 id="descriptor">Orientation &amp; descriptor → rotation invariance</h2>
+      <p>At each keypoint, SIFT computes a histogram of local gradient orientations and picks the dominant peak as the keypoint's <strong>canonical orientation</strong>. All subsequent measurements are made relative to this orientation, so rotating the image doesn't change the descriptor. The descriptor itself is a grid of orientation histograms (4×4×8 = 128 numbers), then normalised for illumination invariance. The result: features that match reliably across scale, rotation, viewpoint and lighting — even on Mars-rover images.</p>
+
+      <h2 id="ransac">RANSAC — fitting amid outliers</h2>
+      <p>After matching, some correspondences are wrong (<strong>outliers</strong>). Plain least-squares is wrecked by even a few outliers because it tries to satisfy everyone. <strong>RANSAC</strong> (RANdom SAmple Consensus) fits robustly:</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">Sample</div>Randomly pick the <em>minimum</em> number of points to define the model (2 for a line, 4 for a homography).</div>
+        <div class="step"><div class="s-title">Solve</div>Fit the model to just that minimal sample.</div>
+        <div class="step"><div class="s-title">Score</div>Count <strong>inliers</strong> — points within a preset distance threshold of the model.</div>
+        <div class="step"><div class="s-title">Repeat &amp; keep best</div>Iterate many times; keep the model with the most inliers. Optionally re-fit (least squares) using all inliers at the end.</div>
+      </div>
+      <div class="callout intuition">
+        <div class="c-head">◆ The intuition (Efros / Tolstoy)</div>
+        <p>"All good matches are alike; every bad match is bad in its own way." Inliers all agree with each other and pile onto the same model; outliers disagree with everyone, so they never form a consensus. RANSAC has guarantees only when outliers are <strong>&lt; 50%</strong>.</p>
+      </div>
+      <div class="grid cols-2">
+        <div class="card"><h4 style="margin-top:0">Pros</h4><p style="margin-bottom:0">Simple, general, applies to many problems (line/plane/homography fitting, fundamental matrix), often works well in practice.</p></div>
+        <div class="card"><h4 style="margin-top:0">Cons</h4><p style="margin-bottom:0">Parameters to tune (threshold, #iterations); can need many iterations; fails at very low inlier ratios.</p></div>
+      </div>
+      <p><strong>Number of rounds:</strong> chosen from the expected outlier fraction and the desired success probability — more outliers or higher confidence ⇒ more iterations. The inlier threshold reflects the expected inlier noise (often modelled as Gaussian, e.g. σ ≈ 3 px). Applications named in class: <strong>image alignment / panorama stitching, 3D reconstruction, motion/translation estimation, homography estimation</strong>.</p>
+
+      <h2 id="exam">Exam pattern (from the revision session)</h2>
+      <div class="callout exam">
+        <div class="c-head">✦ Stated directly by the instructor</div>
+        <ul style="margin:6px 0">
+          <li><strong>4–5 questions</strong> with <strong>unequal weightage</strong> (e.g. 7/8 marks each).</li>
+          <li>Drawn across <strong>all content covered so far</strong>.</li>
+          <li>A <strong>mix of theory and numericals</strong>, with <strong>more focus on numerical understanding</strong>.</li>
+        </ul>
+        <p>Translation: prioritise being fast and correct on the worked problems. The <a href="numericals.html">Numericals</a> page and the <a href="exam.html">Midsem Prep</a> section are your highest-leverage revision.</p>
+      </div>
+
+      <h2 id="takeaways">Key takeaways</h2>
+      <div class="callout key">
+        <div class="c-head">◆ Remember these</div>
+        <ul>
+          <li>Local features = <strong>detect → describe → match</strong>; want geometric + photometric invariance.</li>
+          <li>SIFT: DoG scale-space extrema → localize → orientation (rotation-invariance) → 128-D descriptor.</li>
+          <li><strong>DoG ≈ LoG</strong>; extrema in \((x,y,\sigma)\) give blobs at their characteristic scale.</li>
+          <li>RANSAC: sample minimal set → fit → count inliers → repeat; robust if outliers &lt; 50%.</li>
+        </ul>
+      </div>
+
+      <div class="pager">
+        <a href="session6.html"><div class="pg-dir">← Previous</div><div class="pg-title">Session 6 · Harris &amp; HOG</div></a>
+        <a class="next" href="exam.html"><div class="pg-dir">Next →</div><div class="pg-title">✦ Midsem Exam Prep</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>
