@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Midsem Q2 — Transforms, Hough &amp; Gaussian</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "exam-q2", title: "Midsem Q2", crumb: "Midsem · Q2" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Question 2 · 5 Marks</span>
+      <h1>Intensity Transforms, Hough Mapping &amp; Gaussian</h1>
+
+      <div class="card">
+        <h4 style="margin-top:0">📄 Original question</h4>
+        <p><span class="q-num">Q2(a)</span> An image suffers from low contrast and has some noise. Explain how you would combine two different intensity transformation techniques to improve the image quality. Justify your choice of methods. <span class="badge marks">2M</span></p>
+        <p><span class="q-num">Q2(b)</span> A point \((x_0,y_0)=(3,4)\) in the image space maps to a line in Hough space using \(c = -x_0 m + y_0\). Calculate \(c\) for \(m=2\) and \(m=-1\). <span class="badge marks">2M</span></p>
+        <p><span class="q-num">Q2(c)</span> Why is a Gaussian filter often preferred over a simple average filter? <span class="badge marks">1M</span></p>
+      </div>
+
+      <h2>Solution — Q2(a)</h2>
+      <p>Two problems, so combine two operations and — crucially — <strong>order them correctly</strong>:</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">First: reduce noise (smoothing)</div>Apply a <strong>Gaussian smoothing filter</strong> to suppress the noise. This must come <em>first</em>, because any contrast-boosting step amplifies whatever noise is present.</div>
+        <div class="step"><div class="s-title">Then: boost contrast</div>Apply <strong>histogram equalization</strong> (or piecewise contrast stretching) to spread the now-clean intensities across the full range, restoring visible detail.</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Model answer</span>
+        <p style="margin:4px 0">Combine <strong>smoothing then contrast enhancement</strong>: Gaussian smoothing first to remove noise, then histogram equalization / contrast stretching to fix the low contrast. <strong>Justification:</strong> contrast enhancement multiplies differences between neighbouring values, so if applied before denoising it would magnify the noise too. Denoising first, enhancing second, gives a clean <em>and</em> high-contrast result. (If the noise is salt-and-pepper, prefer a <em>median</em> filter for the first step.)</p>
+      </div>
+
+      <h2>Solution — Q2(b)</h2>
+      <p>The Hough mapping sends image point \((x_0,y_0)\) to the parameter-space line \(c = -x_0\,m + y_0\). With \((x_0,y_0)=(3,4)\): \(c = -3m + 4\).</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">m = 2</div>\(c = -3(2) + 4 = -6 + 4 = \mathbf{-2}\)</div>
+        <div class="step"><div class="s-title">m = −1</div>\(c = -3(-1) + 4 = 3 + 4 = \mathbf{7}\)</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(c=-2\) when \(m=2\); \(\;c=7\) when \(m=-1\). These two \((m,c)\) points both lie on the single vote-line contributed by image point \((3,4)\).</p></div>
+      <p>See it live — toggle to (m, c) space and the point's vote-line is exactly \(c=-3m+4\):</p>
+      <div data-demo="hough"></div>
+
+      <h2>Solution — Q2(c)</h2>
+      <div class="answer-box"><span class="a-tag">Answer</span>
+        <p style="margin:4px 0">A Gaussian filter weights pixels by distance from the centre, so it produces a <strong>smoother, artefact-free</strong> result (no blocky edges or ringing like the box filter). It is <strong>isotropic</strong> (blurs equally in all directions), <strong>separable</strong> (an \(n\times n\) Gaussian = two 1-D passes, so \(2n\) vs \(n^2\) multiplies), and has a clean low-pass frequency response (its Fourier transform is another Gaussian, with no negative side-lobes). It therefore suppresses noise while preserving structure better than a simple average.</p>
+      </div>
+
+      <h2>Practice questions</h2>
+
+      <details class="qa"><summary><span class="q-num">P2.1</span> Point \((2,3)\) maps to \(c=-x_0m+y_0\). Find \(c\) for \(m=1\) and \(m=-2\). <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <p>\(c=-2m+3\).</p>
+          <div class="steps">
+            <div class="step"><div class="s-title">m = 1</div>\(c=-2(1)+3 = \mathbf{1}\)</div>
+            <div class="step"><div class="s-title">m = −2</div>\(c=-2(-2)+3 = 4+3 = \mathbf{7}\)</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(c=1\) (m=1); \(c=7\) (m=−2).</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P2.2</span> Point \((5,2)\) maps to Hough space. Compute \(c\) at \(m=0\) and \(m=3\), and state the geometric meaning of the \(m=0\) value. <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <p>\(c=-5m+2\).</p>
+          <div class="steps">
+            <div class="step"><div class="s-title">m = 0</div>\(c=2\) — the intercept of a horizontal line \(y=2\) through the point.</div>
+            <div class="step"><div class="s-title">m = 3</div>\(c=-15+2 = \mathbf{-13}\)</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(c=2\) at \(m=0\) (a horizontal line through \((5,2)\) has intercept 2); \(c=-13\) at \(m=3\).</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P2.3</span> An image has salt-and-pepper noise <em>and</em> is too dark. Which two operations, in what order, and why? <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span>
+            <p style="margin:4px 0"><strong>(1) Median filter</strong> first — it removes impulse (salt-and-pepper) noise far better than a linear filter because the outlier pixel is replaced by a neighbourhood <em>median</em>, not averaged in. <strong>(2) Gamma correction with \(\gamma&lt;1\)</strong> (or log transform / equalization) to brighten the dark image. Denoise first so brightening doesn't amplify the impulses.</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P2.4</span> Give one situation where a box (average) filter is actually preferable to a Gaussian. <span class="badge marks">1M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span>
+            <p style="margin:4px 0">When <strong>speed/simplicity</strong> matters most: a box filter can be implemented with an <strong>integral image (summed-area table)</strong> so its cost is independent of kernel size — ideal for very large kernels or real-time use where its mild artefacts are acceptable. (It's also exactly what's needed if you genuinely want a uniform local average.)</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P2.5</span> Why does applying contrast stretching <em>before</em> denoising give a worse result than the reverse order? <span class="badge marks">1M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span>
+            <p style="margin:4px 0">Contrast stretching multiplies the spread between intensities. Noise is a small intensity deviation, so stretching first <strong>amplifies the noise</strong> along with the signal, making it harder to remove afterwards. Denoising first keeps the subsequent stretch operating on a clean signal.</p>
+          </div>
+        </div>
+      </details>
+
+      <div class="pager">
+        <a href="exam-q1.html"><div class="pg-dir">← Previous</div><div class="pg-title">Q1 · Sampling &amp; Contrast</div></a>
+        <a class="next" href="exam-q3.html"><div class="pg-dir">Next →</div><div class="pg-title">Q3 · Edge Kernel &amp; Color</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

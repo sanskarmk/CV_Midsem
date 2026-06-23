@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Midsem Q6 — HOG Binning &amp; RANSAC</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "exam-q6", title: "Midsem Q6", crumb: "Midsem · Q6" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Question 6 · 5 Marks</span>
+      <h1>HOG Orientation Binning &amp; RANSAC</h1>
+
+      <div class="card">
+        <h4 style="margin-top:0">📄 Original question</h4>
+        <p><span class="q-num">Q6(a)</span> Consider the 9-point bin in the Histogram of Oriented Gradients (HOG) technique. Determine the bin boundaries and their respective representation level. Compute the histogram values for the pixel with a direction of 57 degrees. <span class="badge marks">3M</span></p>
+        <p><span class="q-num">Q6(b)</span> What is the RANSAC algorithm and mention a few of its applications in computer vision. <span class="badge marks">2M</span></p>
+      </div>
+
+      <h2>Solution — Q6(a)</h2>
+      <p>HOG uses <strong>9 bins</strong> spanning the unsigned-gradient range <strong>0°–180°</strong>, so each bin is \(180/9 = 20°\) wide.</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Bin #</th><th>Boundaries</th><th>Representation level (centre)</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>0°–20°</td><td>0°</td></tr>
+          <tr><td>2</td><td>20°–40°</td><td>20°</td></tr>
+          <tr><td>3</td><td>40°–60°</td><td>40°</td></tr>
+          <tr><td>4</td><td>60°–80°</td><td>60°</td></tr>
+          <tr><td>5</td><td>80°–100°</td><td>80°</td></tr>
+          <tr><td>6</td><td>100°–120°</td><td>100°</td></tr>
+          <tr><td>7</td><td>120°–140°</td><td>120°</td></tr>
+          <tr><td>8</td><td>140°–160°</td><td>140°</td></tr>
+          <tr><td>9</td><td>160°–180°</td><td>160° (180°≡0°)</td></tr>
+        </tbody>
+      </table></div>
+      <p>(Following the course's convention, the representation levels are taken at the multiples of 20°: 0, 20, 40, …, 160.) A direction of <strong>57°</strong> lies between the <strong>40° and 60°</strong> representation levels, so its magnitude is split between those two bins by linear interpolation (distance weighting):</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">Weight to the 40° bin</div>\(\dfrac{60-57}{20} = \dfrac{3}{20} = 0.15\)</div>
+        <div class="step"><div class="s-title">Weight to the 60° bin</div>\(\dfrac{57-40}{20} = \dfrac{17}{20} = 0.85\)</div>
+        <div class="step"><div class="s-title">Distribute the magnitude |g|</div>Bin 40° gets \(+0.15\,|g|\); &nbsp; Bin 60° gets \(+0.85\,|g|\); all other bins 0.</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answer</span>
+        <p style="margin:4px 0">57° contributes <strong>0.15·|g|</strong> to the 40° bin and <strong>0.85·|g|</strong> to the 60° bin. For example, if the gradient magnitude is \(|g|=85\): \(\;\)Bin40 \(= 12.75\), Bin60 \(= 72.25\), rest \(=0\).</p>
+        <p style="margin:4px 0"><small>Simpler "hard" binning (no interpolation) would dump the whole magnitude into the single bin that contains 57°, i.e. the 40°–60° bin — state whichever method your instructor expects.</small></p>
+      </div>
+      <p>Set θ=57° in the demo (use the "Load exam" button), pick a magnitude, and "Cast this vote" to watch the split:</p>
+      <div data-demo="hog"></div>
+
+      <h2>Solution — Q6(b) — RANSAC</h2>
+      <p><strong>RANSAC = RANdom SAmple Consensus</strong> — a robust model-fitting method that ignores outliers by repeatedly fitting to small random samples and keeping the model that the most data points agree with.</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">Sample</div>Randomly select the minimum number of points needed to define the model (2 for a line, 4 for a homography).</div>
+        <div class="step"><div class="s-title">Solve</div>Fit the model to that minimal sample.</div>
+        <div class="step"><div class="s-title">Score</div>Count <strong>inliers</strong> — points within a preset distance threshold of the model.</div>
+        <div class="step"><div class="s-title">Repeat &amp; keep best</div>Iterate; keep the model with the most inliers, then optionally re-fit by least squares on all inliers.</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Applications</span>
+        <p style="margin:4px 0">Image alignment / <strong>panorama stitching</strong> (homography estimation), <strong>3D reconstruction</strong> &amp; stereo (fundamental/essential matrix), <strong>motion/translation estimation</strong> and tracking, line/plane fitting, and removing mismatched feature correspondences after SIFT matching. Works reliably when outliers are <strong>&lt; 50%</strong>.</p>
+      </div>
+
+      <h2>Practice questions</h2>
+
+      <details class="qa"><summary><span class="q-num">P6.1</span> A pixel has direction \(95°\) and magnitude 40. Split its vote across the 9 HOG bins. <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <p>95° lies between representation levels 80° and 100°.</p>
+          <div class="steps">
+            <div class="step"><div class="s-title">Weights</div>to 80°: \((100-95)/20 = 0.25\); &nbsp; to 100°: \((95-80)/20 = 0.75\)</div>
+            <div class="step"><div class="s-title">Distribute magnitude 40</div>Bin 80° \(= 0.25\times40 = 10\); &nbsp; Bin 100° \(= 0.75\times40 = 30\)</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Bin 80° = 10, Bin 100° = 30, all others 0.</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P6.2</span> Where does a pixel at exactly \(30°\) (magnitude \(|g|\)) go? <span class="badge marks">1M</span></summary>
+        <div class="qa-body">
+          <div class="steps">
+            <div class="step"><div class="s-title">30° is midway between 20° and 40°</div>to 20°: \((40-30)/20=0.5\); to 40°: \((30-20)/20=0.5\)</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Split <strong>equally</strong>: \(0.5|g|\) to the 20° bin and \(0.5|g|\) to the 40° bin.</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P6.3</span> A pixel at \(170°\) — show how the wrap-around works. <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <p>170° is between the 160° level and 180°, but 180° ≡ 0° for unsigned gradients, so it wraps to the 0° bin.</p>
+          <div class="steps">
+            <div class="step"><div class="s-title">Weights</div>to 160°: \((180-170)/20 = 0.5\); &nbsp; to 0° (the wrapped 180°): \((170-160)/20 = 0.5\)</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Half the magnitude to bin 160°, half to bin 0° — the histogram is circular over 0–180°.</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P6.4</span> Derive the length of the full HOG feature vector for a 64×128 detection window (8×8 cells, 2×2 blocks, 9 bins). <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="steps">
+            <div class="step"><div class="s-title">Cells</div>\(64/8 = 8\) across, \(128/8 = 16\) down → \(8\times16\) cells</div>
+            <div class="step"><div class="s-title">Blocks (2×2 cells, stride 1, overlapping)</div>\((8-1)\times(16-1) = 7\times15 = 105\) blocks</div>
+            <div class="step"><div class="s-title">Per block</div>\(2\times2\) cells \(\times 9\) bins \(= 36\) values</div>
+            <div class="step"><div class="s-title">Total</div>\(105 \times 36 = \mathbf{3780}\)</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">3780-dimensional (= 7×15 blocks × 4 cells × 9 bins).</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P6.5</span> RANSAC: with 20% outliers and a minimal sample of \(s=2\), roughly how many iterations \(N\) are needed for 99% success? <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <p>Use \(N = \dfrac{\log(1-p)}{\log\!\big(1-(1-e)^{s}\big)}\) with \(p=0.99\), \(e=0.2\), \(s=2\).</p>
+          <div class="steps">
+            <div class="step"><div class="s-title">Prob. a sample is all-inliers</div>\((1-e)^s = 0.8^2 = 0.64\)</div>
+            <div class="step"><div class="s-title">Plug in</div>\(N = \dfrac{\log(0.01)}{\log(1-0.64)} = \dfrac{-2}{\log(0.36)} = \dfrac{-2}{-0.4437} \approx 4.5\)</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">About <strong>5 iterations</strong>. (Few outliers ⇒ very few rounds; the count climbs steeply as the outlier ratio or sample size grows.)</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P6.6</span> Why does RANSAC beat plain least-squares when there are outliers? <span class="badge marks">1M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Least-squares minimises squared error over <em>all</em> points, so a few far-off outliers drag the fit toward them. RANSAC instead fits to small all-inlier samples and scores by <strong>inlier count</strong> (not squared error), so outliers simply fail to vote and never corrupt the chosen model.</p></div>
+        </div>
+      </details>
+
+      <div class="pager">
+        <a href="exam-q5.html"><div class="pg-dir">← Previous</div><div class="pg-title">Q5 · Hough &amp; Corners</div></a>
+        <a class="next" href="numericals.html"><div class="pg-dir">Next →</div><div class="pg-title">∑ All Class Numericals</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

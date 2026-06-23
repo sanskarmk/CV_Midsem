@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Midsem Q4 — Laplacian &amp; Edge Operators</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "exam-q4", title: "Midsem Q4", crumb: "Midsem · Q4" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Question 4 · 5 Marks</span>
+      <h1>Laplacian Kernels &amp; Edge Operators</h1>
+
+      <div class="card">
+        <h4 style="margin-top:0">📄 Original question</h4>
+        <p>Consider the 5×5 image (every row is identical):</p>
+        <div class="matrix-row">
+          <span class="matrix" style="grid-template-columns:repeat(5,38px)">
+            <span class="cell">150</span><span class="cell">150</span><span class="cell">150</span><span class="cell">50</span><span class="cell">50</span>
+            <span class="cell">150</span><span class="cell">150</span><span class="cell">150</span><span class="cell">50</span><span class="cell">50</span>
+            <span class="cell">150</span><span class="cell">150</span><span class="cell">150</span><span class="cell">50</span><span class="cell">50</span>
+            <span class="cell">150</span><span class="cell">150</span><span class="cell">150</span><span class="cell">50</span><span class="cell">50</span>
+            <span class="cell">150</span><span class="cell">150</span><span class="cell">150</span><span class="cell">50</span><span class="cell">50</span>
+          </span>
+        </div>
+        <p><span class="q-num">Q4(a)</span> Using the kernels \(K_1=\begin{bmatrix}0&1&0\\1&-4&1\\0&1&0\end{bmatrix}\) and \(K_2=\begin{bmatrix}1&1&1\\1&-8&1\\1&1&1\end{bmatrix}\), compute the Laplacian at any one edge location and compare their performances. <span class="badge marks">3M</span></p>
+        <p><span class="q-num">Q4(b)</span> Compare the different edge detection operators. <span class="badge marks">2M</span></p>
+      </div>
+
+      <h2>Solution — Q4(a)</h2>
+      <p>The only intensity change is a <strong>vertical edge between column 2 (=150) and column 3 (=50)</strong>. Pick the edge pixel at row 2, column 2 (value 150, on the bright side). Its neighbours: up=150, down=150, left=150, <strong>right=50</strong>.</p>
+
+      <h4>With \(K_1\) (4-neighbour Laplacian)</h4>
+      <div class="eq">\[ \nabla^2 f = -4(150) + \underbrace{(150+150+150+50)}_{\text{up,down,left,right}} = -600 + 500 = \mathbf{-100} \]</div>
+
+      <h4>With \(K_2\) (8-neighbour Laplacian)</h4>
+      <p>Now all 8 neighbours count. Of them, 5 lie in the bright columns (150) and 3 in the dark column (50): sum \(=5(150)+3(50)=900\).</p>
+      <div class="eq">\[ \nabla^2 f = -8(150) + 900 = -1200 + 900 = \mathbf{-300} \]</div>
+
+      <div class="callout key">
+        <div class="c-head">◆ Note the zero-crossing</div>
+        <p>On the <em>other</em> side of the edge (pixel at row 2, col 3 = 50): \(K_1\) gives \(-4(50)+(50+50+150+50)=+100\) and \(K_2\) gives \(-8(50)+700=+300\). The Laplacian <strong>flips sign across the edge</strong> (− on the bright side, + on the dark side); the edge is localized at the <strong>zero-crossing</strong> in between.</p>
+      </div>
+
+      <div class="answer-box"><span class="a-tag">Answer &amp; comparison</span>
+        <p style="margin:4px 0">At the edge pixel: \(K_1 \Rightarrow -100\), \(K_2 \Rightarrow -300\).</p>
+        <ul style="margin:4px 0">
+          <li><strong>Magnitude:</strong> \(K_2\) responds ~3× stronger because it includes the diagonal neighbours — it is more <em>sensitive</em> and also detects diagonal edges, not just horizontal/vertical.</li>
+          <li><strong>Noise:</strong> that extra sensitivity makes \(K_2\) more susceptible to noise; \(K_1\) is more conservative/robust.</li>
+          <li><strong>Both</strong> are isotropic 2nd-derivative operators and locate the edge by a zero-crossing; neither gives edge <em>direction</em>.</li>
+        </ul>
+      </div>
+      <p>Play with both Laplacian kernels on a ramp/spot image:</p>
+      <div data-demo="convolution" data-preset="lap8" data-image="spot"></div>
+
+      <h2>Solution — Q4(b) — comparing edge operators</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Operator</th><th>Order / size</th><th>Strengths</th><th>Weaknesses</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Roberts</strong></td><td>1st deriv, 2×2</td><td>Very cheap, sharp</td><td>Tiny support → very noise-sensitive, poor localization</td></tr>
+          <tr><td><strong>Prewitt</strong></td><td>1st deriv, 3×3</td><td>Gives magnitude &amp; direction; mild averaging</td><td>Uniform weights → less noise-robust than Sobel</td></tr>
+          <tr><td><strong>Sobel</strong></td><td>1st deriv, 3×3</td><td>Centre-weighted (×2) → smoother, less noisy; direction info</td><td>Still single-scale; thick edges</td></tr>
+          <tr><td><strong>Laplacian</strong></td><td>2nd deriv, 3×3</td><td>Isotropic; precise localization via zero-crossings</td><td>No direction; <strong>very noise-sensitive</strong> (2nd derivative)</td></tr>
+          <tr><td><strong>LoG (Marr–Hildreth)</strong></td><td>Gaussian + Laplacian</td><td>Smooths first → robust; clean zero-crossings</td><td>More compute; may round corners</td></tr>
+          <tr><td><strong>Canny</strong></td><td>multi-stage</td><td><strong>Best overall</strong>: good detection, localization &amp; single response</td><td>Most compute; several parameters to tune</td></tr>
+        </tbody>
+      </table></div>
+      <div class="answer-box"><span class="a-tag">One-line summary</span><p style="margin:4px 0">First-derivative operators (Roberts/Prewitt/<strong>Sobel</strong>) find edges at gradient maxima and give direction; second-derivative operators (<strong>Laplacian</strong>/LoG) find edges at zero-crossings and are isotropic but noise-prone; <strong>Canny</strong> combines smoothing + gradients + NMS + hysteresis for the best practical result.</p></div>
+
+      <h2>Practice questions</h2>
+
+      <details class="qa"><summary><span class="q-num">P4.1</span> For the same 5×5 image, compute \(K_1\) and \(K_2\) at the <em>dark-side</em> edge pixel (row 2, col 3 = 50). <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <p>Neighbours of (2,3)=50: up=50, down=50, <strong>left=150</strong>, right=50; diagonals: two 150's (cols 2) and the rest 50's → for \(K_2\), three 150's and five 50's.</p>
+          <div class="steps">
+            <div class="step"><div class="s-title">K₁</div>\(-4(50)+(50+50+150+50) = -200+300 = \mathbf{+100}\)</div>
+            <div class="step"><div class="s-title">K₂</div>\(-8(50)+\big(3\cdot150+5\cdot50\big) = -400 + 700 = \mathbf{+300}\)</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(K_1=+100,\ K_2=+300\) — opposite sign to the bright side, confirming the zero-crossing at the edge.</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P4.2</span> Compute \(K_1\) at a pixel deep in the flat 150-region (e.g. row 2, col 1). What does the result tell you? <span class="badge marks">1M</span></summary>
+        <div class="qa-body">
+          <div class="steps">
+            <div class="step"><div class="s-title">All neighbours = 150</div>\(-4(150)+(150+150+150+150) = -600+600 = \mathbf{0}\)</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(0\). The Laplacian is zero in <strong>flat regions</strong> (and over linear ramps) — it only responds where intensity <em>curves</em>, i.e. near edges. That's why it's a pure edge/detail detector.</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P4.3</span> Apply \(K_1=[0,1,0;1,-4,1;0,1,0]\) to the centre of \(\begin{bmatrix}10&10&10\\10&50&10\\10&10&10\end{bmatrix}\) (an isolated bright pixel). <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="steps">
+            <div class="step"><div class="s-title">Compute</div>\(-4(50) + (10+10+10+10) = -200 + 40 = \mathbf{-160}\)</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(-160\) — a large-magnitude response. The Laplacian strongly flags <strong>isolated points / fine detail</strong>, which is also why it's used for sharpening (and why it amplifies noise).</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P4.4</span> Why is the Laplacian usually combined with a Gaussian (the LoG / Marr–Hildreth operator)? <span class="badge marks">1M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span>
+            <p style="margin:4px 0">The Laplacian is a second derivative, so it <strong>massively amplifies noise</strong>. Pre-smoothing with a Gaussian suppresses the noise first; then the Laplacian's zero-crossings mark true edges reliably. Because convolution is associative, the two are pre-combined into a single <strong>Laplacian-of-Gaussian</strong> kernel (the "Mexican hat").</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P4.5</span> Write the image-sharpening formula using the Laplacian and explain it. <span class="badge marks">1M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span>
+            <p style="margin:4px 0">\(g = f - c\,\nabla^2 f\) (with \(c&gt;0\) when the centre coefficient is negative, as in \(K_1,K_2\)). Subtracting the Laplacian adds back the high-frequency detail it isolated, <strong>enhancing edges and fine structure</strong> — i.e. sharpening. Equivalently, \(g = f + \) (a sharpening mask like \([0,-1,0;-1,5,-1;0,-1,0]\)).</p>
+          </div>
+        </div>
+      </details>
+
+      <div class="pager">
+        <a href="exam-q3.html"><div class="pg-dir">← Previous</div><div class="pg-title">Q3 · Edge Kernel &amp; Color</div></a>
+        <a class="next" href="exam-q5.html"><div class="pg-dir">Next →</div><div class="pg-title">Q5 · Hough &amp; Corners</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

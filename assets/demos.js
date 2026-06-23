@@ -543,10 +543,10 @@
 
     function detectRT() {
       if (pts.length < 2) return null;
-      var D = Math.sqrt(XMAX * XMAX + YMAX * YMAX), nT = 180, dRho = 0.2, nR = Math.ceil(2 * D / dRho) + 1;
+      var nT = 180, dRho = 0.25; // bins centred on multiples of dRho so integers land exactly
       var acc = {}; var best = { v: 0 };
       pts.forEach(function (p) {
-        for (var ti = 0; ti < nT; ti++) { var th = ti * Math.PI / 180; var rho = p.x * Math.cos(th) + p.y * Math.sin(th); var ri = Math.round((rho + D) / dRho); var key = ti + "_" + ri; acc[key] = (acc[key] || 0) + 1; if (acc[key] > best.v) best = { v: acc[key], ti: ti, rho: (ri * dRho - D) }; }
+        for (var ti = 0; ti < nT; ti++) { var th = ti * Math.PI / 180; var rho = p.x * Math.cos(th) + p.y * Math.sin(th); var ri = Math.round(rho / dRho); var key = ti + "_" + ri; acc[key] = (acc[key] || 0) + 1; if (acc[key] > best.v) best = { v: acc[key], ti: ti, rho: (ri * dRho) }; }
       });
       if (best.v < 2) return null;
       var th = best.ti * Math.PI / 180, ct = Math.cos(th), st = Math.sin(th), rho = best.rho;

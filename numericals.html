@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>All Class Numericals</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "numericals", title: "All Class Numericals", crumb: "Reference · Numericals" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Reference</span>
+      <h1>Every numerical solved in class</h1>
+      <p class="lead">One scrollable cheat-page of all the worked computations from Sessions 2–7. The exam is numerical-heavy — re-derive each of these from scratch until they're automatic.</p>
+
+      <div class="toc">
+        <h4>Jump to</h4>
+        <ul>
+          <li><a href="#n1">1 · Contrast stretching</a></li>
+          <li><a href="#n2">2 · Histogram equalization</a></li>
+          <li><a href="#n3">3 · Gradient &amp; direction</a></li>
+          <li><a href="#n4">4 · Hough collinearity</a></li>
+          <li><a href="#n5">5 · Laplacian kernels</a></li>
+          <li><a href="#n6">6 · Harris response</a></li>
+          <li><a href="#n7">7 · HOG histogram</a></li>
+          <li><a href="#n8">8 · HOG binning (57°)</a></li>
+        </ul>
+      </div>
+
+      <h2 id="n1">1 · Contrast stretching <span class="badge blue">Session 2</span></h2>
+      <p>Map \([r_{\min}, r_{\max}] \to [0, L-1]\): &nbsp; \(s = (r-r_{\min})\,\frac{L-1}{r_{\max}-r_{\min}}\).</p>
+      <div class="card">
+        <p style="margin-top:0"><strong>[50,150] → [0,255], r = 100:</strong> &nbsp; slope \(=255/100 = 2.55\); &nbsp; \(s=(100-50)(2.55)=127.5\approx \mathbf{128}\).</p>
+      </div>
+
+      <h2 id="n2">2 · Histogram equalization (5×5, L=8) <span class="badge blue">Session 3</span></h2>
+      <p>Counts: level 3 → 6, level 4 → 14, level 5 → 5 (total 25). Map via \(s=(L-1)\,\text{CDF}\):</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>level r</th><th>n<sub>k</sub></th><th>CDF</th><th>7·CDF</th><th>new s</th></tr></thead>
+        <tbody>
+          <tr><td class="num">3</td><td class="num">6</td><td class="num">0.24</td><td class="num">1.68</td><td class="num"><b>2</b></td></tr>
+          <tr><td class="num">4</td><td class="num">14</td><td class="num">0.80</td><td class="num">5.60</td><td class="num"><b>6</b></td></tr>
+          <tr><td class="num">5</td><td class="num">5</td><td class="num">1.00</td><td class="num">7.00</td><td class="num"><b>7</b></td></tr>
+        </tbody>
+      </table></div>
+      <p>Remap: \(3\to2,\ 4\to6,\ 5\to7\). <a href="session3.html#histeq">Interactive version →</a></p>
+
+      <h2 id="n3">3 · Gradient magnitude &amp; direction <span class="badge blue">Session 4</span></h2>
+      <div class="grid cols-2">
+        <div class="card"><h4 style="margin-top:0">Clean vertical edge (Prewitt)</h4>
+          <p>Patch dark-left/bright-right → \(g_x=(200-10)\times3 = 570,\ g_y=0\).</p>
+          <p style="margin-bottom:0">\(\|\nabla f\|=570,\ \theta=0°\) → vertical edge.</p>
+        </div>
+        <div class="card"><h4 style="margin-top:0">Class "0's and 2's" diagonal</h4>
+          <p>\(g_x=-2,\ g_y=2\) → \(\|\nabla f\|=\sqrt8=2.83\).</p>
+          <p style="margin-bottom:0">\(\theta=\operatorname{atan2}(2,-2)=135°\); edge direction \(=45°\) (⊥).</p>
+        </div>
+      </div>
+
+      <h2 id="n4">4 · Hough collinearity test <span class="badge blue">Session 5</span></h2>
+      <p>Are \((1,2),(2,3),(3,4)\) collinear? Each → \(c=-x\,m+y\):</p>
+      <div class="card">
+        <p style="margin-top:0">\(c=-m+2,\ \ c=-2m+3,\ \ c=-3m+4\). First two: \(-m+2=-2m+3\Rightarrow m=1,\ c=1\). Third checks: \(-3+4=1\) ✓.</p>
+        <div class="answer-box"><span class="a-tag">Result</span><p style="margin:4px 0">Collinear; common line \(y=x+1\) at \((m,c)=(1,1)\).</p></div>
+      </div>
+
+      <h2 id="n5">5 · Laplacian at an edge (5×5, edge between 150|50) <span class="badge blue">Session 4</span></h2>
+      <div class="grid cols-2">
+        <div class="card"><h4 style="margin-top:0">4-neighbour \(K_1\)</h4>
+          <p>Bright-side pixel (=150): \(-4(150)+(150{+}150{+}150{+}50)=-600+500=\mathbf{-100}\).</p>
+          <p style="margin-bottom:0">Dark-side (=50): \(-4(50)+300=\mathbf{+100}\).</p>
+        </div>
+        <div class="card"><h4 style="margin-top:0">8-neighbour \(K_2\)</h4>
+          <p>Bright-side: \(-8(150)+900=\mathbf{-300}\).</p>
+          <p style="margin-bottom:0">Dark-side: \(-8(50)+700=\mathbf{+300}\). Sign flip = zero-crossing at edge.</p>
+        </div>
+      </div>
+
+      <h2 id="n6">6 · Harris corner response <span class="badge blue">Session 6</span></h2>
+      <p>\(R=\det M - k(\text{trace }M)^2\), \(k=0.04\):</p>
+      <div class="grid cols-2">
+        <div class="card"><h4 style="margin-top:0">Corner</h4><p style="margin-bottom:0">\(\sum I_x^2{=}2,\sum I_y^2{=}2,\sum I_xI_y{=}0\): \(\det{=}4,\text{tr}{=}4\), \(R=4-0.04(16)=\mathbf{3.36}&gt;0\).</p></div>
+        <div class="card"><h4 style="margin-top:0">Edge</h4><p style="margin-bottom:0">\(\sum I_x^2{=}2,\sum I_y^2{=}0\): \(\det{=}0,\text{tr}{=}2\), \(R=0-0.04(4)=\mathbf{-0.16}&lt;0\).</p></div>
+      </div>
+
+      <h2 id="n7">7 · HOG histogram (class 5×5) <span class="badge blue">Session 6</span></h2>
+      <p>Central 3×3 gradients → magnitudes &amp; angles → 9-bin histogram (simple binning):</p>
+      <div class="card">
+        <p style="margin-top:0">Angles ≈ {36.87° ×3, 21.8°, 26.57°, 21.8°, 11.31°, 14.04°, 11.31°}, magnitudes ≈ {25×3, 26.9, 22.4, 26.9, 25.5, 20.6, 25.5}.</p>
+        <p>Bin 0–20° (angles ~11–14°): \(25.5+20.6+25.5 = 71.6\). &nbsp; Bin 20–40° (angles ~22–37°): \(25{+}25{+}25{+}26.9{+}22.4{+}26.9 = 151.2\).</p>
+        <div class="answer-box"><span class="a-tag">Histogram</span><p style="margin:4px 0">\([71.6,\ 151.2,\ 0,0,0,0,0,0,0]\) → then L2-normalise.</p></div>
+      </div>
+
+      <h2 id="n8">8 · HOG interpolated binning, θ = 57° <span class="badge blue">Session 6/7</span></h2>
+      <p>9 bins of 20°, levels 0,20,…,160. 57° between 40° and 60°:</p>
+      <div class="card">
+        <p style="margin-top:0">to 40°: \((60-57)/20=0.15\); to 60°: \((57-40)/20=0.85\). With \(|g|=85\): bin40 = 12.75, bin60 = 72.25.</p>
+      </div>
+
+      <div class="callout exam">
+        <div class="c-head">✦ Drill plan</div>
+        <p>Cover the answers and re-solve all eight. Target: each in under 3 minutes with no slips. The Hough, Laplacian, and HOG ones appear almost verbatim on the midsem.</p>
+      </div>
+
+      <div class="pager">
+        <a href="exam-q6.html"><div class="pg-dir">← Back</div><div class="pg-title">Q6 · HOG &amp; RANSAC</div></a>
+        <a class="next" href="formulas.html"><div class="pg-dir">Next →</div><div class="pg-title">ƒ Formula Cheat-Sheet</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

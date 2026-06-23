@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Midsem Q5 — Hough Spaces &amp; Edge vs Corner</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "exam-q5", title: "Midsem Q5", crumb: "Midsem · Q5" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Question 5 · 5 Marks</span>
+      <h1>Hough Spaces &amp; Edge vs Corner</h1>
+
+      <div class="card">
+        <h4 style="margin-top:0">📄 Original question</h4>
+        <p><span class="q-num">Q5(a)</span> In the Hough transform, determine the \(m\text{–}c\) and \(\rho\text{–}\theta\) space representation of the points \((2,0)\) and \((2,5)\). <span class="badge marks">3M</span></p>
+        <p><span class="q-num">Q5(b)</span> Differentiate between an edge and a corner. <span class="badge marks">2M</span></p>
+      </div>
+
+      <h2>Solution — Q5(a)</h2>
+      <h4>① \(m\text{–}c\) space: each point → line \(c = -x\,m + y\)</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">Point (2, 0)</div>\(c = -2m + 0 \;\Rightarrow\; c = -2m\)</div>
+        <div class="step"><div class="s-title">Point (2, 5)</div>\(c = -2m + 5\)</div>
+        <div class="step"><div class="s-title">Try to intersect</div>\(-2m = -2m + 5 \Rightarrow 0 = 5\) — impossible. The two vote-lines are <strong>parallel</strong> (both slope −2), so they never meet.</div>
+      </div>
+      <div class="callout warn">
+        <div class="c-head">▲ Why no intersection?</div>
+        <p>The line through \((2,0)\) and \((2,5)\) is the <strong>vertical line \(x=2\)</strong>, which has <em>infinite slope</em> — it cannot be written as \(y=mx+c\). This is the exact failure case that motivates the polar form.</p>
+      </div>
+
+      <h4>② \(\rho\text{–}\theta\) space: each point → sinusoid \(\rho = x\cos\theta + y\sin\theta\)</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">Point (2, 0)</div>\(\rho = 2\cos\theta + 0 = 2\cos\theta\)</div>
+        <div class="step"><div class="s-title">Point (2, 5)</div>\(\rho = 2\cos\theta + 5\sin\theta\)</div>
+        <div class="step"><div class="s-title">Intersect (set equal)</div>\(2\cos\theta = 2\cos\theta + 5\sin\theta \Rightarrow 5\sin\theta = 0 \Rightarrow \theta = 0^\circ\)</div>
+        <div class="step"><div class="s-title">Find ρ at θ = 0°</div>\(\rho = 2\cos 0^\circ = 2\). So the common cell is \((\rho,\theta) = (2,\,0^\circ)\).</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answer</span>
+        <p style="margin:4px 0"><strong>\(m\text{–}c\):</strong> lines \(c=-2m\) and \(c=-2m+5\) — parallel, <em>no intersection</em> (the line is vertical, slope ∞).</p>
+        <p style="margin:4px 0"><strong>\(\rho\text{–}\theta\):</strong> sinusoids \(\rho=2\cos\theta\) and \(\rho=2\cos\theta+5\sin\theta\) intersect at \((\rho,\theta)=(2,\,0^\circ)\), representing the line \(x\cos0^\circ + y\sin0^\circ = 2\), i.e. \(\mathbf{x=2}\). The polar parameterisation succeeds precisely where \(m\text{–}c\) fails.</p>
+      </div>
+      <p>Confirm it — click "Load (2,0)(2,5)" and toggle the space; in (m, c) the lines stay parallel, in (ρ, θ) the sinusoids cross at θ=0, ρ=2:</p>
+      <div data-demo="hough"></div>
+
+      <h2>Solution — Q5(b) — edge vs corner</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th></th><th>Edge</th><th>Corner</th></tr></thead>
+        <tbody>
+          <tr><td>Intensity changes in…</td><td><strong>one</strong> direction (across the edge)</td><td><strong>two</strong> directions</td></tr>
+          <tr><td>Along the feature</td><td>intensity is ~constant</td><td>changes every way you look</td></tr>
+          <tr><td>Structure-tensor eigenvalues</td><td>one large, one small \((\lambda_1\!\gg\!\lambda_2)\)</td><td>both large \((\lambda_1,\lambda_2\) large\()\)</td></tr>
+          <tr><td>Harris response \(R\)</td><td>\(R&lt;0\)</td><td>\(R&gt;0\)</td></tr>
+          <tr><td>Localization</td><td>ambiguous along the edge (<strong>aperture problem</strong>)</td><td>well-localized in 2-D</td></tr>
+          <tr><td>Use for matching</td><td>weak (slides along itself)</td><td><strong>excellent</strong> — distinctive &amp; repeatable</td></tr>
+        </tbody>
+      </table></div>
+      <div class="answer-box"><span class="a-tag">Model answer</span>
+        <p style="margin:4px 0">An <strong>edge</strong> is a 1-D feature: intensity changes sharply in one direction but is constant along the edge, so you can't tell <em>where</em> you are along it (aperture problem) — its structure tensor has one large eigenvalue. A <strong>corner</strong> is a 2-D feature where two edges meet: intensity changes in all directions, both eigenvalues are large, so it is precisely localizable and highly distinctive — which is why corners (not edges) are used as matching keypoints.</p>
+      </div>
+
+      <h2>Practice questions</h2>
+
+      <details class="qa"><summary><span class="q-num">P5.1</span> Find the \(m\text{–}c\) and \(\rho\text{–}\theta\) representation of the line through \((1,1)\) and \((3,3)\). <span class="badge marks">3M</span></summary>
+        <div class="qa-body">
+          <div class="steps">
+            <div class="step"><div class="s-title">m–c lines</div>\((1,1)\!: c=-m+1;\;\;(3,3)\!: c=-3m+3\)</div>
+            <div class="step"><div class="s-title">Intersect</div>\(-m+1=-3m+3 \Rightarrow 2m=2 \Rightarrow m=1,\ c=0\) → line \(y=x\)</div>
+            <div class="step"><div class="s-title">ρ–θ</div>\(\rho=\cos\theta+\sin\theta\) and \(\rho=3\cos\theta+3\sin\theta\); equal ⇒ \(\cos\theta+\sin\theta=0 \Rightarrow \tan\theta=-1 \Rightarrow \theta=135^\circ\)</div>
+            <div class="step"><div class="s-title">ρ at 135°</div>\(\rho=\cos135^\circ+\sin135^\circ = -\tfrac{1}{\sqrt2}+\tfrac{1}{\sqrt2}=0\)</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(m\text{–}c\): \((m,c)=(1,0)\) → \(y=x\). &nbsp; \(\rho\text{–}\theta\): \((\rho,\theta)=(0,135^\circ)\) — consistent (\(x\cos135^\circ+y\sin135^\circ=0 \Rightarrow y=x\)).</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P5.2</span> Points \((1,3)\) and \((4,3)\) — a horizontal line. Give both representations. <span class="badge marks">3M</span></summary>
+        <div class="qa-body">
+          <div class="steps">
+            <div class="step"><div class="s-title">m–c</div>\(c=-m+3\) and \(c=-4m+3\); intersect ⇒ \(3m=0 \Rightarrow m=0,\ c=3\) → \(y=3\)</div>
+            <div class="step"><div class="s-title">ρ–θ</div>\(\rho=\cos\theta+3\sin\theta\) and \(\rho=4\cos\theta+3\sin\theta\); equal ⇒ \(3\cos\theta=0 \Rightarrow \theta=90^\circ\)</div>
+            <div class="step"><div class="s-title">ρ at 90°</div>\(\rho=\cos90^\circ+3\sin90^\circ = 0+3 = 3\)</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\((m,c)=(0,3)\) → \(y=3\); &nbsp;\((\rho,\theta)=(3,90^\circ)\). Here \(m\text{–}c\) works fine because a horizontal line has finite slope (0).</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P5.3</span> Points \((4,1)\) and \((4,6)\). Show that \(m\text{–}c\) fails and find the \(\rho\text{–}\theta\) line. <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="steps">
+            <div class="step"><div class="s-title">m–c</div>\(c=-4m+1\) and \(c=-4m+6\) — parallel (slope −4), no intersection → vertical line, slope ∞.</div>
+            <div class="step"><div class="s-title">ρ–θ</div>\(\rho=4\cos\theta+\sin\theta\) and \(\rho=4\cos\theta+6\sin\theta\); equal ⇒ \(5\sin\theta=0 \Rightarrow \theta=0^\circ,\ \rho=4\)</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(m\text{–}c\) fails (parallel). \(\rho\text{–}\theta=(4,0^\circ)\) → line \(x=4\).</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P5.4</span> State the single biggest advantage of the \(\rho\text{–}\theta\) parameterisation over \(m\text{–}c\). <span class="badge marks">1M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Both parameters are <strong>bounded</strong> (\(\theta\in[0,180^\circ)\), \(\rho\in[-D,D]\)), so it can represent <strong>every line including vertical ones</strong> in a finite accumulator — unlike \(m\text{–}c\), where vertical lines need \(m\to\infty\).</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P5.5</span> Explain the "aperture problem" and why it makes edges poor matching features. <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Viewing an edge through a small window, you can detect motion <em>across</em> the edge but not <em>along</em> it — sliding the window along the edge looks identical. So an edge point can't be uniquely matched between images (it could correspond to many points along the same edge). A corner removes this ambiguity because shifting in any direction changes the appearance, giving a unique, repeatable match.</p></div>
+        </div>
+      </details>
+
+      <div class="pager">
+        <a href="exam-q4.html"><div class="pg-dir">← Previous</div><div class="pg-title">Q4 · Laplacian &amp; Operators</div></a>
+        <a class="next" href="exam-q6.html"><div class="pg-dir">Next →</div><div class="pg-title">Q6 · HOG &amp; RANSAC</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Formula Cheat-Sheet</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "formulas", title: "Formula Cheat-Sheet", crumb: "Reference · Formulas" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Reference</span>
+      <h1>Formula cheat-sheet</h1>
+      <p class="lead">Everything you need on one page, the night before. Each block links back to the session that explains it.</p>
+
+      <h2>Image fundamentals <span class="badge blue"><a href="session2.html" style="color:inherit">S2</a></span></h2>
+      <div class="card">
+        <p style="margin-top:0">Image formation: \( f(x,y) = i(x,y)\,r(x,y),\quad 0\le r\le 1 \)</p>
+        <p>Gray levels: \( \ell \in [0, L-1],\quad L = 2^b \)</p>
+        <p>Storage (bits): \( M \times N \times b \)</p>
+        <p style="margin-bottom:0">Sampling = discretize \((x,y)\); &nbsp; Quantization = discretize intensity.</p>
+      </div>
+
+      <h2>Intensity transforms <span class="badge blue"><a href="session2.html" style="color:inherit">S2</a> · <a href="session3.html" style="color:inherit">S3</a></span></h2>
+      <div class="card">
+        <p style="margin-top:0">Negative: \( s = (L-1) - r \)</p>
+        <p>Log: \( s = c\,\log(1+r) \)</p>
+        <p>Power-law (gamma): \( s = c\,r^{\gamma} \)</p>
+        <p>Linear contrast stretch: \( s = (r-r_{\min})\dfrac{L-1}{r_{\max}-r_{\min}} \)</p>
+        <p>Threshold: \( s = (L-1)\ \text{if}\ r\ge T\ \text{else}\ 0 \)</p>
+        <p style="margin-bottom:0">Histogram: \( p(r_k) = n_k/MN \); &nbsp; Equalization: \( s_k = (L-1)\sum_{j=0}^{k} p(r_j) \)</p>
+      </div>
+
+      <h2>Spatial filtering &amp; smoothing <span class="badge blue"><a href="session3.html" style="color:inherit">S3</a></span></h2>
+      <div class="card">
+        <p style="margin-top:0">Correlation: \( g(x,y)=\sum_{s,t} w(s,t)\,f(x+s,y+t) \)</p>
+        <p>Convolution: \( g(x,y)=\sum_{s,t} w(s,t)\,f(x-s,y-t) \) (kernel flipped 180°)</p>
+        <p>Box: \( \tfrac{1}{9}\begin{bmatrix}1&1&1\\1&1&1\\1&1&1\end{bmatrix} \) &nbsp; Gaussian: \( G(s,t)=K\,e^{-\frac{s^2+t^2}{2\sigma^2}} \)</p>
+        <p style="margin-bottom:0">Convolution is commutative &amp; associative → combine "smooth then differentiate" into one kernel.</p>
+      </div>
+
+      <h2>Edges &amp; gradients <span class="badge blue"><a href="session4.html" style="color:inherit">S4</a></span></h2>
+      <div class="card">
+        <p style="margin-top:0">Gradient: \( \nabla f = (g_x, g_y) \)</p>
+        <p>Magnitude: \( \|\nabla f\| = \sqrt{g_x^2+g_y^2} \approx |g_x|+|g_y| \)</p>
+        <p>Direction: \( \theta = \tan^{-1}(g_y/g_x) \); &nbsp; edge ⟂ gradient (\(\theta\pm90°\))</p>
+        <p>Prewitt \(g_x\): \(\begin{bmatrix}-1&0&1\\-1&0&1\\-1&0&1\end{bmatrix}\) &nbsp; Sobel \(g_x\): \(\begin{bmatrix}-1&0&1\\-2&0&2\\-1&0&1\end{bmatrix}\)</p>
+        <p style="margin-bottom:0">Laplacian (2nd deriv): \( K_1=\begin{bmatrix}0&1&0\\1&-4&1\\0&1&0\end{bmatrix},\ K_2=\begin{bmatrix}1&1&1\\1&-8&1\\1&1&1\end{bmatrix} \); edge at zero-crossing.</p>
+      </div>
+
+      <h2>Canny &amp; Hough <span class="badge blue"><a href="session5.html" style="color:inherit">S5</a></span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Canny:</strong> ① Gaussian smooth → ② gradient mag/angle → ③ non-max suppression → ④ double-threshold hysteresis (\(T_H:T_L\) ≈ 2:1–3:1).</p>
+        <p>Hough \(m\text{–}c\): point \((x_0,y_0)\) → line \( c = -x_0\,m + y_0 \)</p>
+        <p style="margin-bottom:0">Hough polar: \( \rho = x\cos\theta + y\sin\theta \) (handles vertical lines; \(\theta\in[0,180°)\)).</p>
+      </div>
+
+      <h2>Harris corners <span class="badge blue"><a href="session6.html" style="color:inherit">S6</a></span></h2>
+      <div class="card">
+        <p style="margin-top:0">\( E(u,v) \approx \begin{bmatrix}u&v\end{bmatrix} M \begin{bmatrix}u\\v\end{bmatrix} \)</p>
+        <p>\( M = \sum w \begin{bmatrix} I_x^2 & I_xI_y \\ I_xI_y & I_y^2 \end{bmatrix} \)</p>
+        <p style="margin-bottom:0">\( R = \det M - k\,(\text{trace }M)^2 = \lambda_1\lambda_2 - k(\lambda_1+\lambda_2)^2,\ k=0.04\text{–}0.06 \) &nbsp; (R&gt;0 corner, R&lt;0 edge, |R| small flat).</p>
+      </div>
+
+      <h2>HOG <span class="badge blue"><a href="session6.html" style="color:inherit">S6</a></span></h2>
+      <div class="card">
+        <p style="margin-top:0">Magnitude \( \sqrt{g_x^2+g_y^2} \), orientation \( \tan^{-1}(g_y/g_x) \).</p>
+        <p>9 bins over 0–180° (width 20°); vote split between two nearest bin centres by distance.</p>
+        <p style="margin-bottom:0">64×128 window: \(8\times16\) cells → \(7\times15\) blocks × (2×2 cells × 9 bins) = <strong>3780</strong>-D.</p>
+      </div>
+
+      <h2>SIFT &amp; RANSAC <span class="badge blue"><a href="session7.html" style="color:inherit">S7</a></span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>SIFT:</strong> DoG \( D=(G(k\sigma)-G(\sigma))*I \) → scale-space extrema → localize → orientation → 128-D descriptor (4×4×8).</p>
+        <p><strong>RANSAC:</strong> sample minimal set → fit → count inliers → repeat, keep most inliers. Robust if outliers &lt; 50%.</p>
+        <p style="margin-bottom:0">Iterations: \( N = \dfrac{\log(1-p)}{\log(1-(1-e)^s)} \) (\(p\)=success prob, \(e\)=outlier frac, \(s\)=sample size).</p>
+      </div>
+
+      <h2>Color models <span class="badge blue"><a href="session3.html" style="color:inherit">S3</a></span></h2>
+      <div class="card">
+        <p style="margin-top:0">RGB additive (screens); 24-bit → \((2^8)^3 = 16{,}777{,}216\) colors.</p>
+        <p>CMYK subtractive (print): \( C=1-R,\ M=1-G,\ Y=1-B \); \( K=\min(C,M,Y) \).</p>
+        <p style="margin-bottom:0">HSI/HSV = perceptual (decouples color from brightness); YCbCr = luminance+chroma (compression).</p>
+      </div>
+
+      <div class="pager">
+        <a href="numericals.html"><div class="pg-dir">← Back</div><div class="pg-title">∑ All Numericals</div></a>
+        <a class="next" href="index.html"><div class="pg-dir">Home →</div><div class="pg-title">★ Course Map</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>
