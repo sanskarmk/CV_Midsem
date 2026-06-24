@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Questions for Practice — Predicted Mock Midsem</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "practice", title: "Questions for Practice", crumb: "Exam Prep · Practice" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Exam Prep · Predicted</span>
+      <h1>Questions for Practice</h1>
+      <p class="lead">A <strong>predicted mock midsem</strong> in the style of your paper — six fresh multi-part questions (new numbers and scenarios), each solved step-by-step the way you'd write it in the exam, followed by rapid-fire theory for active recall. These are my best guess at what's likely; treat them as a timed rehearsal.</p>
+
+      <div class="callout exam">
+        <div class="c-head">✦ How to use this</div>
+        <p>Give yourself ~<strong>60 minutes</strong> for the six questions. Try each <em>before</em> reading the solution (cover it with your hand / a card). Aim to write the formula, substitute, and box the answer cleanly — that structure earns method marks even if a number slips.</p>
+      </div>
+
+      <div class="toc">
+        <h4>Mock paper</h4>
+        <ul>
+          <li><a href="#pq1">PQ1 · Resolution, storage &amp; log transform</a></li>
+          <li><a href="#pq2">PQ2 · Histogram equalization</a></li>
+          <li><a href="#pq3">PQ3 · Sobel gradient &amp; direction</a></li>
+          <li><a href="#pq4">PQ4 · Laplacian &amp; operators</a></li>
+          <li><a href="#pq5">PQ5 · Hough — both spaces</a></li>
+          <li><a href="#pq6">PQ6 · Harris, HOG &amp; RANSAC</a></li>
+          <li><a href="#theory">Rapid-fire theory (predicted)</a></li>
+        </ul>
+      </div>
+
+      <!-- ================= PQ1 ================= -->
+      <h2 id="pq1">PQ1 · Resolution, storage &amp; log transform <span class="badge marks">5M</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><span class="q-num">(a)</span> A \(512\times512\) image is quantized to 6 bits per pixel. State the number of gray levels and the uncompressed storage in KB. <span class="badge marks">2M</span></p>
+        <p><span class="q-num">(b)</span> For an 8-bit image, choose \(c\) so a log transform maps the maximum input to 255, then compute the output for \(r=50\) (natural log). <span class="badge marks">2M</span></p>
+        <p><span class="q-num">(c)</span> Why does the log transform expand dark regions while compressing bright ones? <span class="badge marks">1M</span></p>
+      </div>
+      <h4>Solution</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">(a) Gray levels</div>\(L = 2^{6} = \mathbf{64}\) levels.</div>
+        <div class="step"><div class="s-title">(a) Storage</div>\(512\times512\times6 = 1{,}572{,}864\) bits \(\div 8 = 196{,}608\) bytes \(= \mathbf{192\ \text{KB}}\).</div>
+        <div class="step"><div class="s-title">(b) Find c</div>\(c = \dfrac{255}{\ln(1+255)} = \dfrac{255}{\ln 256} = \dfrac{255}{5.545} = 45.99\).</div>
+        <div class="step"><div class="s-title">(b) Apply at r = 50</div>\(s = 45.99\,\ln(1+50) = 45.99\,\ln 51 = 45.99\times 3.932 = 180.8 \approx \mathbf{181}\).</div>
+        <div class="step"><div class="s-title">(c) Reason</div>The slope of \(\log(1+r)\) is large for small \(r\) and small for large \(r\). So a fixed input step near 0 produces a big output change (dark detail spread out), while the same step near 255 produces a tiny output change (bright values squeezed together).</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answers</span><p style="margin:4px 0">(a) 64 levels, 192 KB. &nbsp;(b) \(c\approx45.99\), \(s\approx181\). &nbsp;(c) Log's decreasing slope expands low intensities and compresses high ones.</p></div>
+
+      <!-- ================= PQ2 ================= -->
+      <h2 id="pq2">PQ2 · Histogram equalization <span class="badge marks">5M</span></h2>
+      <div class="card">
+        <p style="margin-top:0">A \(4\times4\), 3-bit image (\(L=8\), 16 pixels) has the histogram below. Perform histogram equalization and give the mapping \(r \to s\).</p>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>level r</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th></tr></thead>
+          <tbody><tr><td><b>n<sub>k</sub></b></td><td class="num">1</td><td class="num">0</td><td class="num">3</td><td class="num">5</td><td class="num">4</td><td class="num">2</td><td class="num">1</td><td class="num">0</td></tr></tbody>
+        </table></div>
+      </div>
+      <h4>Solution</h4>
+      <p>Accumulate the CDF, multiply by \(L-1=7\), round to nearest integer:</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>r</th><th>n<sub>k</sub></th><th>cumulative</th><th>CDF = cum/16</th><th>7·CDF</th><th>new s</th></tr></thead>
+        <tbody>
+          <tr><td class="num">0</td><td class="num">1</td><td class="num">1</td><td class="num">0.0625</td><td class="num">0.44</td><td class="num"><b>0</b></td></tr>
+          <tr><td class="num">1</td><td class="num">0</td><td class="num">1</td><td class="num">0.0625</td><td class="num">0.44</td><td class="num"><b>0</b></td></tr>
+          <tr><td class="num">2</td><td class="num">3</td><td class="num">4</td><td class="num">0.2500</td><td class="num">1.75</td><td class="num"><b>2</b></td></tr>
+          <tr><td class="num">3</td><td class="num">5</td><td class="num">9</td><td class="num">0.5625</td><td class="num">3.94</td><td class="num"><b>4</b></td></tr>
+          <tr><td class="num">4</td><td class="num">4</td><td class="num">13</td><td class="num">0.8125</td><td class="num">5.69</td><td class="num"><b>6</b></td></tr>
+          <tr><td class="num">5</td><td class="num">2</td><td class="num">15</td><td class="num">0.9375</td><td class="num">6.56</td><td class="num"><b>7</b></td></tr>
+          <tr><td class="num">6</td><td class="num">1</td><td class="num">16</td><td class="num">1.0000</td><td class="num">7.00</td><td class="num"><b>7</b></td></tr>
+          <tr><td class="num">7</td><td class="num">0</td><td class="num">16</td><td class="num">1.0000</td><td class="num">7.00</td><td class="num"><b>7</b></td></tr>
+        </tbody>
+      </table></div>
+      <div class="answer-box"><span class="a-tag">Answer — mapping</span><p style="margin:4px 0">\(0\!\to\!0,\ 1\!\to\!0,\ 2\!\to\!2,\ 3\!\to\!4,\ 4\!\to\!6,\ 5\!\to\!7,\ 6\!\to\!7,\ 7\!\to\!7\). The bunched mid-levels (3,4) are pulled apart toward the bright end — contrast improved.</p></div>
+
+      <!-- ================= PQ3 ================= -->
+      <h2 id="pq3">PQ3 · Sobel gradient &amp; direction <span class="badge marks">5M</span></h2>
+      <div class="card">
+        <p style="margin-top:0">For the patch \(\begin{bmatrix}20&20&20\\20&20&20\\120&120&120\end{bmatrix}\):</p>
+        <p><span class="q-num">(a)</span> Compute \(g_x\) and \(g_y\) at the centre using the Sobel operators. <span class="badge marks">3M</span></p>
+        <p><span class="q-num">(b)</span> Find the gradient magnitude, gradient direction, and the edge orientation. <span class="badge marks">2M</span></p>
+      </div>
+      <h4>Solution</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">(a) g<sub>x</sub> = (right col · [1,2,1]) − (left col · [1,2,1])</div>columns are identical (20,20,120), so \(g_x = (20{+}40{+}120) - (20{+}40{+}120) = \mathbf{0}\).</div>
+        <div class="step"><div class="s-title">(a) g<sub>y</sub> = (bottom row · [1,2,1]) − (top row · [1,2,1])</div>\((120{+}240{+}120) - (20{+}40{+}20) = 480 - 80 = \mathbf{400}\).</div>
+        <div class="step"><div class="s-title">(b) Magnitude</div>\(\|\nabla f\| = \sqrt{0^2 + 400^2} = \mathbf{400}\).</div>
+        <div class="step"><div class="s-title">(b) Gradient direction</div>\(\theta = \tan^{-1}(g_y/g_x) = \tan^{-1}(400/0) = \mathbf{90^\circ}\) (points straight up/down).</div>
+        <div class="step"><div class="s-title">(b) Edge orientation</div>edge ⟂ gradient \(= 90^\circ - 90^\circ = \mathbf{0^\circ}\) → a horizontal edge.</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(g_x=0,\ g_y=400\); magnitude 400; gradient at \(90^\circ\); the edge is <strong>horizontal</strong> — consistent with the dark-top / bright-bottom patch.</p></div>
+      <p>Reproduce it (choose "Sobel Y", image "Horizontal edge"):</p>
+      <div data-demo="convolution" data-preset="sobely" data-image="hedge"></div>
+
+      <!-- ================= PQ4 ================= -->
+      <h2 id="pq4">PQ4 · Laplacian &amp; operators <span class="badge marks">5M</span></h2>
+      <div class="card">
+        <p style="margin-top:0">Every row of a 5×5 image is \([100,100,20,20,20]\) (a vertical edge between columns 1 and 2).</p>
+        <p><span class="q-num">(a)</span> Compute the Laplacian at the bright-side edge pixel (value 100, with the dark column 20 on its right) using both \(K_1=[0,1,0;1,-4,1;0,1,0]\) and \(K_2=[1,1,1;1,-8,1;1,1,1]\). <span class="badge marks">3M</span></p>
+        <p><span class="q-num">(b)</span> Compare first-derivative and second-derivative edge operators. <span class="badge marks">2M</span></p>
+      </div>
+      <h4>Solution</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">(a) Identify neighbours</div>centre = 100; up = down = left = 100; right = 20.</div>
+        <div class="step"><div class="s-title">(a) K₁ (4-neighbour)</div>\(-4(100) + (100{+}100{+}100{+}20) = -400 + 320 = \mathbf{-80}\).</div>
+        <div class="step"><div class="s-title">(a) K₂ (8-neighbour)</div>8 neighbours = five 100's + three 20's = \(560\); \(\;-8(100) + 560 = -800 + 560 = \mathbf{-240}\).</div>
+        <div class="step"><div class="s-title">(b) Compare</div>First-derivative (Roberts/Prewitt/Sobel): edge at gradient <em>maxima</em>, gives <strong>magnitude &amp; direction</strong>, more noise-robust (esp. Sobel). Second-derivative (Laplacian): edge at <strong>zero-crossings</strong>, isotropic, no direction, very noise-sensitive (so usually used as LoG after Gaussian smoothing).</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(K_1=-80,\ K_2=-240\) (both negative on the bright side; they'd be \(+80,+240\) on the dark side → zero-crossing at the edge). \(K_2\) responds ~3× stronger. First-derivative ops give direction and resist noise better; second-derivative ops localize via zero-crossings but amplify noise.</p></div>
+
+      <!-- ================= PQ5 ================= -->
+      <h2 id="pq5">PQ5 · Hough transform — both spaces <span class="badge marks">5M</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><span class="q-num">(a)</span> Using the Hough \((m,c)\) transform, determine whether \((0,1)\), \((1,3)\) and \((2,5)\) are collinear, and give the line. <span class="badge marks">3M</span></p>
+        <p><span class="q-num">(b)</span> Give the \(\rho\text{–}\theta\) representation of \((3,0)\) and \((0,3)\), and find the line passing through both. <span class="badge marks">2M</span></p>
+      </div>
+      <h4>Solution</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">(a) Vote-lines \(c = -x m + y\)</div>\((0,1)\!: c = 1;\quad (1,3)\!: c = -m+3;\quad (2,5)\!: c = -2m+5\).</div>
+        <div class="step"><div class="s-title">(a) Intersect</div>From the first, \(c=1\). Sub into the second: \(-m+3 = 1 \Rightarrow m = 2\), so \((m,c)=(2,1)\).</div>
+        <div class="step"><div class="s-title">(a) Verify with the third</div>\(-2(2)+5 = 1\) ✓ → all three meet at \((2,1)\).</div>
+        <div class="step"><div class="s-title">(b) Sinusoids \(\rho = x\cos\theta + y\sin\theta\)</div>\((3,0)\!: \rho = 3\cos\theta;\quad (0,3)\!: \rho = 3\sin\theta\).</div>
+        <div class="step"><div class="s-title">(b) Intersect</div>\(3\cos\theta = 3\sin\theta \Rightarrow \tan\theta = 1 \Rightarrow \theta = 45^\circ\); then \(\rho = 3\cos45^\circ = 3/\sqrt2 \approx 2.12\).</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answers</span><p style="margin:4px 0">(a) Collinear at \((m,c)=(2,1)\) → line \(\mathbf{y = 2x + 1}\). &nbsp;(b) \((\rho,\theta)=(2.12,\,45^\circ)\), i.e. \(x\cos45^\circ + y\sin45^\circ = 2.12\) → line \(\mathbf{x + y = 3}\).</p></div>
+      <p>Check (a) — click the point sequence in the demo and toggle the space:</p>
+      <div data-demo="hough"></div>
+
+      <!-- ================= PQ6 ================= -->
+      <h2 id="pq6">PQ6 · Harris, HOG &amp; RANSAC <span class="badge marks">5M</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><span class="q-num">(a)</span> A window gives \(\sum I_x^2 = 5,\ \sum I_y^2 = 5,\ \sum I_xI_y = 2\). With \(k=0.04\), compute the Harris response \(R\) and classify the region. <span class="badge marks">2M</span></p>
+        <p><span class="q-num">(b)</span> A pixel has gradient direction \(125^\circ\) and magnitude \(60\). Distribute its vote across the 9 HOG bins. <span class="badge marks">2M</span></p>
+        <p><span class="q-num">(c)</span> For RANSAC line fitting (\(s=2\)) with 30% outliers, how many iterations give 99% success? <span class="badge marks">1M</span></p>
+      </div>
+      <h4>Solution</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">(a) det &amp; trace</div>\(M=\begin{bmatrix}5&2\\2&5\end{bmatrix}\): \(\det = 25 - 4 = 21\), \(\text{trace} = 10\).</div>
+        <div class="step"><div class="s-title">(a) Response</div>\(R = 21 - 0.04(10)^2 = 21 - 4 = \mathbf{17} &gt; 0\) → <strong>corner</strong> (eigenvalues \(7\) and \(3\), both large).</div>
+        <div class="step"><div class="s-title">(b) Locate 125°</div>between bin centres 120° and 140°.</div>
+        <div class="step"><div class="s-title">(b) Weights &amp; distribute</div>to 120°: \((140-125)/20 = 0.75 \Rightarrow 0.75\times60 = 45\); to 140°: \((125-120)/20 = 0.25 \Rightarrow 0.25\times60 = 15\).</div>
+        <div class="step"><div class="s-title">(c) RANSAC iterations</div>\((1-0.3)^2 = 0.49\); \(N = \dfrac{\log(0.01)}{\log(1-0.49)} = \dfrac{-2}{\log 0.51} = \dfrac{-2}{-0.292} \approx 6.8\).</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answers</span><p style="margin:4px 0">(a) \(R=17&gt;0\) → corner. &nbsp;(b) Bin 120° = 45, Bin 140° = 15, rest 0. &nbsp;(c) \(N\approx \mathbf{7}\) iterations.</p></div>
+      <p>Set θ=125 in the HOG demo and cast the vote:</p>
+      <div data-demo="hog"></div>
+
+      <!-- ================= THEORY ================= -->
+      <h2 id="theory">Rapid-fire theory (predicted)</h2>
+      <p>Short, high-probability theory prompts. Try to answer in 1–2 lines before revealing.</p>
+
+      <details class="qa"><summary><span class="q-num">T1</span> Define sampling and quantization. <span class="badge marks">2M</span></summary>
+        <div class="qa-body"><div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Sampling = digitizing spatial coordinates \((x,y)\) (the pixel grid / spatial resolution). Quantization = digitizing the intensity into \(L=2^b\) gray levels (intensity resolution).</p></div></div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">T2</span> How do convolution and correlation differ? <span class="badge marks">2M</span></summary>
+        <div class="qa-body"><div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Convolution flips the kernel \(180^\circ\) before the multiply-and-add; correlation does not. They coincide for symmetric kernels. Convolution is commutative and associative, enabling pre-combination of filters (e.g. derivative-of-Gaussian).</p></div></div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">T3</span> List the four steps of the Canny edge detector. <span class="badge marks">2M</span></summary>
+        <div class="qa-body"><div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">① Gaussian smoothing; ② gradient magnitude &amp; angle (Sobel); ③ non-maximum suppression (thin to 1 px along the gradient); ④ double-threshold + hysteresis linking (\(T_H:T_L\) ≈ 2:1–3:1).</p></div></div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">T4</span> Why two thresholds in Canny? <span class="badge marks">1M</span></summary>
+        <div class="qa-body"><div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">A high threshold confidently <em>starts</em> edges (rejects noise); a low threshold <em>continues</em> them where connected to a strong edge — bridging gaps without admitting noise. One threshold can't do both.</p></div></div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">T5</span> Why is the polar \(\rho\text{–}\theta\) Hough form preferred over \(m\text{–}c\)? <span class="badge marks">1M</span></summary>
+        <div class="qa-body"><div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Vertical lines have infinite slope, which \(m\text{–}c\) can't store in a finite accumulator. In \(\rho\text{–}\theta\) both parameters are bounded (\(\theta\in[0,180^\circ)\), \(\rho\in[-D,D]\)), so every line fits.</p></div></div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">T6</span> Differentiate an edge from a corner (structure-tensor view). <span class="badge marks">2M</span></summary>
+        <div class="qa-body"><div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Edge: strong gradient in one direction → one large, one small eigenvalue of \(M\) → \(R&lt;0\); poorly localized along the edge (aperture problem). Corner: gradients in two directions → both eigenvalues large → \(R&gt;0\); uniquely localizable and great for matching.</p></div></div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">T7</span> What is the Difference of Gaussians and why does SIFT use it? <span class="badge marks">2M</span></summary>
+        <div class="qa-body"><div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">DoG \(= G(k\sigma){*}I - G(\sigma){*}I\) approximates the scale-normalised Laplacian-of-Gaussian (a blob detector) but is nearly free to compute from the Gaussian pyramid. Local extrema in \((x,y,\sigma)\) give keypoints at their characteristic scale → scale invariance.</p></div></div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">T8</span> State the RGB↔CMYK relationship and why each is used. <span class="badge marks">2M</span></summary>
+        <div class="qa-body"><div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(C=1-R,\ M=1-G,\ Y=1-B\); \(K=\min(C,M,Y)\). RGB is additive (screens emit light, all-on=white); CMYK is subtractive (inks absorb light on white paper, all-on=black). The physical process dictates the model.</p></div></div>
+      </details>
+
+      <div class="callout key">
+        <div class="c-head">◆ After this mock</div>
+        <p>Mis-stepped anywhere? Jump back to the matching type in <a href="numericals.html">Numericals — step by step</a>, or the explainer on the relevant <a href="index.html">session page</a>. Then re-attempt the question from a blank sheet.</p>
+      </div>
+
+      <div class="pager">
+        <a href="exam-q6.html"><div class="pg-dir">← Solved paper</div><div class="pg-title">Midsem Q6</div></a>
+        <a class="next" href="lectures.html"><div class="pg-dir">Next →</div><div class="pg-title">▶ From the Lectures</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

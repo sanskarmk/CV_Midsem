@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>All Class Numericals</title>
+<title>Numericals — Step by Step</title>
 <link rel="stylesheet" href="assets/style.css">
-<script>window.CV_PAGE = { id: "numericals", title: "All Class Numericals", crumb: "Reference · Numericals" };</script>
+<script>window.CV_PAGE = { id: "numericals", title: "Numericals — Step by Step", crumb: "Reference · Numericals" };</script>
 </head>
 <body>
 <div class="app">
@@ -15,101 +15,337 @@
     <header class="topbar" id="topbar"></header>
     <div class="content">
 
-      <span class="page-tag">Reference</span>
-      <h1>Every numerical solved in class</h1>
-      <p class="lead">One scrollable cheat-page of all the worked computations from Sessions 2–7. The exam is numerical-heavy — re-derive each of these from scratch until they're automatic.</p>
+      <span class="page-tag">Reference · every numerical type</span>
+      <h1>Numericals — step by step</h1>
+      <p class="lead">Each numerical type explained twice: first <strong>"understand it"</strong> (the why + the method you follow), then a clean <strong>exam-answer-style</strong> worked example — written the way you'd put it on the answer sheet, with the result boxed. Master the <em>method</em> and any numbers become routine.</p>
 
       <div class="toc">
-        <h4>Jump to</h4>
+        <h4>The 14 types</h4>
         <ul>
-          <li><a href="#n1">1 · Contrast stretching</a></li>
-          <li><a href="#n2">2 · Histogram equalization</a></li>
-          <li><a href="#n3">3 · Gradient &amp; direction</a></li>
-          <li><a href="#n4">4 · Hough collinearity</a></li>
-          <li><a href="#n5">5 · Laplacian kernels</a></li>
-          <li><a href="#n6">6 · Harris response</a></li>
-          <li><a href="#n7">7 · HOG histogram</a></li>
-          <li><a href="#n8">8 · HOG binning (57°)</a></li>
+          <li><a href="#t1">1 · Sampling, quantization &amp; storage</a></li>
+          <li><a href="#t2">2 · Contrast stretching</a></li>
+          <li><a href="#t3">3 · Log transform</a></li>
+          <li><a href="#t4">4 · Power-law (gamma)</a></li>
+          <li><a href="#t5">5 · Histogram equalization</a></li>
+          <li><a href="#t6">6 · Convolution / applying a kernel</a></li>
+          <li><a href="#t7">7 · Averaging (box) filter</a></li>
+          <li><a href="#t8">8 · Gradient: magnitude &amp; direction</a></li>
+          <li><a href="#t9">9 · Laplacian (4 vs 8 neighbour)</a></li>
+          <li><a href="#t10">10 · Hough transform</a></li>
+          <li><a href="#t11">11 · Harris corner response</a></li>
+          <li><a href="#t12">12 · HOG histogram &amp; binning</a></li>
+          <li><a href="#t13">13 · RGB → CMYK conversion</a></li>
+          <li><a href="#t14">14 · RANSAC iteration count</a></li>
         </ul>
       </div>
 
-      <h2 id="n1">1 · Contrast stretching <span class="badge blue">Session 2</span></h2>
-      <p>Map \([r_{\min}, r_{\max}] \to [0, L-1]\): &nbsp; \(s = (r-r_{\min})\,\frac{L-1}{r_{\max}-r_{\min}}\).</p>
+      <!-- ============ 1 ============ -->
+      <h2 id="t1">1 · Sampling, quantization &amp; storage <span class="badge blue">Session 2</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p><strong>Sampling</strong> chooses how many pixels (an \(M\times N\) grid → spatial resolution); <strong>quantization</strong> chooses how many gray levels each pixel can hold (\(L = 2^b\) → intensity resolution). Storage is just every pixel times its bit-depth.</p>
+      </div>
+      <h4>Method</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">Gray levels</div>\(L = 2^{b}\) for \(b\) bits.</div>
+        <div class="step"><div class="s-title">Storage in bits</div>\(\text{bits} = M \times N \times b\) (×3 for an RGB color image).</div>
+        <div class="step"><div class="s-title">Convert</div>÷8 → bytes, ÷1024 → KB, ÷1024 again → MB.</div>
+      </div>
+      <h4>Worked example — exam style</h4>
       <div class="card">
-        <p style="margin-top:0"><strong>[50,150] → [0,255], r = 100:</strong> &nbsp; slope \(=255/100 = 2.55\); &nbsp; \(s=(100-50)(2.55)=127.5\approx \mathbf{128}\).</p>
-      </div>
-
-      <h2 id="n2">2 · Histogram equalization (5×5, L=8) <span class="badge blue">Session 3</span></h2>
-      <p>Counts: level 3 → 6, level 4 → 14, level 5 → 5 (total 25). Map via \(s=(L-1)\,\text{CDF}\):</p>
-      <div class="tbl-wrap"><table>
-        <thead><tr><th>level r</th><th>n<sub>k</sub></th><th>CDF</th><th>7·CDF</th><th>new s</th></tr></thead>
-        <tbody>
-          <tr><td class="num">3</td><td class="num">6</td><td class="num">0.24</td><td class="num">1.68</td><td class="num"><b>2</b></td></tr>
-          <tr><td class="num">4</td><td class="num">14</td><td class="num">0.80</td><td class="num">5.60</td><td class="num"><b>6</b></td></tr>
-          <tr><td class="num">5</td><td class="num">5</td><td class="num">1.00</td><td class="num">7.00</td><td class="num"><b>7</b></td></tr>
-        </tbody>
-      </table></div>
-      <p>Remap: \(3\to2,\ 4\to6,\ 5\to7\). <a href="session3.html#histeq">Interactive version →</a></p>
-
-      <h2 id="n3">3 · Gradient magnitude &amp; direction <span class="badge blue">Session 4</span></h2>
-      <div class="grid cols-2">
-        <div class="card"><h4 style="margin-top:0">Clean vertical edge (Prewitt)</h4>
-          <p>Patch dark-left/bright-right → \(g_x=(200-10)\times3 = 570,\ g_y=0\).</p>
-          <p style="margin-bottom:0">\(\|\nabla f\|=570,\ \theta=0°\) → vertical edge.</p>
+        <p style="margin-top:0"><strong>Q.</strong> A \(256\times256\) grayscale image is stored at 8 bits/pixel. Number of gray levels? Uncompressed size?</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Levels</div>\(L = 2^{8} = 256\) gray levels (0–255).</div>
+          <div class="step"><div class="s-title">Bits</div>\(256\times256\times8 = 524{,}288\) bits.</div>
+          <div class="step"><div class="s-title">Bytes / KB</div>\(\div 8 = 65{,}536\) bytes \(= 64\) KB.</div>
         </div>
-        <div class="card"><h4 style="margin-top:0">Class "0's and 2's" diagonal</h4>
-          <p>\(g_x=-2,\ g_y=2\) → \(\|\nabla f\|=\sqrt8=2.83\).</p>
-          <p style="margin-bottom:0">\(\theta=\operatorname{atan2}(2,-2)=135°\); edge direction \(=45°\) (⊥).</p>
-        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">256 levels; 65 536 bytes = <strong>64 KB</strong>. (24-bit color would be ×3 = 192 KB.)</p></div>
       </div>
+      <div class="callout exam"><div class="c-head">✦ Tip</div><p>"How many bits for \(N\) levels?" → \(b=\log_2 N\). Watch units: examiners love asking for KB vs MB. Too few samples ⇒ pixelation; too few levels ⇒ false contouring.</p></div>
 
-      <h2 id="n4">4 · Hough collinearity test <span class="badge blue">Session 5</span></h2>
-      <p>Are \((1,2),(2,3),(3,4)\) collinear? Each → \(c=-x\,m+y\):</p>
+      <!-- ============ 2 ============ -->
+      <h2 id="t2">2 · Contrast stretching <span class="badge blue">Session 2</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>An image using only part of the scale looks flat. A linear stretch rescales the used range \([r_{\min}, r_{\max}]\) onto the whole range \([0, L-1]\) — a straight line on the \(s\)-vs-\(r\) graph.</p>
+      </div>
+      <h4>Method</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">Write the formula</div>\(s = (r - r_{\min})\cdot\dfrac{L-1}{r_{\max}-r_{\min}}\)</div>
+        <div class="step"><div class="s-title">Compute the slope</div>\(\dfrac{L-1}{r_{\max}-r_{\min}}\) once.</div>
+        <div class="step"><div class="s-title">Substitute &amp; round</div>plug the pixel value, round to nearest integer.</div>
+      </div>
+      <h4>Worked example — exam style</h4>
       <div class="card">
-        <p style="margin-top:0">\(c=-m+2,\ \ c=-2m+3,\ \ c=-3m+4\). First two: \(-m+2=-2m+3\Rightarrow m=1,\ c=1\). Third checks: \(-3+4=1\) ✓.</p>
-        <div class="answer-box"><span class="a-tag">Result</span><p style="margin:4px 0">Collinear; common line \(y=x+1\) at \((m,c)=(1,1)\).</p></div>
-      </div>
-
-      <h2 id="n5">5 · Laplacian at an edge (5×5, edge between 150|50) <span class="badge blue">Session 4</span></h2>
-      <div class="grid cols-2">
-        <div class="card"><h4 style="margin-top:0">4-neighbour \(K_1\)</h4>
-          <p>Bright-side pixel (=150): \(-4(150)+(150{+}150{+}150{+}50)=-600+500=\mathbf{-100}\).</p>
-          <p style="margin-bottom:0">Dark-side (=50): \(-4(50)+300=\mathbf{+100}\).</p>
+        <p style="margin-top:0"><strong>Q.</strong> Pixels span [50, 150]. Stretch to [0, 255]. Find \(s\) for \(r=100\).</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Slope</div>\(\dfrac{255}{150-50} = 2.55\)</div>
+          <div class="step"><div class="s-title">Substitute</div>\(s = (100-50)\times 2.55 = 127.5\)</div>
         </div>
-        <div class="card"><h4 style="margin-top:0">8-neighbour \(K_2\)</h4>
-          <p>Bright-side: \(-8(150)+900=\mathbf{-300}\).</p>
-          <p style="margin-bottom:0">Dark-side: \(-8(50)+700=\mathbf{+300}\). Sign flip = zero-crossing at edge.</p>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(s = 127.5 \approx \mathbf{128}\).</p></div>
+      </div>
+      <div class="callout exam"><div class="c-head">✦ Tip</div><p>To <em>invert</em> (given output, find input): \(r = \frac{s}{\text{slope}} + r_{\min}\). Check endpoints: \(r_{\min}\!\to\!0\) and \(r_{\max}\!\to\!255\) must hold.</p></div>
+
+      <!-- ============ 3 ============ -->
+      <h2 id="t3">3 · Log transform <span class="badge blue">Session 2/3</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>\(s = c\,\log(1+r)\) <strong>expands dark values and compresses bright ones</strong> — useful for huge-dynamic-range data (e.g. Fourier spectra). The \(+1\) avoids \(\log 0\). Choose \(c\) so the largest input maps to the largest output.</p>
+      </div>
+      <h4>Method</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">Pick c so max→max</div>\(c = \dfrac{L-1}{\log(1 + (L-1))}\)</div>
+        <div class="step"><div class="s-title">Apply</div>\(s = c\,\log(1+r)\), then round.</div>
+      </div>
+      <h4>Worked example — exam style</h4>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> 8-bit image. Choose \(c\) so \(r=255\) maps to 255, then find \(s\) for \(r=100\) (natural log).</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Find c</div>\(c = \dfrac{255}{\ln(256)} = \dfrac{255}{5.545} = 45.99\)</div>
+          <div class="step"><div class="s-title">Apply to r = 100</div>\(s = 45.99\times \ln(101) = 45.99\times 4.615 = 212.3\)</div>
         </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(c \approx 45.99\); \(\;s \approx \mathbf{212}\). Note how a mid input (100) is pushed <em>up</em> to 212 — dark detail brightened.</p></div>
       </div>
+      <div class="callout exam"><div class="c-head">✦ Tip</div><p>State your log base. With base-10, \(c = 255/\log_{10}(256) = 105.9\). Either is accepted if consistent; verify \(r=255\Rightarrow s=255\).</p></div>
 
-      <h2 id="n6">6 · Harris corner response <span class="badge blue">Session 6</span></h2>
-      <p>\(R=\det M - k(\text{trace }M)^2\), \(k=0.04\):</p>
-      <div class="grid cols-2">
-        <div class="card"><h4 style="margin-top:0">Corner</h4><p style="margin-bottom:0">\(\sum I_x^2{=}2,\sum I_y^2{=}2,\sum I_xI_y{=}0\): \(\det{=}4,\text{tr}{=}4\), \(R=4-0.04(16)=\mathbf{3.36}&gt;0\).</p></div>
-        <div class="card"><h4 style="margin-top:0">Edge</h4><p style="margin-bottom:0">\(\sum I_x^2{=}2,\sum I_y^2{=}0\): \(\det{=}0,\text{tr}{=}2\), \(R=0-0.04(4)=\mathbf{-0.16}&lt;0\).</p></div>
+      <!-- ============ 4 ============ -->
+      <h2 id="t4">4 · Power-law (gamma) <span class="badge blue">Session 2/3</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>\(s = c\,r^{\gamma}\). On normalised values, \(\gamma&lt;1\) <strong>brightens</strong> (expands dark detail), \(\gamma&gt;1\) <strong>darkens</strong> (expands bright detail), \(\gamma=1\) is identity. This is exactly gamma correction for displays.</p>
       </div>
-
-      <h2 id="n7">7 · HOG histogram (class 5×5) <span class="badge blue">Session 6</span></h2>
-      <p>Central 3×3 gradients → magnitudes &amp; angles → 9-bin histogram (simple binning):</p>
+      <h4>Method</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">Normalise</div>\(r_n = r/(L-1)\) so it lies in [0,1].</div>
+        <div class="step"><div class="s-title">Apply power</div>\(s_n = r_n^{\gamma}\) (with \(c=1\)).</div>
+        <div class="step"><div class="s-title">Scale back</div>\(s = (L-1)\,s_n\), round.</div>
+      </div>
+      <h4>Worked example — exam style</h4>
       <div class="card">
-        <p style="margin-top:0">Angles ≈ {36.87° ×3, 21.8°, 26.57°, 21.8°, 11.31°, 14.04°, 11.31°}, magnitudes ≈ {25×3, 26.9, 22.4, 26.9, 25.5, 20.6, 25.5}.</p>
-        <p>Bin 0–20° (angles ~11–14°): \(25.5+20.6+25.5 = 71.6\). &nbsp; Bin 20–40° (angles ~22–37°): \(25{+}25{+}25{+}26.9{+}22.4{+}26.9 = 151.2\).</p>
-        <div class="answer-box"><span class="a-tag">Histogram</span><p style="margin:4px 0">\([71.6,\ 151.2,\ 0,0,0,0,0,0,0]\) → then L2-normalise.</p></div>
+        <p style="margin-top:0"><strong>Q.</strong> 8-bit image, \(\gamma=0.5\), \(c=1\). Find \(s\) for \(r=100\).</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Normalise</div>\(r_n = 100/255 = 0.392\)</div>
+          <div class="step"><div class="s-title">Power</div>\(s_n = 0.392^{0.5} = \sqrt{0.392} = 0.626\)</div>
+          <div class="step"><div class="s-title">Scale</div>\(s = 255\times 0.626 = 159.7\)</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(s \approx \mathbf{160}\) (brightened, since \(\gamma=0.5&lt;1\)). For \(\gamma=2\): \(255\times0.392^2 = 39.2\) → darkened.</p></div>
       </div>
 
-      <h2 id="n8">8 · HOG interpolated binning, θ = 57° <span class="badge blue">Session 6/7</span></h2>
-      <p>9 bins of 20°, levels 0,20,…,160. 57° between 40° and 60°:</p>
+      <!-- ============ 5 ============ -->
+      <h2 id="t5">5 · Histogram equalization <span class="badge blue">Session 3</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>Push every pixel through the <strong>scaled CDF</strong> of its own histogram: \(s_k=(L-1)\,\text{CDF}(r_k)\). Crowded intensities (steep CDF) get spread apart → contrast up, histogram flattened.</p>
+      </div>
+      <h4>Method</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">Histogram</div>count \(n_k\) for each level; total \(MN\).</div>
+        <div class="step"><div class="s-title">PDF then CDF</div>\(p_k = n_k/MN\); cumulative sum \(\to\) CDF.</div>
+        <div class="step"><div class="s-title">Map</div>\(s_k = \text{round}\big((L-1)\cdot\text{CDF}_k\big)\).</div>
+        <div class="step"><div class="s-title">Replace</div>swap each old level for its new \(s_k\).</div>
+      </div>
+      <h4>Worked example — exam style (class 5×5, L=8)</h4>
       <div class="card">
-        <p style="margin-top:0">to 40°: \((60-57)/20=0.15\); to 60°: \((57-40)/20=0.85\). With \(|g|=85\): bin40 = 12.75, bin60 = 72.25.</p>
+        <p style="margin-top:0"><strong>Q.</strong> 25 pixels; only levels 3 (×6), 4 (×14), 5 (×5) occur. Equalize.</p>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>r</th><th>n<sub>k</sub></th><th>CDF</th><th>7·CDF</th><th>new s</th></tr></thead>
+          <tbody>
+            <tr><td class="num">3</td><td class="num">6</td><td class="num">6/25=0.24</td><td class="num">1.68</td><td class="num"><b>2</b></td></tr>
+            <tr><td class="num">4</td><td class="num">14</td><td class="num">20/25=0.80</td><td class="num">5.60</td><td class="num"><b>6</b></td></tr>
+            <tr><td class="num">5</td><td class="num">5</td><td class="num">25/25=1.00</td><td class="num">7.00</td><td class="num"><b>7</b></td></tr>
+          </tbody>
+        </table></div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Map \(3\to2,\ 4\to6,\ 5\to7\) — the three levels spread out across the range.</p></div>
+      </div>
+      <p><a href="session3.html#histeq">▶ Interactive histogram-equalization demo (this example + the Gonzalez 4096-pixel one)</a></p>
+
+      <!-- ============ 6 ============ -->
+      <h2 id="t6">6 · Convolution / applying a kernel <span class="badge blue">Session 3/4</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>Centre the kernel on the pixel, multiply each kernel weight by the pixel under it, and sum. (Convolution flips the kernel 180° first; correlation does not. For symmetric kernels they're identical.) The single number you get is the filtered value at that pixel.</p>
+      </div>
+      <h4>Method</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">Align</div>place the kernel centre on the target pixel.</div>
+        <div class="step"><div class="s-title">(Convolution only) flip</div>rotate the kernel 180°. Many edge masks are anti-symmetric, so be careful with signs.</div>
+        <div class="step"><div class="s-title">Multiply &amp; add</div>sum of (weight × underlying pixel) over the 9 cells.</div>
+      </div>
+      <h4>Worked example — exam style</h4>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Apply \(\begin{bmatrix}-1&0&1\\-1&0&1\\-1&0&1\end{bmatrix}\) to the centre of \(\begin{bmatrix}10&10&200\\10&10&200\\10&10&200\end{bmatrix}\).</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Per row: (−1)·left + 0·mid + (1)·right</div>each row: \(-10 + 200 = 190\)</div>
+          <div class="step"><div class="s-title">Sum the three rows</div>\(190+190+190 = 570\)</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Response \(= \mathbf{570}\) — a strong vertical-edge response. <small>(If the patch were left-right symmetric, the result would be 0 — as in midsem Q3.)</small></p></div>
+      </div>
+      <p>Drag the window and watch the multiply-add live:</p>
+      <div data-demo="convolution" data-preset="prewittx" data-image="vedge"></div>
+
+      <!-- ============ 7 ============ -->
+      <h2 id="t7">7 · Averaging (box) filter <span class="badge blue">Session 3</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>A \(3\times3\) box filter replaces a pixel with the <strong>mean of its 9-pixel neighbourhood</strong> — simple smoothing. Kernel is \(\frac{1}{9}\) times all-ones.</p>
+      </div>
+      <h4>Worked example — exam style</h4>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Smooth the centre of \(\begin{bmatrix}10&20&30\\40&50&60\\70&80&90\end{bmatrix}\) with a \(3\times3\) average filter.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Sum all 9</div>\(10{+}20{+}30{+}40{+}50{+}60{+}70{+}80{+}90 = 450\)</div>
+          <div class="step"><div class="s-title">Divide by 9</div>\(450/9 = 50\)</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">New centre value \(= \mathbf{50}\). (Here it equals the centre pixel because the patch is a symmetric ramp.)</p></div>
+      </div>
+      <div class="callout exam"><div class="c-head">✦ Tip</div><p>For a weighted (Gaussian) kernel, multiply each pixel by its weight, sum, then divide by the sum of weights. Box = all weights equal.</p></div>
+
+      <!-- ============ 8 ============ -->
+      <h2 id="t8">8 · Gradient: magnitude &amp; direction <span class="badge blue">Session 4</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>Apply a \(g_x\) mask and a \(g_y\) mask (Prewitt/Sobel). Combine into magnitude (edge strength) and direction. The gradient points <em>across</em> the edge; the edge runs <em>perpendicular</em> to it.</p>
+      </div>
+      <h4>Method</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">Compute g<sub>x</sub>, g<sub>y</sub></div>convolve patch with the two masks.</div>
+        <div class="step"><div class="s-title">Magnitude</div>\(\|\nabla f\| = \sqrt{g_x^2 + g_y^2}\) (or \(|g_x|+|g_y|\)).</div>
+        <div class="step"><div class="s-title">Direction</div>\(\theta = \tan^{-1}(g_y/g_x)\); edge direction \(=\theta\pm90^\circ\).</div>
+      </div>
+      <h4>Worked example — exam style (Sobel)</h4>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Patch \(\begin{bmatrix}100&100&100\\100&100&200\\100&200&200\end{bmatrix}\). Find \(g_x, g_y\), magnitude and direction (Sobel).</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">g<sub>x</sub> = (col₃·[1,2,1]) − (col₁·[1,2,1])</div>\((100{+}400{+}200) - (100{+}200{+}100) = 700 - 400 = 300\)</div>
+          <div class="step"><div class="s-title">g<sub>y</sub> = (row₃·[1,2,1]) − (row₁·[1,2,1])</div>\((100{+}400{+}200) - (100{+}200{+}100) = 700 - 400 = 300\)</div>
+          <div class="step"><div class="s-title">Magnitude</div>\(\sqrt{300^2+300^2} = 300\sqrt2 \approx 424.3\)</div>
+          <div class="step"><div class="s-title">Direction</div>\(\theta = \tan^{-1}(300/300) = 45^\circ\); edge \(= 135^\circ\)</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(g_x=g_y=300\), \(\|\nabla f\|\approx424\), gradient at \(45^\circ\), so the <strong>edge runs at \(135^\circ\)</strong> (a diagonal).</p></div>
       </div>
 
-      <div class="callout exam">
-        <div class="c-head">✦ Drill plan</div>
-        <p>Cover the answers and re-solve all eight. Target: each in under 3 minutes with no slips. The Hough, Laplacian, and HOG ones appear almost verbatim on the midsem.</p>
+      <!-- ============ 9 ============ -->
+      <h2 id="t9">9 · Laplacian (4 vs 8 neighbour) <span class="badge blue">Session 4</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>A second-derivative, isotropic operator: \(-c\) on the centre, \(+1\) on the neighbours. It's 0 in flat/linear regions and <strong>flips sign across an edge</strong> (the edge = zero-crossing). 8-neighbour reacts more strongly (and to diagonals) than 4-neighbour.</p>
+      </div>
+      <h4>Worked example — exam style (5×5, edge 150|50)</h4>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Every row = [150,150,150,50,50]. Laplacian at a bright-side edge pixel (value 150; right neighbour = 50).</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">K₁ (4-neighbour): −4·centre + (up+down+left+right)</div>\(-4(150) + (150{+}150{+}150{+}50) = -600+500 = -100\)</div>
+          <div class="step"><div class="s-title">K₂ (8-neighbour): −8·centre + (8 neighbours: 5×150 + 3×50)</div>\(-8(150) + 900 = -1200+900 = -300\)</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(K_1=-100,\ K_2=-300\). On the dark side these become \(+100\) and \(+300\) — the sign flip locates the edge (zero-crossing). \(K_2\) is ~3× stronger (more sensitive, also noisier).</p></div>
+      </div>
+
+      <!-- ============ 10 ============ -->
+      <h2 id="t10">10 · Hough transform <span class="badge blue">Session 5</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>Each image point \((x,y)\) maps to a vote-line \(c=-x\,m+y\) in \((m,c)\) space. Collinear points ⇒ their vote-lines meet at one \((m,c)\) = the shared line. For vertical lines (slope ∞) switch to polar \(\rho=x\cos\theta+y\sin\theta\) (sinusoids that intersect).</p>
+      </div>
+      <h4>Method (collinearity / line params)</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">Write each point's vote-line</div>\(c = -x_i\,m + y_i\).</div>
+        <div class="step"><div class="s-title">Intersect any two</div>solve for \((m,c)\).</div>
+        <div class="step"><div class="s-title">Verify with the rest</div>substitute; if all pass → collinear, line \(y=mx+c\).</div>
+        <div class="step"><div class="s-title">If vertical (parallel vote-lines)</div>use \(\rho\text{–}\theta\): set sinusoids equal, solve \(\theta\), back-substitute \(\rho\).</div>
+      </div>
+      <h4>Worked example — exam style</h4>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Are \((1,2),(2,3),(3,4)\) collinear (Hough)?</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Vote-lines</div>\(c=-m+2,\ \ c=-2m+3,\ \ c=-3m+4\)</div>
+          <div class="step"><div class="s-title">Intersect first two</div>\(-m+2=-2m+3 \Rightarrow m=1,\ c=1\)</div>
+          <div class="step"><div class="s-title">Check third</div>\(-3(1)+4 = 1\) ✓</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Collinear; common line \(y = x + 1\) at \((m,c)=(1,1)\).</p></div>
+      </div>
+      <p>Click "Load (1,2)(2,3)(3,4)" and toggle the space:</p>
+      <div data-demo="hough"></div>
+
+      <!-- ============ 11 ============ -->
+      <h2 id="t11">11 · Harris corner response <span class="badge blue">Session 6</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>Build \(M=\sum\begin{bmatrix}I_x^2 & I_xI_y\\ I_xI_y & I_y^2\end{bmatrix}\) over a window, then \(R=\det M - k(\text{trace }M)^2\). \(R&gt;0\) corner, \(R&lt;0\) edge, \(|R|\) small flat (\(k=0.04\text{–}0.06\)).</p>
+      </div>
+      <h4>Method</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">Assemble M</div>from \(\sum I_x^2,\ \sum I_y^2,\ \sum I_xI_y\).</div>
+        <div class="step"><div class="s-title">det &amp; trace</div>\(\det = (\sum I_x^2)(\sum I_y^2) - (\sum I_xI_y)^2\); \(\text{trace}=\sum I_x^2 + \sum I_y^2\).</div>
+        <div class="step"><div class="s-title">Response</div>\(R = \det - k\,(\text{trace})^2\); classify by sign.</div>
+      </div>
+      <h4>Worked example — exam style</h4>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> A window gives \(\sum I_x^2=2,\ \sum I_y^2=2,\ \sum I_xI_y=0\). Take \(k=0.04\). Classify.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">M, det, trace</div>\(M=\begin{bmatrix}2&0\\0&2\end{bmatrix}\), \(\det=4\), \(\text{trace}=4\)</div>
+          <div class="step"><div class="s-title">R</div>\(R = 4 - 0.04(4)^2 = 4 - 0.64 = 3.36\)</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(R = 3.36 &gt; 0\) → <strong>corner</strong> (both eigenvalues \(=2\), large). An edge case \(\sum I_x^2=2,\sum I_y^2=0\) gives \(R=-0.16&lt;0\).</p></div>
+      </div>
+      <p><a href="session6.html#harris-demo">▶ Interactive Harris demo — watch the gradient scatter classify flat/edge/corner.</a></p>
+
+      <!-- ============ 12 ============ -->
+      <h2 id="t12">12 · HOG histogram &amp; binning <span class="badge blue">Session 6</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>For each pixel compute gradient magnitude and orientation, then drop its magnitude into a 9-bin histogram over 0–180°. The standard scheme <strong>splits each vote between the two nearest bin centres</strong> (interpolation).</p>
+      </div>
+      <h4>Method (interpolated binning)</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">Bin centres</div>0,20,40,…,160 (width 20°).</div>
+        <div class="step"><div class="s-title">Locate θ</div>find the two centres it falls between.</div>
+        <div class="step"><div class="s-title">Weights</div>weight to a centre \(= \dfrac{\text{distance to the }far\text{ centre}}{20}\).</div>
+        <div class="step"><div class="s-title">Distribute</div>add weight × |g| to each of the two bins.</div>
+      </div>
+      <h4>Worked example — exam style</h4>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> A pixel has direction 57° and magnitude 85. Bin it.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Between which centres?</div>57° lies between 40° and 60°.</div>
+          <div class="step"><div class="s-title">Weights</div>to 40°: \((60-57)/20=0.15\); to 60°: \((57-40)/20=0.85\)</div>
+          <div class="step"><div class="s-title">Distribute |g| = 85</div>bin 40° \(+= 0.15\times85 = 12.75\); bin 60° \(+= 0.85\times85 = 72.25\)</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Bin 40° = 12.75, Bin 60° = 72.25, rest 0. <small>(Class "simple" binning instead dumps all 85 into the single 40–60° bin.)</small></p></div>
+      </div>
+      <div data-demo="hog"></div>
+      <p style="font-size:14px;color:var(--muted)">The class 5×5 cell example (full histogram \([71.6, 151.2, 0, …]\)) is worked in detail on the <a href="session6.html#hog-num">Session 6 page</a>.</p>
+
+      <!-- ============ 13 ============ -->
+      <h2 id="t13">13 · RGB → CMYK conversion <span class="badge blue">Session 3</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>Print is subtractive: \(C=1-R,\ M=1-G,\ Y=1-B\) (on normalised 0–1 values). Then pull out black \(K=\min(C,M,Y)\) to save colored ink.</p>
+      </div>
+      <h4>Worked example — exam style</h4>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Convert \((R,G,B)=(0.2,0.5,0.9)\) to CMYK (course convention: subtract \(K\)).</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">CMY</div>\(C=0.8,\ M=0.5,\ Y=0.1\)</div>
+          <div class="step"><div class="s-title">K</div>\(K=\min(0.8,0.5,0.1)=0.1\)</div>
+          <div class="step"><div class="s-title">Subtract K</div>\(C=0.7,\ M=0.4,\ Y=0.0\)</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\((C,M,Y,K)=(0.7,\,0.4,\,0.0,\,0.1)\). <small>(Normalised variant divides by \(1-K\): \(C'=0.7/0.9=0.78\), etc.)</small></p></div>
+      </div>
+
+      <!-- ============ 14 ============ -->
+      <h2 id="t14">14 · RANSAC iteration count <span class="badge blue">Session 7</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>How many random samples \(N\) guarantee (with probability \(p\)) at least one all-inlier sample, given an outlier fraction \(e\) and minimal sample size \(s\)?</p>
+      </div>
+      <h4>Method</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">Prob. one sample is all-inliers</div>\((1-e)^{s}\).</div>
+        <div class="step"><div class="s-title">Formula</div>\(N = \dfrac{\log(1-p)}{\log\!\big(1-(1-e)^{s}\big)}\), round up.</div>
+      </div>
+      <h4>Worked example — exam style</h4>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Line fitting (\(s=2\)), outliers \(e=0.2\), want \(p=0.99\). Find \(N\).</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">All-inlier prob.</div>\((1-0.2)^2 = 0.64\)</div>
+          <div class="step"><div class="s-title">Plug in</div>\(N = \dfrac{\log(0.01)}{\log(1-0.64)} = \dfrac{-2}{\log(0.36)} = \dfrac{-2}{-0.4437} = 4.5\)</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(N \approx \mathbf{5}\) iterations. More outliers or larger \(s\) ⇒ steeply more iterations.</p></div>
+      </div>
+
+      <div class="callout key">
+        <div class="c-head">◆ Drill plan</div>
+        <p>Cover each <em>answer</em> and reproduce the steps from the <em>method</em>. Target: any of these in &lt; 3 minutes. The Hough, Laplacian, gradient and HOG types are the most likely to carry the heaviest marks. Then attempt the <a href="practice.html">Questions for Practice →</a> as a timed mock.</p>
       </div>
 
       <div class="pager">
-        <a href="exam-q6.html"><div class="pg-dir">← Back</div><div class="pg-title">Q6 · HOG &amp; RANSAC</div></a>
+        <a href="practice.html"><div class="pg-dir">← Mock exam</div><div class="pg-title">✎ Questions for Practice</div></a>
         <a class="next" href="formulas.html"><div class="pg-dir">Next →</div><div class="pg-title">ƒ Formula Cheat-Sheet</div></a>
       </div>
 

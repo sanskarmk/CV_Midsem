@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>From the Lectures — Exam-Flagged &amp; Class-Solved Problems</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "lectures", title: "From the Lectures", crumb: "Exam Prep · From the Lectures" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Exam Prep · distilled from the 8 recordings</span>
+      <h1>From the Lectures — exam-flagged &amp; class-solved problems</h1>
+      <p class="lead">Everything below is pulled straight from Prof. Adhikary's lecture recordings: the numericals he <strong>actually solved in class</strong> and the problem types he <strong>explicitly said to expect in the exam</strong> — each worked out fully in exam-answer style. Where a quote appears it's paraphrased from the recording.</p>
+
+      <div class="callout exam">
+        <div class="c-head">✦ Exam pattern — straight from the revision lecture</div>
+        <ul style="margin:6px 0">
+          <li><strong>4–5 questions, unequal weightage</strong> (some marked higher, some lower).</li>
+          <li><strong>Theory + numerical mix</strong> — "in numericals and theory mix" (theory is included so everyone can secure passing marks).</li>
+          <li><strong>Syllabus = modules 1–8</strong>, everything covered up to and including <strong>RANSAC</strong>.</li>
+          <li><strong>Quiz-1 covered up to the Harris corner detector</strong> — "a pretty good revision for your mid-sem."</li>
+          <li>Mid-sem ≈ <strong>30 marks</strong>; make-up paper is the same pattern, "not more complex."</li>
+        </ul>
+      </div>
+
+      <div class="callout key">
+        <div class="c-head">◆ Problem types he told you to expect</div>
+        <ul style="margin:6px 0">
+          <li>"Oftentimes in your exams you'll get: <strong>compute the 4-neighbourhood / 8-neighbourhood convolutions and correlations</strong>." → <a href="#A">Problem A</a></li>
+          <li>"You can expect <strong>numericals around the Harris corner detector</strong>, and edge detection — basically <strong>whether this point is an edge or a corner</strong>." → <a href="#E">Problem E</a></li>
+          <li>Two numericals were <strong>pre-solved in revision</strong>: <strong>histogram equalization</strong> and <strong>HOG</strong>. → <a href="#C">C</a>, <a href="#D">D</a></li>
+          <li>"Is a <strong>3-bit quantization good enough</strong>? … if I give you a choice between 2-bit and 8-bit, which would you prefer, and what are the hardware requirements?" → <a href="#H">Problem H</a></li>
+          <li>"<strong>Why was it better than its predecessor</strong>?" type theory questions. → <a href="#J">Section J</a></li>
+        </ul>
+      </div>
+
+      <div class="callout warn">
+        <div class="c-head">▲ The professor's #1 exam tip — write your assumptions</div>
+        <p>He stressed this repeatedly: a grader seeing "\(G_x\) is \(4\times5\)" when they expected \(5\times4\) "may, in the spur of the moment, mark you wrong." So <strong>always state your conventions</strong> — which axis is \(x\), zero-padding choice, correlation vs convolution, log base, the value of \(k\), bin centres, etc. It protects your method marks.</p>
+      </div>
+
+      <h2>What each recording covered</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Lecture</th><th>Main content</th><th>Solved / flagged here</th></tr></thead>
+        <tbody>
+          <tr><td>L1</td><td>Intro, why vision is hard, applications, image as \(f(x,y)\)</td><td>—</td></tr>
+          <tr><td>L2</td><td>Image formation, lenses, sampling &amp; quantization, 4/8-neighbourhood</td><td><a href="#A">A</a>, <a href="#H">H</a></td></tr>
+          <tr><td>L3</td><td>Histogram equalization, filtering, Gaussian, color spaces</td><td><a href="#C">C</a></td></tr>
+          <tr><td>L4</td><td>Edges, gradients, 1st/2nd derivatives, Prewitt/Sobel</td><td><a href="#B">B</a>, <a href="#F">F</a></td></tr>
+          <tr><td>L5</td><td>Canny pipeline, Hough transform, color models</td><td><a href="#G">G</a></td></tr>
+          <tr><td>L6</td><td>Harris corner detector, HOG descriptor</td><td><a href="#E">E</a>, <a href="#D">D</a></td></tr>
+          <tr><td>L7</td><td>SIFT (scale-space, DoG, LoG), HOG voting</td><td><a href="#D">D</a>, <a href="#J">J</a></td></tr>
+          <tr><td>L8</td><td>RANSAC, <strong>revision + 2 pre-solved numericals</strong>, exam pattern</td><td><a href="#C">C</a>, <a href="#D">D</a>, <a href="#I">I</a></td></tr>
+        </tbody>
+      </table></div>
+
+      <!-- ===================== A ===================== -->
+      <h2 id="A">A · Convolution &amp; correlation — 4- and 8-neighbourhood <span class="badge amber">flagged "in your exams"</span></h2>
+      <div class="callout intuition"><div class="c-head">▶ From the recording (L2)</div>
+        <p>"A four-neighbourhood = the immediately adjacent pixels; an eight-neighbourhood adds the diagonals. Oftentimes in your exams you'll get: compute the 4-neighbourhood / 8-neighbourhood convolutions and correlations." Key fact he kept returning to: <strong>convolution flips the kernel 180°, correlation does not</strong> — so for an asymmetric kernel the two answers differ (often by a sign).</p>
+      </div>
+
+      <h4>A1 · Correlation vs convolution (asymmetric kernel)</h4>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> For image patch \(P=\begin{bmatrix}1&2&3\\4&5&6\\7&8&9\end{bmatrix}\) and kernel \(K=\begin{bmatrix}-1&0&1\\-1&0&1\\-1&0&1\end{bmatrix}\), compute the response at the centre by (i) correlation and (ii) convolution.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">(i) Correlation — overlay K as-is, multiply, add</div>row sums: \((-1{+}3)+(-4{+}6)+(-7{+}9) = 2+2+2 = \mathbf{+6}\).</div>
+          <div class="step"><div class="s-title">(ii) Convolution — flip K by 180° first</div>flipped \(K=\begin{bmatrix}1&0&-1\\1&0&-1\\1&0&-1\end{bmatrix}\); response \(=(1{-}3)+(4{-}6)+(7{-}9) = -6\).</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Correlation \(=+6\), convolution \(=-6\). Same magnitude, opposite sign — exactly because the kernel is anti-symmetric and convolution flips it. <em>State which one you used.</em></p></div>
+      </div>
+
+      <h4>A2 · 4-neighbour vs 8-neighbour operator (Laplacian)</h4>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> For \(P=\begin{bmatrix}10&10&10\\10&50&10\\10&10&10\end{bmatrix}\), apply the 4-neighbour kernel \(\begin{bmatrix}0&1&0\\1&-4&1\\0&1&0\end{bmatrix}\) and the 8-neighbour kernel \(\begin{bmatrix}1&1&1\\1&-8&1\\1&1&1\end{bmatrix}\) at the centre. (Symmetric kernels ⇒ convolution = correlation.)</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">4-neighbour</div>\(-4(50) + (10{+}10{+}10{+}10) = -200 + 40 = \mathbf{-160}\)</div>
+          <div class="step"><div class="s-title">8-neighbour</div>\(-8(50) + 8(10) = -400 + 80 = \mathbf{-320}\)</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">4-neighbour \(=-160\), 8-neighbour \(=-320\). The 8-neighbour version reacts ~2× more strongly (it also senses diagonals) — more sensitive, but noisier.</p></div>
+      </div>
+      <p>Try any kernel × any patch, toggle correlation/convolution:</p>
+      <div data-demo="convolution" data-preset="prewittx" data-image="spot"></div>
+
+      <!-- ===================== B ===================== -->
+      <h2 id="B">B · Edge detection by 1st &amp; 2nd derivatives <span class="badge blue">L4</span></h2>
+      <div class="callout intuition"><div class="c-head">▶ From the recording (L4)</div>
+        <p>"Difference of intensities = gradient. We take derivatives — subtract the previous pixel. You can zero-pad at the borders." He walked a 1-D intensity scan line and showed first differences flag edges, then second differences <em>amplify</em> them.</p>
+      </div>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> A 1-D intensity scan line is \([0,\,0,\,0,\,6,\,6,\,6]\). Compute the first-order derivative (difference \(f[i]-f[i-1]\), zero-padded) and identify the edge. Then take the second derivative.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">First derivative \(f[i]-f[i-1]\)</div>\([0,\,0,\,0,\,6,\,0,\,0]\) — a single spike of \(+6\) at the 0→6 transition = the <strong>edge location</strong>.</div>
+          <div class="step"><div class="s-title">Second derivative (difference of the first derivative)</div>\([0,0,0,6,-6,0]\) — a \(+6\) then \(-6\): the edge sits at the <strong>zero-crossing</strong> between them.</div>
+          <div class="step"><div class="s-title">Why bother with the 2nd derivative?</div>It gives a sharper, "cleaner rate of change" and localizes the edge precisely at the zero-crossing — but it amplifies noise, so smooth first.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">First derivative peaks (\(+6\)) at the edge; second derivative produces a \(+6,-6\) pair whose zero-crossing marks the edge. Edges with noise need Gaussian smoothing before differentiation.</p></div>
+      </div>
+
+      <!-- ===================== C ===================== -->
+      <h2 id="C">C · Histogram equalization — the professor's pre-solved example <span class="badge amber">pre-solved in revision</span></h2>
+      <div class="callout intuition"><div class="c-head">▶ From the recording (L8)</div>
+        <p>He took a <strong>3×3, 3-bit image</strong> (levels 0–7), and ran one iteration: "count each level → probability mass function (\(n/9\)) → cumulative \(\to\) CDF → multiply by \(L-1=7\) → round to the nearest integer (bits must be discrete)." His mapping came out 0→1, 1→2, 2→3 … and he chose this example <em>on purpose</em> to show a subtle point.</p>
+      </div>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Equalize the 3-bit (\(L=8\)) image \(\begin{bmatrix}0&1&2\\2&3&4\\4&5&6\end{bmatrix}\) (9 pixels). Counts: level 0→1, 1→1, 2→2, 3→1, 4→2, 5→1, 6→1, 7→0.</p>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>r</th><th>n<sub>k</sub></th><th>cumulative</th><th>CDF = cum/9</th><th>7·CDF</th><th>round → s</th></tr></thead>
+          <tbody>
+            <tr><td class="num">0</td><td class="num">1</td><td class="num">1</td><td class="num">0.111</td><td class="num">0.78</td><td class="num"><b>1</b></td></tr>
+            <tr><td class="num">1</td><td class="num">1</td><td class="num">2</td><td class="num">0.222</td><td class="num">1.56</td><td class="num"><b>2</b></td></tr>
+            <tr><td class="num">2</td><td class="num">2</td><td class="num">4</td><td class="num">0.444</td><td class="num">3.11</td><td class="num"><b>3</b></td></tr>
+            <tr><td class="num">3</td><td class="num">1</td><td class="num">5</td><td class="num">0.556</td><td class="num">3.89</td><td class="num"><b>4</b></td></tr>
+            <tr><td class="num">4</td><td class="num">2</td><td class="num">7</td><td class="num">0.778</td><td class="num">5.44</td><td class="num"><b>5</b></td></tr>
+            <tr><td class="num">5</td><td class="num">1</td><td class="num">8</td><td class="num">0.889</td><td class="num">6.22</td><td class="num"><b>6</b></td></tr>
+            <tr><td class="num">6</td><td class="num">1</td><td class="num">9</td><td class="num">1.000</td><td class="num">7.00</td><td class="num"><b>7</b></td></tr>
+            <tr><td class="num">7</td><td class="num">0</td><td class="num">9</td><td class="num">1.000</td><td class="num">7.00</td><td class="num"><b>7</b></td></tr>
+          </tbody>
+        </table></div>
+        <p>Mapping \(0\!\to\!1,\,1\!\to\!2,\,2\!\to\!3,\,3\!\to\!4,\,4\!\to\!5,\,5\!\to\!6,\,6\!\to\!7\). Transformed image:</p>
+        <div class="matrix-row">
+          <span class="matrix" style="grid-template-columns:repeat(3,38px)"><span class="cell">1</span><span class="cell">2</span><span class="cell">3</span><span class="cell">3</span><span class="cell">4</span><span class="cell">5</span><span class="cell">5</span><span class="cell">6</span><span class="cell">7</span></span>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer + the point he was making</span>
+          <p style="margin:4px 0">Output image \(\begin{bmatrix}1&2&3\\3&4&5\\5&6&7\end{bmatrix}\). Notice the input used levels 0–6 but the output uses 1–7 — <strong>the lowest level (0) is emptied</strong>. His deliberate point: on an <em>already well-spread</em> histogram, vanilla histogram equalization can <strong>constrict the range and mildly deteriorate</strong> the image. Do it for <em>one iteration only</em>, and keep values discrete (rounding, e.g. \(28/9=3.11\to3\)).</p>
+        </div>
+      </div>
+      <p>Step through the CDF mapping interactively:</p>
+      <div data-demo="histeq" data-set="class5"></div>
+
+      <!-- ===================== D ===================== -->
+      <h2 id="D">D · HOG orientation binning with interpolation — pre-solved <span class="badge amber">pre-solved in revision</span></h2>
+      <div class="callout intuition"><div class="c-head">▶ From the recording (L7 &amp; L8)</div>
+        <p>He used 9 bins at <strong>20°, 40°, 60° … 180°</strong> and split each pixel's magnitude between the two nearest bins by linear interpolation: "weight to the lower bin = (upper centre − angle)/20." He worked two pixels and accumulated them into the 60° bin.</p>
+      </div>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Bin two pixels into the 9-bin HOG histogram (bin width 20°).<br>Pixel 1: \(\theta=45^\circ,\ |g|=14.14\). &nbsp; Pixel 2: \(\theta=63.43^\circ,\ |g|=22.36\).</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Pixel 1 — between 40° and 60°</div>\(w_{40}=\dfrac{60-45}{20}=0.75,\ \ w_{60}=0.25\). &nbsp; Bin 40° gets \(0.75(14.14)=10.61\); &nbsp; Bin 60° gets \(0.25(14.14)=3.53\).</div>
+          <div class="step"><div class="s-title">Pixel 2 — between 60° and 80°</div>\(w_{60}=\dfrac{80-63.43}{20}=0.83,\ \ w_{80}=0.17\). &nbsp; Bin 60° gets \(0.83(22.36)=18.56\); &nbsp; Bin 80° gets \(0.17(22.36)=3.80\).</div>
+          <div class="step"><div class="s-title">Accumulate the 60° bin</div>\(3.53 + 18.56 = 22.09\) — the dominant (peak) bin, exactly as he showed.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Bin 40° = 10.61, <strong>Bin 60° = 22.09</strong> (peak), Bin 80° = 3.80. The cell's dominant orientation is ≈ 60°. <small>(Magnitudes 14.14 = √200 and 22.36 = √500 come from \((g_x,g_y)=(10,10)\) and \((10,20)\).)</small></p></div>
+      </div>
+      <p>Set θ = 45°, then 63.43°, and cast each vote:</p>
+      <div data-demo="hog"></div>
+
+      <!-- ===================== E ===================== -->
+      <h2 id="E">E · Harris — is this point an edge or a corner? <span class="badge amber">flagged for exam</span></h2>
+      <div class="callout intuition"><div class="c-head">▶ From the recording (L6 &amp; L8)</div>
+        <p>"A corner is a point where intensity changes in <em>multiple</em> directions." Harris steps he gave: <strong>① Gaussian smooth → ② derivative in x and y → ③ build the matrix → ④ corner response</strong>. And: "you can expect a numerical — whether this point is an edge or a corner."</p>
+      </div>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> A window gives \(\sum I_x^2 = 4,\ \sum I_y^2 = 4,\ \sum I_xI_y = 1\). With \(k=0.04\), compute \(R = \det(M) - k\,(\text{trace }M)^2\) and classify. Repeat for a second window with \(\sum I_x^2 = 6,\ \sum I_y^2 = 0,\ \sum I_xI_y = 0\).</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Window 1 — M, det, trace</div>\(M=\begin{bmatrix}4&1\\1&4\end{bmatrix}\): \(\det = 16-1 = 15\), \(\text{trace}=8\).</div>
+          <div class="step"><div class="s-title">Window 1 — response</div>\(R = 15 - 0.04(8)^2 = 15 - 2.56 = \mathbf{12.44} &gt; 0\) → <strong>corner</strong> (eigenvalues ≈ 5 and 3, both large).</div>
+          <div class="step"><div class="s-title">Window 2 — det, trace, R</div>\(\det = 0,\ \text{trace}=6;\ \ R = 0 - 0.04(6)^2 = \mathbf{-1.44} &lt; 0\) → <strong>edge</strong> (one eigenvalue large, one zero).</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Window 1: \(R=+12.44\) → corner. Window 2: \(R=-1.44\) → edge. (If both \(\sum I_x^2,\sum I_y^2\approx0\) then \(R\approx0\) → flat.) Rule: \(R&gt;0\) corner, \(R&lt;0\) edge, \(|R|\) small flat.</p></div>
+      </div>
+      <p>Watch the gradient scatter decide flat/edge/corner:</p>
+      <div data-demo="harris"></div>
+
+      <!-- ===================== F ===================== -->
+      <h2 id="F">F · Gradient magnitude &amp; direction (+ assumptions) <span class="badge blue">L4 / L6</span></h2>
+      <div class="callout intuition"><div class="c-head">▶ From the recording</div>
+        <p>"Every one of these algorithms requires gradient computation — magnitude and angle." And the grading warning: if your \(G_x\) is written \(4\times5\) when the grader expects \(5\times4\), "they may mark you wrong in the spur of the moment — so write your assumptions."</p>
+      </div>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> For \(\begin{bmatrix}10&10&30\\10&10&30\\10&10&30\end{bmatrix}\) compute \(g_x,g_y\) (Sobel), the gradient magnitude and direction, and the edge orientation. <em>Assumption: \(x\) increases left→right (columns), \(y\) increases top→bottom (rows); correlation.</em></p>
+        <div class="steps">
+          <div class="step"><div class="s-title">g_x = (right col·[1,2,1]) − (left col·[1,2,1])</div>\((30{+}60{+}30) - (10{+}20{+}10) = 120 - 40 = 80\)</div>
+          <div class="step"><div class="s-title">g_y = (bottom row·[1,2,1]) − (top row·[1,2,1])</div>columns identical top-to-bottom ⇒ \(g_y = 0\)</div>
+          <div class="step"><div class="s-title">Magnitude &amp; direction</div>\(\|\nabla f\| = \sqrt{80^2+0^2} = 80;\quad \theta = \tan^{-1}(0/80) = 0^\circ\)</div>
+          <div class="step"><div class="s-title">Edge orientation</div>edge ⟂ gradient \(= 90^\circ\) → a <strong>vertical edge</strong>, consistent with the dark-left/bright-right patch.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(g_x=80,\ g_y=0\); magnitude 80; gradient at \(0^\circ\); vertical edge. Because the convention was stated, the grader can't dock you for axis orientation.</p></div>
+      </div>
+
+      <!-- ===================== G ===================== -->
+      <h2 id="G">G · Hough — a line from points <span class="badge blue">L5</span></h2>
+      <div class="callout intuition"><div class="c-head">▶ From the recording (L5)</div>
+        <p>"You only need two points to make a line." He rearranged \(y=mx+c\) to \(m=\dfrac{y-c}{x}\) and warned that <strong>your textbook may call the intercept \(b\) instead of \(c\)</strong> — so match the notation.</p>
+      </div>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Using the Hough \((m,c)\) transform, check whether \((1,1),(2,2),(3,3)\) are collinear, and give the line.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Vote-lines \(c=-x m + y\)</div>\((1,1)\!: c=-m+1;\ \ (2,2)\!: c=-2m+2;\ \ (3,3)\!: c=-3m+3\)</div>
+          <div class="step"><div class="s-title">Intersect first two</div>\(-m+1=-2m+2 \Rightarrow m=1,\ c=0\)</div>
+          <div class="step"><div class="s-title">Check the third</div>\(-3(1)+3 = 0\) ✓</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">All three vote-lines meet at \((m,c)=(1,0)\) → collinear on \(y=x\). (If the points made a <em>vertical</em> line, switch to \(\rho=x\cos\theta+y\sin\theta\) — see <a href="exam-q5.html">Q5</a>.)</p></div>
+      </div>
+      <div data-demo="hough"></div>
+
+      <!-- ===================== H ===================== -->
+      <h2 id="H">H · Is 3-bit quantization good enough? (2-bit vs 8-bit) <span class="badge amber">flagged theory-numeric</span></h2>
+      <div class="callout intuition"><div class="c-head">▶ From the recording (L8)</div>
+        <p>"If I give you a choice of quantization between 2-bit and 8-bit, which would you prefer? And for 8-bit, what are the hardware requirements? — those sort of questions where you think a little deeper."</p>
+      </div>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Is 3-bit quantization "good enough"? Compare 2-bit vs 8-bit and state the hardware trade-off.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Levels</div>2-bit → \(2^2=4\) levels; 3-bit → 8 levels; 8-bit → \(2^8=256\) levels.</div>
+          <div class="step"><div class="s-title">Quality</div>Few levels (2–3 bit) cause <strong>false contouring</strong> — smooth gradients break into visible bands. 3-bit is fine only for images with little tonal variation; for photographs it's too coarse.</div>
+          <div class="step"><div class="s-title">Which to prefer</div>For visual quality, <strong>8-bit</strong>: 256 levels are enough that the eye sees no banding.</div>
+          <div class="step"><div class="s-title">Hardware cost of 8-bit</div>More bits ⇒ a higher-resolution <strong>ADC</strong>, ~\(8/2=4\times\) the storage vs 2-bit, more memory bandwidth and power. On constrained edge/ADAS/drone hardware you may deliberately drop bit-depth to save those resources.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">3-bit (8 levels) is generally <strong>not</strong> good enough for natural images (false contouring). Prefer 8-bit for quality; the cost is a finer ADC, ~4× storage vs 2-bit, and more bandwidth/power — a quality-vs-resource trade-off set by the hardware.</p></div>
+      </div>
+
+      <!-- ===================== I ===================== -->
+      <h2 id="I">I · RANSAC — iterate until enough inliers <span class="badge blue">L8</span></h2>
+      <div class="callout intuition"><div class="c-head">▶ From the recording (L8)</div>
+        <p>"We keep going until the line covers ~80% inliers — a simple evaluation criterion, repeated. A point is an inlier if its distance to the model is within the threshold (e.g. match distance > 0.3× something). Sometimes the target (say 80%) becomes untenable — you might be stuck at 60% — so you cap the iterations."</p>
+      </div>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> RANSAC line fit with \(s=2\) sample points, an outlier fraction \(e=0.2\), wanting success probability \(p=0.99\). How many iterations \(N\)? And what's the inlier rule?</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Inlier rule</div>a point is an inlier if its <strong>perpendicular distance to the candidate line ≤ threshold</strong> \(t\) (set from expected noise, e.g. ~3 px). Score a model by its inlier count / fraction; accept when it covers, say, ≥ 80%.</div>
+          <div class="step"><div class="s-title">Prob. a 2-point sample is all-inliers</div>\((1-e)^s = 0.8^2 = 0.64\)</div>
+          <div class="step"><div class="s-title">Iterations</div>\(N = \dfrac{\log(1-p)}{\log(1-(1-e)^s)} = \dfrac{\log 0.01}{\log 0.36} = \dfrac{-2}{-0.4437} \approx 4.5 \to \mathbf{5}\)</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">≈ 5 iterations. Inlier = within the distance threshold of the model; iterate, keep the model with the most inliers, stop when the inlier fraction (e.g. 80%) is met or the iteration cap is hit.</p></div>
+      </div>
+
+      <!-- ===================== J ===================== -->
+      <h2 id="J">J · Flagged theory — "why better than its predecessor?" <span class="badge amber">flagged theory</span></h2>
+      <div class="callout intuition"><div class="c-head">▶ From the recording</div>
+        <p>"Why was it better than its predecessor — those sorts of questions you can expect." Have a one-line "upgrade reason" ready for each pair:</p>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Method</th><th>Beats…</th><th>Because</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Sobel</strong></td><td>Prewitt</td><td>centre row/column weighted ×2 → built-in smoothing → less noise-sensitive.</td></tr>
+          <tr><td><strong>Gaussian</strong> filter</td><td>box/average</td><td>smooth (no ringing), isotropic, separable, clean low-pass response.</td></tr>
+          <tr><td><strong>Canny</strong></td><td>plain gradient threshold</td><td>NMS gives 1-px edges + hysteresis links them → good detection, localization, single response.</td></tr>
+          <tr><td><strong>DoG</strong></td><td>LoG</td><td>DoG ≈ LoG but nearly free from the Gaussian pyramid (just subtractions).</td></tr>
+          <tr><td><strong>SIFT</strong></td><td>Harris</td><td>adds scale (and rotation) invariance — Harris alone is not scale-invariant.</td></tr>
+          <tr><td><strong>CMYK</strong> (with K)</td><td>plain CMY</td><td>black ink \(K=\min(C,M,Y)\) saves colored ink and deepens blacks.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout key"><div class="c-head">◆ Also flagged: associative property of convolution</div>
+        <p>"Just remember this — the associative property of convolution saves us one operation." Instead of <em>smooth then differentiate</em> (two convolutions per pixel), pre-combine them into a single <strong>derivative-of-Gaussian</strong> kernel: \((G * I)' = G' * I\). One convolution does the work of two — used in Canny and SIFT.</p>
+      </div>
+
+      <div class="callout exam">
+        <div class="c-head">✦ Highest-probability checklist</div>
+        <p>From what he solved and flagged, prioritise: <strong>convolution/correlation (4 &amp; 8 nbr)</strong>, <strong>histogram equalization (one iteration, discrete)</strong>, <strong>HOG interpolation binning</strong>, <strong>Harris edge-vs-corner</strong>, <strong>gradient magnitude/direction</strong>, plus the theory upgrades above and the quantization trade-off. Re-attempt each from a blank sheet, and <em>always write your assumptions</em>.</p>
+      </div>
+
+      <div class="pager">
+        <a href="practice.html"><div class="pg-dir">← Mock paper</div><div class="pg-title">✎ Questions for Practice</div></a>
+        <a class="next" href="numericals.html"><div class="pg-dir">Next →</div><div class="pg-title">∑ Numericals — Step by Step</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

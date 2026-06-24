@@ -26,10 +26,12 @@
       { id: "exam-q3", ix: "Q3", label: "Q3 · Edge Kernel & Color", href: "exam-q3.html" },
       { id: "exam-q4", ix: "Q4", label: "Q4 · Laplacian & Operators", href: "exam-q4.html" },
       { id: "exam-q5", ix: "Q5", label: "Q5 · Hough & Corners", href: "exam-q5.html" },
-      { id: "exam-q6", ix: "Q6", label: "Q6 · HOG & RANSAC", href: "exam-q6.html" }
+      { id: "exam-q6", ix: "Q6", label: "Q6 · HOG & RANSAC", href: "exam-q6.html" },
+      { id: "practice", ix: "✎", label: "Questions for Practice", href: "practice.html" },
+      { id: "lectures", ix: "▶", label: "From the Lectures", href: "lectures.html" }
     ]},
     { group: "Reference", items: [
-      { id: "numericals", ix: "∑", label: "All Class Numericals", href: "numericals.html" },
+      { id: "numericals", ix: "∑", label: "Numericals — Step by Step", href: "numericals.html" },
       { id: "formulas",   ix: "ƒ", label: "Formula Cheat-Sheet", href: "formulas.html" }
     ]}
   ];
