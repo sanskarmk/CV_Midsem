@@ -20,7 +20,7 @@
       <p class="lead">Each numerical type explained twice: first <strong>"understand it"</strong> (the why + the method you follow), then a clean <strong>exam-answer-style</strong> worked example — written the way you'd put it on the answer sheet, with the result boxed. Master the <em>method</em> and any numbers become routine.</p>
 
       <div class="toc">
-        <h4>The 14 types</h4>
+        <h4>The numerical types</h4>
         <ul>
           <li><a href="#t1">1 · Sampling, quantization &amp; storage</a></li>
           <li><a href="#t2">2 · Contrast stretching</a></li>
@@ -36,6 +36,7 @@
           <li><a href="#t12">12 · HOG histogram &amp; binning</a></li>
           <li><a href="#t13">13 · RGB → CMYK conversion</a></li>
           <li><a href="#t14">14 · RANSAC iteration count</a></li>
+          <li><a href="#t15">15 · Canny — all 4 steps (pipeline)</a></li>
         </ul>
       </div>
 
@@ -338,6 +339,20 @@
         </div>
         <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(N \approx \mathbf{5}\) iterations. More outliers or larger \(s\) ⇒ steeply more iterations.</p></div>
       </div>
+
+      <!-- ============ 15 ============ -->
+      <h2 id="t15">15 · Canny edge detector — all 4 steps <span class="badge blue">Session 5</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>Canny isn't one formula — it's a 4-stage <strong>pipeline</strong> run on the whole image. A full worked numerical (Gaussian smoothing → Sobel magnitude/angle → non-maximum suppression → double-threshold hysteresis) on a \(5\times5\) image with a noisy pixel is solved end-to-end, with every intermediate matrix, on the Session 5 page.</p>
+      </div>
+      <h4>Method (per stage)</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">① Smooth</div>convolve with a \(3\times3\) Gaussian \(\frac1{16}[1\,2\,1;2\,4\,2;1\,2\,1]\) → noise (e.g. a 160 speck) collapses toward its neighbours.</div>
+        <div class="step"><div class="s-title">② Gradient</div>Sobel \(g_x,g_y\) → magnitude \(\sqrt{g_x^2+g_y^2}\) and angle \(\tan^{-1}(g_y/g_x)\), quantised to \(\{0,45,90,135\}^\circ\).</div>
+        <div class="step"><div class="s-title">③ NMS</div>keep a pixel only if its magnitude ≥ its two neighbours <em>along the gradient direction</em> → 1-px-thin edges.</div>
+        <div class="step"><div class="s-title">④ Hysteresis</div>strong if \(\ge T_H\), weak if \(\in[T_L,T_H)\); keep weak only if 8-connected to a strong edge (ratio \(T_H:T_L\approx\)2:1–3:1).</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Full worked example</span><p style="margin:4px 0">See the complete computation — every matrix at every stage, ending in a clean 1-pixel vertical edge with the noise rejected — on <a href="session5.html#canny-num"><strong>Session 5 · Canny end-to-end →</strong></a></p></div>
 
       <div class="callout key">
         <div class="c-head">◆ Drill plan</div>

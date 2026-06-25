@@ -24,6 +24,7 @@
         <ul>
           <li><a href="#canny">Canny — the 4 steps</a></li>
           <li><a href="#canny-demo">Canny, live</a></li>
+          <li><a href="#canny-num">Canny — full numerical</a></li>
           <li><a href="#linefit">Why line fitting needs voting</a></li>
           <li><a href="#hough-mc">Hough in (m, c) space</a></li>
           <li><a href="#hough-demo">Hough, live</a></li>
@@ -53,6 +54,79 @@
       <h2 id="canny-demo">Canny, live</h2>
       <p>Step through all four stages on a noisy synthetic image. Adjust \(\sigma\) and the thresholds and watch the final edge map respond:</p>
       <div data-demo="canny"></div>
+
+      <h2 id="canny-num">Worked numerical — Canny end-to-end (all 4 steps)</h2>
+      <p>A complete run on a small \(5\times5\) image with a vertical edge (dark left → bright right) and one <strong>noisy speck</strong> (value 160) in the dark region — so you can see smoothing earn its keep. Convention: \(x\) increases left→right, replicate (edge) padding, Sobel for gradients.</p>
+      <div class="matrix-row">
+        <span class="mlabel">Input image \(I\):</span>
+        <span class="matrix" style="grid-template-columns:repeat(5,40px)">
+          <span class="cell">20</span><span class="cell">20</span><span class="cell">20</span><span class="cell">200</span><span class="cell">200</span>
+          <span class="cell">20</span><span class="cell">20</span><span class="cell">20</span><span class="cell">200</span><span class="cell">200</span>
+          <span class="cell">20</span><span class="cell center">160</span><span class="cell">20</span><span class="cell">200</span><span class="cell">200</span>
+          <span class="cell">20</span><span class="cell">20</span><span class="cell">20</span><span class="cell">200</span><span class="cell">200</span>
+          <span class="cell">20</span><span class="cell">20</span><span class="cell">20</span><span class="cell">200</span><span class="cell">200</span>
+        </span>
+      </div>
+
+      <h3>Step 1 — Gaussian smoothing</h3>
+      <p>Convolve with the \(3\times3\) Gaussian \(\frac{1}{16}\begin{bmatrix}1&2&1\\2&4&2\\1&2&1\end{bmatrix}\). Worked at the noisy pixel \((row\,2, col\,1)=160\), whose neighbours are all 20:</p>
+      <div class="eq">\[ S_{2,1}=\tfrac{1}{16}\big(20{+}40{+}20+40{+}\underbrace{640}_{4\times160}{+}40+20{+}40{+}20\big)=\tfrac{880}{16}=55 \]</div>
+      <p>The speck <strong>160 collapses to 55</strong> — that's the whole point of smoothing first. Full smoothed image \(S\) (rounded):</p>
+      <pre>  20   20   65  155  200
+  29   38   74  155  200
+  38   55   82  155  200
+  29   38   74  155  200
+  20   20   65  155  200</pre>
+
+      <h3>Step 2 — Gradient magnitude &amp; angle (Sobel)</h3>
+      <p>Apply \(g_x=\begin{bmatrix}-1&0&1\\-2&0&2\\-1&0&1\end{bmatrix}\), \(g_y=\begin{bmatrix}-1&-2&-1\\0&0&0\\1&2&1\end{bmatrix}\) to \(S\). Worked at the edge pixel \((2,3)\):</p>
+      <div class="eq">\[ g_x=(200{+}400{+}200)-(74{+}164{+}74)=800-312=488,\qquad g_y=(74{+}310{+}200)-(74{+}310{+}200)=0 \]</div>
+      <div class="eq">\[ \|\nabla S\|=\sqrt{488^2+0^2}=488,\qquad \theta=\tan^{-1}\!\tfrac{0}{488}=0^\circ\ (\text{horizontal gradient}) \]</div>
+      <p>Gradient magnitude \(\|\nabla S\|\) and the direction quantised to \(\{0^\circ,45^\circ,90^\circ,135^\circ\}\):</p>
+      <div class="demo-flex">
+        <div><div class="mlabel">‖∇S‖ (magnitude)</div><pre>  45  188  524  531  180
+  94  208  475  505  180
+  52  180  435  488  180
+  94  208  475  505  180
+  45  188  524  531  180</pre></div>
+        <div><div class="mlabel">quantised direction</div><pre>  90    0    0    0    0
+  90   45    0    0    0
+   0    0    0    0    0
+  90  135    0    0    0
+  90    0    0    0    0</pre></div>
+      </div>
+      <p>The true edge is the big ridge in <strong>column 3</strong> (≈ 488–531); the leftover noise gives only a modest bump in columns 0–1 (≈ 90–208).</p>
+
+      <h3>Step 3 — Non-maximum suppression</h3>
+      <p>Keep a pixel only if its magnitude is ≥ its two neighbours <em>along the gradient direction</em>. The edge pixels have direction \(0^\circ\) → compare left/right.</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">Edge pixel (2,3): keep</div>dir \(0^\circ\): left \(=435\), right \(=180\); \(488\ge435\) and \(488\ge180\) → <strong>kept</strong>.</div>
+        <div class="step"><div class="s-title">Off-peak pixel (0,1): suppress</div>dir \(0^\circ\): left \(=45\), right \(=524\); \(188 &lt; 524\) → <strong>suppressed</strong> (it's not the ridge peak).</div>
+      </div>
+      <p>Result — the edge is thinned to a <strong>single column</strong>; the noise leaves only two tiny survivors (94):</p>
+      <pre>   0    0    0  531    0
+  94    0    0  505    0
+   0    0    0  488    0
+  94    0    0  505    0
+   0    0    0  531    0</pre>
+
+      <h3>Step 4 — Double thresholding &amp; hysteresis</h3>
+      <p>Pick \(T_H=300,\ T_L=120\) (ratio 2.5:1). Classify each surviving pixel: <strong>strong</strong> if \(\ge T_H\), <strong>weak</strong> if \(\in[T_L,T_H)\), else discard. Then keep weak pixels only if 8-connected to a strong one.</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">Column 3 (488–531)</div>all \(\ge 300\) → <strong>strong</strong> edges.</div>
+        <div class="step"><div class="s-title">Noise survivors (94)</div>\(94 &lt; T_L=120\) → <strong>discarded</strong> (not even weak). Smoothing + thresholding killed the speck entirely.</div>
+      </div>
+      <p>Final edge map — a clean, 1-pixel-wide vertical edge, noise gone:</p>
+      <pre>  .  .  .  ▉  .
+  .  .  .  ▉  .
+  .  .  .  ▉  .
+  .  .  .  ▉  .
+  .  .  .  ▉  .</pre>
+      <div class="answer-box"><span class="a-tag">What this shows</span><p style="margin:4px 0">All four stages in action: <strong>(1)</strong> Gaussian crushed the 160 speck to 55; <strong>(2)</strong> Sobel localised the true edge at column 3; <strong>(3)</strong> NMS thinned it to one pixel; <strong>(4)</strong> double-thresholding kept the strong edge and rejected the weak noise. Output: one clean vertical edge.</p></div>
+      <div class="callout exam">
+        <div class="c-head">✦ Exam tip</div>
+        <p>If a full \(5\times5\) is too long under time pressure, examiners often ask for <em>one</em> stage on a small patch ("apply NMS to this pixel given its direction", or "classify these pixels with \(T_H,T_L\)"). Always <strong>state your padding, Sobel convention, and threshold values</strong>. Re-run this live in the <a href="#canny-demo">Canny demo above</a>.</p>
+      </div>
 
       <h2 id="linefit">Why line fitting needs voting</h2>
       <p>After edge detection we have lots of edge points, and we want the <strong>lines</strong> behind them. Why not just fit? Because of three problems: <strong>clutter</strong> (extra points, multiple lines — which points belong to which line?), <strong>missing evidence</strong> (only parts of each line survive — how to bridge gaps?), and <strong>noise</strong> (points and orientations are imperfect). Checking every subset of points is infeasible.</p>

@@ -973,7 +973,7 @@
 
     function start() {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        status.textContent = "⚠ Camera API unavailable in this context. If you opened the file directly (file://) and it's blocked, run a quick local server — e.g. `python3 -m http.server` in this folder — and open http://localhost:8000/session6.html, which browsers treat as secure.";
+        status.textContent = "⚠ Camera API unavailable here. This page must be served from a secure context — https:// (e.g. GitHub Pages) or http://localhost. If you opened the raw file from disk (file://) and it's blocked, view it over http://localhost instead.";
         return;
       }
       status.textContent = "Requesting camera permission…";
@@ -985,9 +985,9 @@
           raf = requestAnimationFrame(frame);
         })
         .catch(function (err) {
-          var msg = err && err.name === "NotAllowedError" ? "Permission denied. Allow camera access in your browser's site settings and try again."
+          var msg = err && err.name === "NotAllowedError" ? "Permission denied. Allow camera access in your browser's site settings (click the camera icon in the address bar) and try again."
             : err && err.name === "NotFoundError" ? "No camera found on this device."
-            : "Could not start the camera (" + (err && err.name || err) + "). If on file://, try a local server (http://localhost).";
+            : "Could not start the camera (" + (err && err.name || err) + "). Make sure the page is on https:// or http://localhost and no other app is using the camera.";
           status.textContent = "⚠ " + msg;
         });
     }

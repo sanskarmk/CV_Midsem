@@ -160,7 +160,7 @@
       <div data-demo="camera"></div>
       <div class="callout warn">
         <div class="c-head">▲ Camera permission &amp; privacy</div>
-        <p>Your browser will ask for camera access; <strong>frames are processed on your device and never uploaded</strong>. If you opened the site directly as a <code>file://</code> page and the camera is blocked, run a quick local server in the site folder — <code>python3 -m http.server</code> — and open <code>http://localhost:8000/session6.html</code>, which browsers treat as a secure context.</p>
+        <p>Your browser will ask for camera access; <strong>frames are processed entirely on your device and never uploaded</strong>. On <strong>GitHub Pages — or any <code>https://</code> site — this works automatically</strong>, because HTTPS is a "secure context"; no server or extra setup is needed. (The only case needing a workaround is opening the raw files straight from disk as <code>file://</code>; if a browser blocks the camera there, just view them over <code>http://localhost</code> instead, e.g. VS Code Live Server.)</p>
       </div>
 
       <h2 id="takeaways">Key takeaways</h2>
