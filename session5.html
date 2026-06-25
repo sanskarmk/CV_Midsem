@@ -41,6 +41,10 @@
         <div class="step"><div class="s-title">3 · Non-maximum suppression (NMS)</div>Thin the ridges to 1-pixel width: keep a pixel only if its magnitude is a <strong>local maximum along the gradient direction</strong> (compare against the two neighbours in that direction). The angle is snapped to one of 4 directions: 0°, 45°, 90°, 135°.</div>
         <div class="step"><div class="s-title">4 · Double thresholding + hysteresis</div>Use two thresholds \(T_L, T_H\). Pixels \(\ge T_H\) are <strong>strong</strong> edges (definitely edges); pixels between \(T_L\) and \(T_H\) are <strong>weak</strong> — kept only if connected (via the 8-neighbourhood) to a strong edge. This links broken edges while rejecting noise. Recommended ratio \(T_H:T_L \approx\) 2:1 to 3:1.</div>
       </div>
+
+      <figure data-diagram="canny-flow" data-caption="Canny as a pipeline of four stages — each one cleans up the previous stage's output."></figure>
+
+      <figure data-diagram="nms" class="sm" data-caption="Non-maximum suppression (stage 3): a pixel survives only if its gradient magnitude is a local maximum along the gradient direction — turning thick ridges into 1-pixel edges."></figure>
       <div class="callout intuition">
         <div class="c-head">◆ Why two thresholds?</div>
         <p>A single threshold either lets noise through (too low) or breaks real edges into dashes (too high). Hysteresis gets the best of both: a <strong>high</strong> threshold to confidently <em>start</em> an edge, and a <strong>low</strong> threshold to <em>continue</em> it as long as it stays connected. "Strong edges are edges; weak edges are edges iff they touch a strong one."</p>
@@ -81,6 +85,8 @@
         <li>\(\theta\) — angle the perpendicular makes with the x-axis.</li>
       </ul>
       <p>Now both parameters are <strong>bounded</strong> (\(\theta\in[0,180^\circ)\), \(\rho\in[-D, D]\)), so every line — vertical included — fits in the accumulator. A point \((x_0,y_0)\) in image space maps to a <strong>sinusoid</strong> in \((\rho,\theta)\) space; intersecting sinusoids vote for a common line. This is the form actually used in practice.</p>
+
+      <figure data-diagram="hough-polar" class="sm" data-caption="The polar/normal form: ρ is the perpendicular distance from the origin to the line, θ the angle that perpendicular makes with the x-axis. Both are bounded, so vertical lines fit too."></figure>
 
       <h2 id="worked">Worked numerical — are the points collinear?</h2>
       <p>The class example (and the template for <a href="exam-q5.html">Q5</a>): determine whether \((1,2), (2,3), (3,4)\) lie on one line using the Hough transform.</p>

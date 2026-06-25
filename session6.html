@@ -80,6 +80,8 @@
       </table></div>
       <p><strong>The algorithm:</strong> ① compute \(R\) everywhere; ② keep points with \(R &gt; \text{threshold}\); ③ take only the <strong>local maxima</strong> of \(R\) (non-max suppression) so each corner is reported once.</p>
 
+      <figure data-diagram="harris-eigen" class="sm" data-caption="Classification in the eigenvalue plane (λ₁, λ₂): both small → flat (|R| small); one large → edge (R<0); both large → corner (R>0)."></figure>
+
       <h2 id="harris-demo">Harris, live</h2>
       <p>Move the window across the bright square. Watch the gradient scatter \((I_x, I_y)\) and how \(\lambda_1, \lambda_2\) and \(R\) classify the region:</p>
       <div data-demo="harris"></div>
@@ -113,6 +115,8 @@
         <div class="step"><div class="s-title">Blocks &amp; normalization</div>Group cells into <strong>2×2 blocks</strong> that slide with overlap. Normalise each block's concatenated histogram (e.g. L2-norm) to cancel lighting/contrast changes.</div>
         <div class="step"><div class="s-title">Concatenate</div>Stack all normalised block histograms into one feature vector. For 64×128: <strong>7×15 blocks × 4 cells × 9 bins = 3780</strong> dimensions. Feed to a classifier (e.g. SVM).</div>
       </div>
+
+      <figure data-diagram="hog-pipeline" data-caption="HOG end-to-end: divide the window into 8×8 cells → per-cell 9-bin orientation histogram → group into overlapping 2×2 blocks, L2-normalise → concatenate into the 3780-D descriptor."></figure>
 
       <h2 id="hog-num">HOG numerical — the class 5×5 example</h2>
       <p>A tiny illustrative cell. Image patch (grayscale):</p>

@@ -100,6 +100,13 @@
   mj.async = true; mj.id = "MathJax-script";
   document.head.appendChild(mj);
 
+  // ---- Inline SVG diagrams (self-initialising) ----
+  if (!window.CVDiagrams) {
+    var dg = document.createElement("script");
+    dg.src = "assets/diagrams.js"; dg.async = true;
+    document.head.appendChild(dg);
+  } else { window.CVDiagrams.initAll(); }
+
   // ---- Auto-init demos after DOM + demos.js ready ----
   function initDemos() {
     if (window.CVDemos && typeof window.CVDemos.initAll === "function") {

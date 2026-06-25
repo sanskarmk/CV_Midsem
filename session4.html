@@ -39,12 +39,16 @@
         <p>Where intensity jumps, its <strong>first derivative has a peak</strong> and its <strong>second derivative crosses zero</strong>. So differentiating the image and looking for large responses localizes edges. Since digital images are discrete, we approximate derivatives by <strong>differences</strong> between neighbouring pixels.</p>
       </div>
 
+      <figure data-diagram="edge-derivative" data-caption="A 1-D step edge and its derivatives: f′ peaks exactly at the edge, while f″ produces a +/− pair whose zero-crossing pinpoints the edge location."></figure>
+
       <h2 id="profiles">Edge profiles</h2>
       <div class="grid cols-3">
         <div class="card"><h4 style="margin-top:0">Step edge</h4><p style="margin-bottom:0">Intensity jumps instantly from one level to another (≈2 pixels wide). The ideal, sharp edge.</p></div>
         <div class="card"><h4 style="margin-top:0">Ramp edge</h4><p style="margin-bottom:0">Intensity changes gradually over several pixels (e.g. 9 px) — what real, slightly-blurred edges look like.</p></div>
         <div class="card"><h4 style="margin-top:0">Roof edge</h4><p style="margin-bottom:0">Intensity rises then falls (a thin line/ridge), like a bright wire on a dark background.</p></div>
       </div>
+      <figure data-diagram="edge-profiles" data-caption="The three canonical edge profiles. Top: image intensity across the edge; bottom: the 1-D intensity profile f(x). A step jumps instantly, a ramp rises gradually (real, slightly-blurred edges), and a roof is a thin bright line."></figure>
+
       <p>Real edges are corrupted by noise. Because differentiation <em>amplifies</em> noise, we almost always <strong>smooth first</strong> (Gaussian) and differentiate second — the seed of the Canny pipeline.</p>
 
       <h2 id="gradient">The image gradient</h2>
@@ -63,6 +67,8 @@
         <div class="c-head">◆ The orthogonality rule</div>
         <p>The gradient points <em>across</em> the edge (up the cliff); the edge itself runs <em>perpendicular</em> to the gradient. If the gradient direction is 135°, the edge direction is 45°.</p>
       </div>
+
+      <figure data-diagram="gradient-direction" class="sm" data-caption="The gradient ∇f points across the edge toward increasing brightness; the edge runs perpendicular (90°) to it."></figure>
 
       <h2 id="operators">Prewitt &amp; Sobel operators</h2>
       <p>We estimate \(g_x, g_y\) by convolving with small kernels. Both subtract one side from the other; <strong>Sobel</strong> additionally weights the centre row/column by 2, giving a little built-in smoothing (so it's more noise-robust than Prewitt).</p>

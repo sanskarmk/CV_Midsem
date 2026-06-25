@@ -365,6 +365,18 @@ details.qa .qa-body { padding: 4px 18px 18px 18px; border-top: 1px solid var(--b
 .kpi .k-num { font-size: 26px; font-weight: 800; background: linear-gradient(135deg,var(--accent),var(--accent-2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .kpi .k-label { font-size: 12.5px; color: var(--muted); }
 
+/* ---------- Diagrams (inline SVG figures) ---------- */
+figure.diagram {
+  margin: 20px 0; padding: 16px 16px 10px; text-align: center;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+figure.diagram svg { display: block; width: 100%; height: auto; max-width: 720px; margin: 0 auto; }
+figure.diagram figcaption { margin-top: 10px; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+figure.diagram .dg-fill-surface { fill: var(--surface-2); }
+figure.diagram.sm svg { max-width: 380px; }
+figure.diagram.md svg { max-width: 520px; }
+
 mjx-container { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 .eq { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px 16px; margin: 14px 0; overflow-x: auto; }
 

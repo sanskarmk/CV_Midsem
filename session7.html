@@ -75,6 +75,8 @@
       <p>An object's "right" amount of blur depends on how big it appears. SIFT builds a <strong>scale-space</strong>: the image repeatedly blurred by Gaussians of increasing \(\sigma\), grouped into octaves (each octave halves the resolution).</p>
       <div class="eq">\[ D(x,y,\sigma) = \big(G(x,y,k\sigma) - G(x,y,\sigma)\big) * I(x,y) \]</div>
       <p>The <strong>Difference of Gaussians (DoG)</strong> — subtracting adjacent blur levels — is a cheap approximation to the scale-normalised Laplacian-of-Gaussian, a strong blob detector. A pixel that is a <strong>local extremum among its 26 neighbours</strong> (8 in its scale + 9 above + 9 below in scale) is a candidate keypoint. Its scale tells you the blob's <em>characteristic size</em> — the foundation of scale invariance.</p>
+
+      <figure data-diagram="scale-space-dog" data-caption="Blur the image into a Gaussian scale-space, subtract adjacent levels to get the DoG (≈ LoG), then keep points that are extrema among their 26 neighbours in (x, y, σ) — keypoints at their natural scale."></figure>
       <div class="callout key">
         <div class="c-head">◆ Why DoG instead of LoG?</div>
         <p>The LoG is the ideal blob detector but expensive. DoG ≈ LoG and is almost free once you have the Gaussian pyramid (just subtractions). Extrema in the 3-D \((x, y, \sigma)\) volume are blobs at their natural scale.</p>
@@ -82,6 +84,8 @@
 
       <h2 id="descriptor">Orientation &amp; descriptor → rotation invariance</h2>
       <p>At each keypoint, SIFT computes a histogram of local gradient orientations and picks the dominant peak as the keypoint's <strong>canonical orientation</strong>. All subsequent measurements are made relative to this orientation, so rotating the image doesn't change the descriptor. The descriptor itself is a grid of orientation histograms (4×4×8 = 128 numbers), then normalised for illumination invariance. The result: features that match reliably across scale, rotation, viewpoint and lighting — even on Mars-rover images.</p>
+
+      <figure data-diagram="sift-descriptor" class="sm" data-caption="The SIFT descriptor: a 4×4 grid of cells around the keypoint, each holding an 8-bin orientation histogram — 4×4×8 = 128 numbers, measured relative to the keypoint's dominant orientation."></figure>
 
       <h2 id="ransac">RANSAC — fitting amid outliers</h2>
       <p>After matching, some correspondences are wrong (<strong>outliers</strong>). Plain least-squares is wrecked by even a few outliers because it tries to satisfy everyone. <strong>RANSAC</strong> (RANdom SAmple Consensus) fits robustly:</p>
@@ -91,6 +95,8 @@
         <div class="step"><div class="s-title">Score</div>Count <strong>inliers</strong> — points within a preset distance threshold of the model.</div>
         <div class="step"><div class="s-title">Repeat &amp; keep best</div>Iterate many times; keep the model with the most inliers. Optionally re-fit (least squares) using all inliers at the end.</div>
       </div>
+
+      <figure data-diagram="ransac" class="md" data-caption="RANSAC fits the model (here a line) that wins the most inliers — points within a distance threshold (dashed band). Outliers fall outside the band and never form a consensus, so they can't corrupt the fit."></figure>
       <div class="callout intuition">
         <div class="c-head">◆ The intuition (Efros / Tolstoy)</div>
         <p>"All good matches are alike; every bad match is bad in its own way." Inliers all agree with each other and pile onto the same model; outliers disagree with everyone, so they never form a consensus. RANSAC has guarantees only when outliers are <strong>&lt; 50%</strong>.</p>
