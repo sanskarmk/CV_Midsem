@@ -847,6 +847,171 @@
     onTheme(refresh); refresh();
   };
 
+  /* ============================================================
+     9) LIVE CAMERA — edges (Sobel/Canny) & Harris corners
+     ============================================================ */
+  DEMOS.camera = function (el, o) {
+    el.appendChild(head("Live Camera — Edges &amp; Corners",
+      "Point your webcam at the scene and watch Sobel / Canny edges and Harris corners computed live, in pure JavaScript. Frames are processed on your device and never uploaded.",
+      "Webcam · Live"));
+
+    var btns = make("div", "btn-row");
+    var startBtn = make("button", "btn primary", "▶ Start camera");
+    var stopBtn = make("button", "btn", "⏹ Stop"); stopBtn.disabled = true;
+    var modeSel = make("select");
+    [["edges", "Sobel edges"], ["canny", "Canny edges"], ["corners", "Harris corners"], ["original", "Original"]]
+      .forEach(function (m) { var op = make("option", null, m[1]); op.value = m[0]; modeSel.appendChild(op); });
+    var mirrorBtn = make("button", "btn", "Mirror: On");
+    btns.appendChild(startBtn); btns.appendChild(stopBtn); btns.appendChild(modeSel); btns.appendChild(mirrorBtn);
+    el.appendChild(btns);
+
+    var ctrls = make("div");
+    var sR = make("input"); sR.type = "range"; sR.min = 1; sR.max = 100; sR.value = 45; var sV = make("span", "val");
+    var cw = make("div", "ctrl"); cw.appendChild(make("label", null, "Sensitivity")); cw.appendChild(sR); cw.appendChild(sV);
+    ctrls.appendChild(cw); el.appendChild(ctrls);
+
+    var video = document.createElement("video");
+    video.setAttribute("playsinline", ""); video.muted = true; video.autoplay = true; video.style.display = "none";
+    el.appendChild(video);
+    var out = document.createElement("canvas"); out.width = 320; out.height = 240;
+    out.style.width = "min(100%, 480px)"; out.style.background = "var(--code-bg)"; out.style.imageRendering = "auto";
+    el.appendChild(out);
+    var legend = make("div", "legend"); el.appendChild(legend);
+    var status = make("div", "readout");
+    status.textContent = "Camera is off. Click “Start camera” — your browser will ask for permission. Everything runs locally; no frames are uploaded.";
+    el.appendChild(status);
+
+    var stream = null, raf = null, mirror = true, mode = "edges";
+    var PW = 320, PH = 240;
+    var proc = document.createElement("canvas");
+    var fpsT = 0, fpsN = 0, fpsVal = 0;
+
+    function toGray(d, n) { var g = new Float32Array(n); for (var i = 0, j = 0; i < n; i++, j += 4) g[i] = 0.299 * d[j] + 0.587 * d[j + 1] + 0.114 * d[j + 2]; return g; }
+    function blur3(g, W, H) {
+      var t = new Float32Array(W * H), out2 = new Float32Array(W * H), i;
+      for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) { i = y * W + x; var l = x > 0 ? g[i - 1] : g[i], r = x < W - 1 ? g[i + 1] : g[i]; t[i] = (l + 2 * g[i] + r) * 0.25; }
+      for (var y2 = 0; y2 < H; y2++) for (var x2 = 0; x2 < W; x2++) { i = y2 * W + x2; var u = y2 > 0 ? t[i - W] : t[i], dn = y2 < H - 1 ? t[i + W] : t[i]; out2[i] = (u + 2 * t[i] + dn) * 0.25; }
+      return out2;
+    }
+    function sobel(g, W, H) {
+      var gx = new Float32Array(W * H), gy = new Float32Array(W * H);
+      for (var y = 1; y < H - 1; y++) for (var x = 1; x < W - 1; x++) {
+        var i = y * W + x;
+        var tl = g[i - W - 1], tc = g[i - W], tr = g[i - W + 1], ml = g[i - 1], mr = g[i + 1], bl = g[i + W - 1], bc = g[i + W], br = g[i + W + 1];
+        gx[i] = (tr + 2 * mr + br) - (tl + 2 * ml + bl);
+        gy[i] = (bl + 2 * bc + br) - (tl + 2 * tc + tr);
+      }
+      return { gx: gx, gy: gy };
+    }
+
+    function renderEdges(g, W, H, img) {
+      var s = sobel(g, W, H), gx = s.gx, gy = s.gy, n = W * H;
+      var thr = 160 * (1 - sR.value / 100) + 12; // higher sensitivity → lower threshold
+      var d = img.data;
+      for (var i = 0, j = 0; i < n; i++, j += 4) {
+        var m = Math.sqrt(gx[i] * gx[i] + gy[i] * gy[i]) / 4;
+        var v = m > thr ? 255 : 0;
+        d[j] = d[j + 1] = d[j + 2] = v; d[j + 3] = 255;
+      }
+    }
+    function renderCanny(g, W, H, img) {
+      g = blur3(g, W, H);
+      var s = sobel(g, W, H), gx = s.gx, gy = s.gy, n = W * H;
+      var mag = new Float32Array(n), sup = new Float32Array(n), i, x, y;
+      for (i = 0; i < n; i++) mag[i] = Math.sqrt(gx[i] * gx[i] + gy[i] * gy[i]) / 4;
+      for (y = 1; y < H - 1; y++) for (x = 1; x < W - 1; x++) {
+        i = y * W + x; var a = Math.atan2(gy[i], gx[i]) * 180 / Math.PI; if (a < 0) a += 180; var n1, n2;
+        if (a < 22.5 || a >= 157.5) { n1 = mag[i - 1]; n2 = mag[i + 1]; }
+        else if (a < 67.5) { n1 = mag[i - W + 1]; n2 = mag[i + W - 1]; }
+        else if (a < 112.5) { n1 = mag[i - W]; n2 = mag[i + W]; }
+        else { n1 = mag[i - W - 1]; n2 = mag[i + W + 1]; }
+        sup[i] = (mag[i] >= n1 && mag[i] >= n2) ? mag[i] : 0;
+      }
+      var TH = 150 * (1 - sR.value / 100) + 18, TL = TH * 0.4;
+      var lab = new Uint8Array(n), st = [];
+      for (i = 0; i < n; i++) { lab[i] = sup[i] >= TH ? 2 : (sup[i] >= TL ? 1 : 0); if (lab[i] === 2) st.push(i); }
+      while (st.length) { var p = st.pop(); var nb = [p - 1, p + 1, p - W, p + W, p - W - 1, p - W + 1, p + W - 1, p + W + 1]; for (var q = 0; q < 8; q++) { var k = nb[q]; if (k >= 0 && k < n && lab[k] === 1) { lab[k] = 2; st.push(k); } } }
+      var d = img.data;
+      for (i = 0, x = 0; i < n; i++, x += 4) { var v = lab[i] === 2 ? 255 : 0; d[x] = d[x + 1] = d[x + 2] = v; d[x + 3] = 255; }
+    }
+    function renderCorners(g, W, H, octx) {
+      var s = sobel(g, W, H), gx = s.gx, gy = s.gy, n = W * H, i;
+      var xx = new Float32Array(n), yy = new Float32Array(n), xy = new Float32Array(n);
+      for (i = 0; i < n; i++) { xx[i] = gx[i] * gx[i]; yy[i] = gy[i] * gy[i]; xy[i] = gx[i] * gy[i]; }
+      xx = blur3(xx, W, H); yy = blur3(yy, W, H); xy = blur3(xy, W, H);
+      var R = new Float32Array(n), maxR = 1, k = 0.04, x, y;
+      for (y = 1; y < H - 1; y++) for (x = 1; x < W - 1; x++) { i = y * W + x; var det = xx[i] * yy[i] - xy[i] * xy[i], tr = xx[i] + yy[i]; var r = (det - k * tr * tr) / 1e6; R[i] = r; if (r > maxR) maxR = r; }
+      var frac = (1 - sR.value / 100) * 0.25 + 0.02, thr = frac * maxR, count = 0;
+      octx.fillStyle = "#ff3b6b"; octx.strokeStyle = "#fff"; octx.lineWidth = 1;
+      for (y = 2; y < H - 2 && count < 600; y++) for (x = 2; x < W - 2 && count < 600; x++) {
+        i = y * W + x; var v = R[i];
+        if (v > thr && v >= R[i - 1] && v >= R[i + 1] && v >= R[i - W] && v >= R[i + W] && v >= R[i - W - 1] && v >= R[i + W + 1] && v >= R[i - W + 1] && v >= R[i + W - 1]) {
+          octx.beginPath(); octx.arc(x, y, 3, 0, 7); octx.fill(); count++;
+        }
+      }
+      return count;
+    }
+
+    function frame() {
+      if (!stream) return;
+      var vw = video.videoWidth, vh = video.videoHeight;
+      if (vw && vh) { PW = 320; PH = Math.max(120, Math.round(320 * vh / vw)); }
+      if (proc.width !== PW) { proc.width = PW; proc.height = PH; out.width = PW; out.height = PH; }
+      var pctx = proc.getContext("2d");
+      pctx.save(); if (mirror) { pctx.translate(PW, 0); pctx.scale(-1, 1); } pctx.drawImage(video, 0, 0, PW, PH); pctx.restore();
+      var octx = out.getContext("2d");
+      var img = pctx.getImageData(0, 0, PW, PH), n = PW * PH;
+      var corners = 0;
+      if (mode === "original") { octx.putImageData(img, 0, 0); }
+      else if (mode === "corners") { octx.putImageData(img, 0, 0); corners = renderCorners(toGray(img.data, n), PW, PH, octx); }
+      else { var g = toGray(img.data, n); if (mode === "canny") renderCanny(g, PW, PH, img); else renderEdges(g, PW, PH, img); octx.putImageData(img, 0, 0); }
+      // fps
+      var now = performance.now(); fpsN++; if (now - fpsT > 500) { fpsVal = Math.round(fpsN * 1000 / (now - fpsT)); fpsN = 0; fpsT = now; }
+      status.textContent = "Live · " + PW + "×" + PH + " · " + modeSel.options[modeSel.selectedIndex].text + " · ~" + fpsVal + " fps" + (mode === "corners" ? " · " + corners + " corners" : "") + "\nAll processing is in-browser (vanilla JS). Nothing leaves your device.";
+      raf = requestAnimationFrame(frame);
+    }
+
+    function start() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        status.textContent = "⚠ Camera API unavailable in this context. If you opened the file directly (file://) and it's blocked, run a quick local server — e.g. `python3 -m http.server` in this folder — and open http://localhost:8000/session6.html, which browsers treat as secure.";
+        return;
+      }
+      status.textContent = "Requesting camera permission…";
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 640 } }, audio: false })
+        .then(function (s) {
+          stream = s; video.srcObject = s; video.play();
+          startBtn.disabled = true; stopBtn.disabled = false;
+          fpsT = performance.now(); fpsN = 0;
+          raf = requestAnimationFrame(frame);
+        })
+        .catch(function (err) {
+          var msg = err && err.name === "NotAllowedError" ? "Permission denied. Allow camera access in your browser's site settings and try again."
+            : err && err.name === "NotFoundError" ? "No camera found on this device."
+            : "Could not start the camera (" + (err && err.name || err) + "). If on file://, try a local server (http://localhost).";
+          status.textContent = "⚠ " + msg;
+        });
+    }
+    function stop() {
+      if (raf) cancelAnimationFrame(raf); raf = null;
+      if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+      startBtn.disabled = false; stopBtn.disabled = true;
+      status.textContent = "Camera stopped.";
+    }
+    startBtn.onclick = start;
+    stopBtn.onclick = stop;
+    modeSel.onchange = function () {
+      mode = modeSel.value;
+      legend.innerHTML = mode === "corners"
+        ? '<span><span class="swatch" style="background:#ff3b6b"></span>detected Harris corners (R &gt; threshold, local maxima)</span>'
+        : mode === "original" ? '' : '<span><span class="swatch" style="background:#fff"></span>edge pixels</span>';
+    };
+    mirrorBtn.onclick = function () { mirror = !mirror; mirrorBtn.textContent = "Mirror: " + (mirror ? "On" : "Off"); };
+    sR.oninput = function () { sV.textContent = sR.value; };
+    sV.textContent = sR.value;
+    // pause when tab hidden to save the camera
+    document.addEventListener("visibilitychange", function () { if (document.hidden && raf) { cancelAnimationFrame(raf); raf = null; } else if (!document.hidden && stream && !raf) { raf = requestAnimationFrame(frame); } });
+  };
+
   // expose registry incrementally
   window.CVDemos = window.CVDemos || {};
   window.CVDemos._DEMOS = DEMOS;

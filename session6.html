@@ -30,6 +30,7 @@
           <li><a href="#harris-num">Harris numerical</a></li>
           <li><a href="#hog">HOG descriptor</a></li>
           <li><a href="#hog-num">HOG numerical</a></li>
+          <li><a href="#live-camera">Live camera demo</a></li>
           <li><a href="#takeaways">Key takeaways</a></li>
         </ul>
       </div>
@@ -153,6 +154,14 @@
         <p>Above, each pixel dumps its <em>whole</em> magnitude into the one bin its angle falls in (the class's simple method). The more standard HOG (and <a href="exam-q6.html">Midsem Q6a</a>) splits each vote between the <strong>two nearest bin centres by distance</strong> (bilinear interpolation). Try both ideas in the demo:</p>
       </div>
       <div data-demo="hog"></div>
+
+      <h2 id="live-camera">Live camera — edges &amp; corners on your webcam</h2>
+      <p>Everything on this page comes together here: a live webcam feed with <strong>Sobel/Canny edges</strong> and the <strong>Harris corner detector</strong> running on every frame — implemented entirely in vanilla JavaScript (no OpenCV, no libraries). Switch to <em>Harris corners</em> and wave a textured object or a checkerboard: you'll see corners light up exactly where intensity changes in two directions, while flat areas and straight edges stay bare.</p>
+      <div data-demo="camera"></div>
+      <div class="callout warn">
+        <div class="c-head">▲ Camera permission &amp; privacy</div>
+        <p>Your browser will ask for camera access; <strong>frames are processed on your device and never uploaded</strong>. If you opened the site directly as a <code>file://</code> page and the camera is blocked, run a quick local server in the site folder — <code>python3 -m http.server</code> — and open <code>http://localhost:8000/session6.html</code>, which browsers treat as a secure context.</p>
+      </div>
 
       <h2 id="takeaways">Key takeaways</h2>
       <div class="callout key">
