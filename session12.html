@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session 12 — Semantic Segmentation &amp; Metrics</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "session12", title: "Session 12 · Semantic Seg & Metrics", crumb: "Session 12 · Semantic Seg & Metrics" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Session 12</span>
+      <h1>Semantic Segmentation &amp; CV Metrics</h1>
+      <p class="lead">Turn a CNN that maps an image to a class vector into one that maps an image to a class <em>at every pixel</em>. Then measure how good those pixels (and, for detection, boxes) are: IoU, precision, recall, and mAP.</p>
+
+      <div class="toc">
+        <h4>On this page</h4>
+        <ul>
+          <li><a href="#cnn">CNN recap</a></li>
+          <li><a href="#task">Pixel-wise classification</a></li>
+          <li><a href="#fcn">Fully convolutional nets</a></li>
+          <li><a href="#up">Unpooling &amp; transpose conv</a></li>
+          <li><a href="#unet">U-Net</a></li>
+          <li><a href="#iou">IoU</a></li>
+          <li><a href="#iou-demo">IoU, live</a></li>
+          <li><a href="#pr">Precision, recall, F1</a></li>
+          <li><a href="#map">Average precision &amp; mAP</a></li>
+          <li><a href="#takeaways">Key takeaways</a></li>
+        </ul>
+      </div>
+
+      <div class="callout intuition">
+        <div class="c-head">▶ From the recording</div>
+        <p>“If I have pooled, I’ll unpool. If I have convolved, I’ll do <strong>transpose convolution</strong>. Mathematically deconvolution does not exist — we call it that anyway. In segmentation we generally use transpose convolutions.” Skip connections (ResNet residuals, U-Net copies) “smooth the lost topology” so gradient descent can actually find a minimum.</p>
+      </div>
+
+      <h2 id="cnn">CNN recap</h2>
+      <p>A convolutional net is a function of the image parameterised by filter weights and biases. We design the <em>form</em> (conv → nonlinearity \(f(\cdot)\) → pool, repeated) and fit the parameters to data. A classifier CNN collapses \(H\times W\times C\) to an \(F\)-dimensional vector of class scores. Questions that need a map, not a vector: <em>which pixels are the cat? how far is each pixel from the camera? which pixels are fake?</em></p>
+      <p>The webinar DL review in one table (you will not derive these; you should know which prior each name adds):</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Block</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>Conv + ReLU</td><td>Local weighted sum, then \(\max(0,x)\). Learns edges → parts → objects as you stack.</td></tr>
+          <tr><td>Pooling</td><td>Downsample (max/avg). Translation tolerance, cheaper, larger receptive field.</td></tr>
+          <tr><td>AlexNet (2012)</td><td>First ImageNet winner with ReLU, dropout, GPU training — the backbone R-CNN used.</td></tr>
+          <tr><td>VGG</td><td>Only 3×3 convs, very deep, simple. The “default” backbone quoted for R-CNN timing (~47 s/image).</td></tr>
+          <tr><td>ResNet</td><td>Skip / residual connections so gradients survive 50–152 layers. Default encoder before ViTs.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="task">Semantic segmentation as per-pixel classification</h2>
+      <p>Predict an \(F\)-dimensional probability vector at <strong>every pixel</strong>. Loss is computed and back-propagated at every pixel. Visualise by colouring each pixel with \(\arg\max\) over classes. “Semantic” here just means we are <em>naming</em> things — and we do <strong>not</strong> distinguish object instances (two cars are the same class colour).</p>
+      <div class="callout intuition">
+        <div class="c-head">◆ From vector to image</div>
+        <p>Any vector–vector map can be rewritten as \(1\times1\) convolutions. Take a classifier CNN, replace the final fully-connected layers with \(1\times1\) convs, and it becomes a <strong>fully convolutional</strong> net that accepts any spatial size and emits a coarse label map. Long et al., <em>Fully Convolutional Networks for Semantic Segmentation</em>, CVPR 2014.</p>
+      </div>
+
+      <h2 id="fcn">Encoder–decoder / FCN</h2>
+      <p><strong>Key idea:</strong> downsample toward the middle of the network (convolutions, pooling — large receptive field, cheap), then upsample back to input resolution. Because everything is convolution, you can reuse an ImageNet classifier as the encoder: feed a bigger image and the same weights produce a bigger feature map.</p>
+      <figure data-diagram="fcn" data-caption="Encoder–decoder: pool/stride down to a bottleneck, then upsample. Skip connections (U-Net) copy fine encoder maps across so boundaries aren’t lost."></figure>
+
+      <h2 id="up">How do we upsample?</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Op</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Nearest-neighbour unpool</strong></td><td>Inverse of \(2\times2\) max-pool: copy each value into a \(2\times2\) block (e.g. 8 becomes four 8s).</td></tr>
+          <tr><td><strong>Max-unpool</strong></td><td>Remember argmax switches from the encoder; put the value back in that slot, zeros elsewhere — sharper.</td></tr>
+          <tr><td><strong>Transpose convolution</strong></td><td>“Fractionally strided” conv: each input multiplies a filter that is <em>added</em> into a larger output. Learnable upsampling. (Also called deconvolution, which is a misleading name.)</td></tr>
+        </tbody>
+      </table></div>
+      <p>A \(3\times3\) convolution, stride 2, pad 1 <em>downsamples</em>. A \(3\times3\) transpose convolution, stride 2, pad 1 <em>upsamples</em> — the output is the filter, weighted by each input activation, tiled with overlap.</p>
+
+      <h2 id="unet">U-Net</h2>
+      <p>Ronneberger et al., MICCAI 2015 — originally for biomedical images, now the default encoder–decoder. The “U”: a contracting path (downsample) and an expanding path (upsample) with <strong>skip concatenations</strong> that copy high-resolution encoder feature maps onto the matching decoder stage. That preserves localisation that pooling would otherwise destroy.</p>
+
+      <h3>Handout segmentation metrics</h3>
+      <ul>
+        <li><strong>Pixel accuracy</strong> — fraction of pixels correctly labelled. Inflated by huge classes (sky, road).</li>
+        <li><strong>mIoU</strong> — IoU averaged over classes; the number that actually punishes missing the small object.</li>
+        <li><strong>Boundary error</strong> — ABPE / BDE: how far predicted contours sit from ground-truth contours (localisation of the outline, not just the area).</li>
+      </ul>
+
+      <h2 id="iou">Intersection over Union</h2>
+      <p>For a class (or a box), compare the predicted set \(P\) to ground truth \(G\):</p>
+      <div class="eq">\[ \mathrm{IoU} = \frac{|P\cap G|}{|P\cup G|} = \frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}+\mathrm{FN}} \]</div>
+      <p>Mean IoU averages this over classes. For detection, a predicted box is a true positive if \(\mathrm{IoU}\ge\) a threshold (PASCAL: 0.5). Multiple detections of the same object: first is TP, the rest FP.</p>
+
+      <h2 id="iou-demo">IoU, live</h2>
+      <p>Move the predicted box and watch intersection, union and the TP/FP decision at threshold 0.5:</p>
+      <div data-demo="iou"></div>
+
+      <h2 id="pr">Precision, recall, F1</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th></th><th>Relevant (GT +)</th><th>Non-relevant (GT −)</th></tr></thead>
+        <tbody>
+          <tr><td>Predicted +</td><td>TP</td><td>FP</td></tr>
+          <tr><td>Predicted −</td><td>FN</td><td>TN</td></tr>
+        </tbody>
+      </table></div>
+      <div class="eq">\[ P=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}}\,,\quad R=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FN}}\,,\quad F_1=\frac{2PR}{P+R} \]</div>
+      <p>Precision = “of my predictions, how many were right?” Recall = “of all the true objects, how many did I find?”</p>
+      <div class="callout warn">
+        <div class="c-head">▲ Don’t use accuracy for detection</div>
+        <p>A detector that says “no object” everywhere scores ~99% accuracy on a typical image (almost every window is background). Accuracy is the wrong metric when positives are rare — hence precision/recall, IoU and mAP.</p>
+      </div>
+
+      <h2 id="map">Average Precision and mAP</h2>
+      <p>Rank all detections of one class by confidence. Walking down the list, precision zig-zags (drops on an FP, rises on a TP) while recall is non-decreasing. <strong>AP</strong> is the area under the precision–recall curve. In practice we first make the curve monotone: at each recall \(\hat{r}\), replace precision by the <em>max precision for any recall \(\ge\hat{r}\)</em>.</p>
+      <p><strong>PASCAL VOC 2008 11-point interpolated AP:</strong> average the interpolated precision at recall \(0, 0.1, \ldots, 1.0\). <strong>mAP</strong> = mean of AP over classes. (COCO later averages over IoU thresholds 0.5:0.05:0.95 as well.) A full walk-through is in <a href="session16.html">Session 16</a>.</p>
+      <div class="card">
+        <p style="margin-top:0"><strong>Mini numerical — IoU of two boxes.</strong> GT box \([x_1,y_1,x_2,y_2]=[0,0,4,4]\), prediction \([1,1,5,5]\).</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Intersection</div>overlap is \([1,1,4,4]\) → area \(3\times3=9\).</div>
+          <div class="step"><div class="s-title">Union</div>\(4\times4 + 4\times4 - 9 = 23\).</div>
+          <div class="step"><div class="s-title">IoU</div>\(9/23\approx0.391\). At threshold 0.5 this is an <strong>FP</strong>.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(\mathrm{IoU}=9/23\approx0.39\) → false positive if the dataset threshold is 0.5.</p></div>
+      </div>
+
+      <h2 id="takeaways">Key takeaways</h2>
+      <div class="callout key">
+        <div class="c-head">◆ Remember these</div>
+        <ul>
+          <li>Semantic seg = F-way softmax at every pixel; FCN = classifier with FC replaced by \(1\times1\) conv.</li>
+          <li>Upsample with unpool or transpose convolution. U-Net adds skip concatenations for localisation.</li>
+          <li>\(\mathrm{IoU}=|P\cap G|/|P\cup G|\). TP if IoU ≥ threshold (often 0.5).</li>
+          <li>P / R / F1 from the confusion matrix. AP = area under (interpolated) PR curve; mAP averages AP over classes.</li>
+        </ul>
+      </div>
+
+      <div class="pager">
+        <a href="session11.html"><div class="pg-dir">← Previous</div><div class="pg-title">Session 11 · Image Segmentation</div></a>
+        <a class="next" href="session13.html"><div class="pg-dir">Next →</div><div class="pg-title">Sessions 13–14 · Object Detection</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

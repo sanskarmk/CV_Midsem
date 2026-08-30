@@ -270,6 +270,131 @@
     <text x="190" y="225" text-anchor="middle" fill="var(--muted)" font-size="12">keep p only if p ≥ n₁ and p ≥ n₂  →  1-px-thin edge</text>
   </svg>`;
 
+  D["bow"] = `
+  <svg viewBox="0 0 720 200" ${FONT}>
+    <rect x="20" y="50" width="70" height="70" fill="var(--surface-2)" stroke="var(--border-2)"/>
+    <text x="55" y="90" text-anchor="middle" fill="var(--muted)" font-size="11">image</text>
+    <polygon points="100,85 118,85 118,78 138,90 118,102 118,95 100,95" fill="var(--accent)"/>
+    <rect x="150" y="40" width="120" height="90" rx="8" fill="var(--surface-2)" stroke="var(--border-2)"/>
+    <text x="210" y="75" text-anchor="middle" fill="var(--accent-2)" font-size="12" font-weight="700">SIFT patches</text>
+    <text x="210" y="96" text-anchor="middle" fill="var(--muted)" font-size="11">local descriptors</text>
+    <polygon points="280,85 298,85 298,78 318,90 298,102 298,95 280,95" fill="var(--accent)"/>
+    <rect x="330" y="40" width="130" height="90" rx="8" fill="var(--surface-2)" stroke="var(--border-2)"/>
+    <text x="395" y="75" text-anchor="middle" fill="var(--accent-2)" font-size="12" font-weight="700">k-means codebook</text>
+    <text x="395" y="96" text-anchor="middle" fill="var(--muted)" font-size="11">K visual words</text>
+    <polygon points="470,85 488,85 488,78 508,90 488,102 488,95 470,95" fill="var(--accent)"/>
+    <rect x="520" y="40" width="180" height="90" rx="8" fill="var(--surface-2)" stroke="var(--accent)"/>
+    <text x="610" y="75" text-anchor="middle" fill="var(--accent)" font-size="12" font-weight="700">histogram → classify</text>
+    <text x="610" y="96" text-anchor="middle" fill="var(--muted)" font-size="11">optional spatial pyramid</text>
+  </svg>`;
+
+  D["linear-clf"] = `
+  <svg viewBox="0 0 420 240" ${FONT}>
+    <line x1="40" y1="200" x2="390" y2="200" stroke="var(--muted)"/>
+    <line x1="40" y1="200" x2="40" y2="20" stroke="var(--muted)"/>
+    <line x1="70" y1="190" x2="340" y2="40" stroke="var(--accent)" stroke-width="2.4"/>
+    <circle cx="120" cy="80" r="6" fill="var(--accent-2)"/><circle cx="150" cy="110" r="6" fill="var(--accent-2)"/><circle cx="100" cy="130" r="6" fill="var(--accent-2)"/>
+    <circle cx="280" cy="160" r="6" fill="var(--pink)"/><circle cx="310" cy="130" r="6" fill="var(--pink)"/><circle cx="250" cy="180" r="6" fill="var(--pink)"/>
+    <text x="210" y="30" text-anchor="middle" fill="var(--muted)" font-size="12">hyperplane  w·x + b = 0</text>
+  </svg>`;
+
+  D["attention"] = `
+  <svg viewBox="0 0 640 210" ${FONT}>
+    ${[0,1,2,3].map(function(i){return '<rect x="'+(40+i*70)+'" y="40" width="56" height="36" rx="6" fill="var(--surface-2)" stroke="var(--border-2)"/><text x="'+(68+i*70)+'" y="63" text-anchor="middle" fill="var(--muted)" font-size="11">h'+(i+1)+'</text>';}).join('')}
+    <text x="180" y="28" text-anchor="middle" fill="var(--accent-2)" font-size="12" font-weight="700">encoder states</text>
+    <rect x="420" y="40" width="70" height="36" rx="6" fill="var(--pink)" opacity=".85"/><text x="455" y="63" text-anchor="middle" fill="#111" font-size="11" font-weight="700">sᵢ</text>
+    <text x="455" y="28" text-anchor="middle" fill="var(--pink)" font-size="12" font-weight="700">decoder</text>
+    <text x="320" y="120" text-anchor="middle" fill="var(--accent)" font-size="13">score → softmax α → cᵢ = Σ αⱼ hⱼ</text>
+    <rect x="230" y="145" width="180" height="40" rx="8" fill="var(--surface-2)" stroke="var(--accent)"/>
+    <text x="320" y="170" text-anchor="middle" fill="var(--accent)" font-size="13" font-weight="700">dynamic context cᵢ</text>
+  </svg>`;
+
+  D["vit"] = `
+  <svg viewBox="0 0 720 170" ${FONT}>
+    ${[0,1,2,3].map(function(i){return '<rect x="'+(20+i*38)+'" y="50" width="34" height="34" fill="var(--surface-3)" stroke="var(--border-2)"/>';}).join('')}
+    <text x="96" y="42" text-anchor="middle" fill="var(--muted)" font-size="11">patches</text>
+    <polygon points="180,67 198,67 198,60 218,75 198,90 198,83 180,83" fill="var(--accent)"/>
+    <rect x="230" y="48" width="90" height="54" rx="8" fill="var(--surface-2)" stroke="var(--border-2)"/>
+    <text x="275" y="80" text-anchor="middle" fill="var(--accent-2)" font-size="12">tokens+[CLS]</text>
+    <polygon points="330,67 348,67 348,60 368,75 348,90 348,83 330,83" fill="var(--accent)"/>
+    <rect x="380" y="48" width="130" height="54" rx="8" fill="var(--surface-2)" stroke="var(--border-2)"/>
+    <text x="445" y="80" text-anchor="middle" fill="var(--accent-2)" font-size="12">transformer</text>
+    <polygon points="520,67 538,67 538,60 558,75 538,90 538,83 520,83" fill="var(--accent)"/>
+    <rect x="570" y="48" width="130" height="54" rx="8" fill="var(--surface-2)" stroke="var(--accent)"/>
+    <text x="635" y="80" text-anchor="middle" fill="var(--accent)" font-size="12" font-weight="700">class scores</text>
+  </svg>`;
+
+  D["seg-types"] = `
+  <svg viewBox="0 0 700 160" ${FONT}>
+    ${[["Semantic",80,"one colour / class"],["Instance",350,"car #1 ≠ car #2"],["Panoptic",580,"things + stuff"]].map(function(p){return '<rect x="'+(p[1]-70)+'" y="30" width="140" height="80" rx="10" fill="var(--surface-2)" stroke="var(--border-2)"/><text x="'+p[1]+'" y="68" text-anchor="middle" fill="var(--accent-2)" font-size="14" font-weight="700">'+p[0]+'</text><text x="'+p[1]+'" y="92" text-anchor="middle" fill="var(--muted)" font-size="11">'+p[2]+'</text>';}).join('')}
+  </svg>`;
+
+  D["meanshift"] = `
+  <svg viewBox="0 0 480 200" ${FONT}>
+    <ellipse cx="280" cy="90" rx="90" ry="55" fill="none" stroke="var(--border-2)" stroke-dasharray="4 3"/>
+    <circle cx="160" cy="130" r="7" fill="var(--accent)"/>
+    <circle cx="200" cy="110" r="7" fill="var(--accent)"/>
+    <circle cx="240" cy="95" r="7" fill="var(--accent)"/>
+    <circle cx="280" cy="88" r="9" fill="var(--pink)"/>
+    <polyline points="160,130 200,110 240,95 280,88" fill="none" stroke="var(--accent-2)" stroke-width="2"/>
+    <text x="160" y="175" fill="var(--muted)" font-size="11">window walks to the mode (pink)</text>
+  </svg>`;
+
+  D["fcn"] = `
+  <svg viewBox="0 0 640 160" ${FONT}>
+    <rect x="20" y="50" width="70" height="70" fill="var(--surface-2)" stroke="var(--border-2)"/><text x="55" y="90" text-anchor="middle" fill="var(--muted)" font-size="11">H×W</text>
+    <polygon points="100,85 130,75 130,95" fill="var(--accent)"/>
+    <rect x="140" y="65" width="50" height="40" fill="var(--surface-3)" stroke="var(--border-2)"/>
+    <rect x="210" y="75" width="36" height="24" fill="var(--surface-3)" stroke="var(--border-2)"/>
+    <text x="228" y="48" text-anchor="middle" fill="var(--muted)" font-size="11">encoder</text>
+    <polygon points="260,85 290,75 290,95" fill="var(--pink)"/>
+    <rect x="300" y="65" width="50" height="40" fill="var(--surface-3)" stroke="var(--accent)"/>
+    <rect x="370" y="50" width="70" height="70" fill="var(--surface-2)" stroke="var(--accent)"/>
+    <text x="405" y="90" text-anchor="middle" fill="var(--accent)" font-size="11">H×W×F</text>
+    <text x="500" y="90" fill="var(--muted)" font-size="12">skips copy fine maps →</text>
+  </svg>`;
+
+  D["detectors"] = `
+  <svg viewBox="0 0 720 150" ${FONT}>
+    ${[["R-CNN","CNN × 2000 crops",70],["Fast","CNN once + RoI",250],["Faster","+ learned RPN",430],["YOLO","7×7 grid, 1 shot",610]].map(function(p){return '<rect x="'+(p[2]-70)+'" y="35" width="140" height="80" rx="10" fill="var(--surface-2)" stroke="var(--border-2)"/><text x="'+p[2]+'" y="70" text-anchor="middle" fill="var(--accent-2)" font-size="14" font-weight="700">'+p[0]+'</text><text x="'+p[2]+'" y="94" text-anchor="middle" fill="var(--muted)" font-size="11">'+p[1]+'</text>';}).join('')}
+  </svg>`;
+
+  D["aperture"] = `
+  <svg viewBox="0 0 520 200" ${FONT}>
+    <line x1="40" y1="170" x2="240" y2="170" stroke="var(--muted)"/><line x1="40" y1="170" x2="40" y2="20" stroke="var(--muted)"/>
+    <line x1="40" y1="140" x2="220" y2="40" stroke="var(--accent)" stroke-width="2.2"/>
+    <text x="140" y="18" text-anchor="middle" fill="var(--muted)" font-size="11">one constraint: a line in (u,v)</text>
+    <rect x="300" y="40" width="80" height="80" fill="var(--surface-3)" stroke="var(--border-2)"/>
+    <rect x="300" y="40" width="80" height="40" fill="#888"/>
+    <text x="340" y="140" text-anchor="middle" fill="var(--muted)" font-size="11">edge → aperture</text>
+    <rect x="410" y="40" width="80" height="80" fill="var(--surface-3)" stroke="var(--accent)"/>
+    <rect x="410" y="40" width="40" height="40" fill="#888"/><rect x="450" y="80" width="40" height="40" fill="#ccc"/>
+    <text x="450" y="140" text-anchor="middle" fill="var(--accent)" font-size="11">corner → unique (u,v)</text>
+  </svg>`;
+
+  D["kalman"] = `
+  <svg viewBox="0 0 640 140" ${FONT}>
+    <rect x="20" y="40" width="130" height="50" rx="8" fill="var(--surface-2)" stroke="var(--border-2)"/><text x="85" y="70" text-anchor="middle" fill="var(--accent-2)" font-size="13">predict x⁻, P⁻</text>
+    <polygon points="160,65 178,65 178,58 198,75 178,92 178,85 160,85" fill="var(--accent)"/>
+    <rect x="210" y="40" width="160" height="50" rx="8" fill="var(--surface-2)" stroke="var(--border-2)"/><text x="290" y="70" text-anchor="middle" fill="var(--accent-2)" font-size="13">K = blend model/sensor</text>
+    <polygon points="380,65 398,65 398,58 418,75 398,92 398,85 380,85" fill="var(--accent)"/>
+    <rect x="430" y="40" width="180" height="50" rx="8" fill="var(--surface-2)" stroke="var(--accent)"/><text x="520" y="70" text-anchor="middle" fill="var(--accent)" font-size="13">update x̂ with z</text>
+  </svg>`;
+
+  D["pr-roc"] = `
+  <svg viewBox="0 0 640 220" ${FONT}>
+    <text x="150" y="22" text-anchor="middle" fill="var(--accent-2)" font-size="13" font-weight="700">PR curve</text>
+    <line x1="40" y1="190" x2="260" y2="190" stroke="var(--muted)"/><line x1="40" y1="190" x2="40" y2="40" stroke="var(--muted)"/>
+    <polyline points="40,80 90,70 130,110 180,90 230,100 260,120" fill="none" stroke="var(--pink)" stroke-width="2"/>
+    <polyline points="40,80 90,70 180,70 180,90 260,90" fill="none" stroke="var(--accent)" stroke-width="2"/>
+    <text x="150" y="212" text-anchor="middle" fill="var(--muted)" font-size="11">recall →  ·  pink=raw, blue=interpolated</text>
+    <text x="470" y="22" text-anchor="middle" fill="var(--accent-2)" font-size="13" font-weight="700">ROC</text>
+    <line x1="360" y1="190" x2="580" y2="190" stroke="var(--muted)"/><line x1="360" y1="190" x2="360" y2="40" stroke="var(--muted)"/>
+    <line x1="360" y1="190" x2="580" y2="40" stroke="var(--border-2)" stroke-dasharray="4 3"/>
+    <polyline points="360,190 400,90 480,55 580,40" fill="none" stroke="var(--accent)" stroke-width="2.4"/>
+    <text x="470" y="212" text-anchor="middle" fill="var(--muted)" font-size="11">FPR →  ·  diagonal = random</text>
+  </svg>`;
+
   // ---- init ----
   function initAll() {
     var nodes = document.querySelectorAll("figure[data-diagram]");

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Optional — Face Detection &amp; OCR</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "optional", title: "Optional · Face & OCR", crumb: "Optional · Face & OCR" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Handout · webinars / experiential</span>
+      <h1>Face Detection &amp; OCR</h1>
+      <p class="lead">Optional modules in the handout, but the comprehensive syllabus is <strong>all topics</strong>. Two self-contained stacks: faces (Viola–Jones → modern DNNs + TAR/FAR) and text (layout → recognise → CER/WER).</p>
+
+      <div class="toc">
+        <h4>On this page</h4>
+        <ul>
+          <li><a href="#face">Face detection &amp; recognition</a></li>
+          <li><a href="#vj">Viola–Jones</a></li>
+          <li><a href="#face-dnn">DNN face models</a></li>
+          <li><a href="#face-metrics">Face metrics</a></li>
+          <li><a href="#ocr">OCR</a></li>
+          <li><a href="#ocr-metrics">OCR metrics</a></li>
+          <li><a href="#takeaways">Key takeaways</a></li>
+        </ul>
+      </div>
+
+      <h2 id="face">Face detection vs recognition</h2>
+      <p><strong>Detection</strong> — is there a face, and where is the box (and optionally landmarks). <strong>Recognition / identification</strong> — whose face. <strong>Verification</strong> — is this the same person as the gallery template (1:1). Attendance system on a face image is the handout use case: detect → align (landmarks) → embed → match.</p>
+
+      <h2 id="vj">Viola–Jones (boosting)</h2>
+      <p>T2 Ch 10.7. 2001, still the “why was it better than its predecessor?” story for faces.</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">Haar features</div>Rectangle differences (eye darker than cheek, etc.) computed in \(O(1)\) with an <strong>integral image</strong>.</div>
+        <div class="step"><div class="s-title">AdaBoost</div>Pick a tiny set of those features as weak classifiers; the boosted combination is the detector.</div>
+        <div class="step"><div class="s-title">Attentional cascade</div>Most windows are not faces. Early stages reject them with 1–2 features; later stages run only on survivors. That’s why it was real-time on 2001 CPUs.</div>
+      </div>
+      <p><strong>Active appearance models</strong> (T2 Ch 10.5) fit a statistical shape+texture face for landmarks / expression — the classic alternative to modern landmark nets.</p>
+
+      <h2 id="face-dnn">DNN architectures (handout)</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Model</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td><strong>MTCNN</strong></td><td>Three cascaded CNNs: proposal → refine → landmarks. Still a common baseline.</td></tr>
+          <tr><td><strong>RetinaFace</strong></td><td>Single-shot, extra-supervised with landmarks; robust in the wild.</td></tr>
+          <tr><td><strong>FastFace</strong></td><td>Speed-oriented detector for edge/attendance.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="face-metrics">Face metrics (class notes in the handout)</h2>
+      <ul>
+        <li><strong>IoU-based</strong> detection metrics — same TP rule as Session 12 (IoU ≥ 0.5).</li>
+        <li><strong>TAR</strong> (true acceptance rate) / <strong>FAR</strong> (false acceptance) / <strong>FRR</strong> (false rejection) for verification.</li>
+        <li><strong>TAR @ a specific FAR</strong> (e.g. TAR @ FAR = 10⁻³) — the operating point a bank actually cares about.</li>
+        <li><strong>Top-K identification rate</strong> — is the right identity in the top K gallery hits.</li>
+      </ul>
+
+      <h2 id="ocr">Optical character recognition</h2>
+      <p>Challenges: fonts, skew, blur, layout (tables, multi-column), handwriting, low resolution (number plates). Pipeline:</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">Layout / localisation</div>Find text regions — classical edges/contours, or a detector (YOLO), or a document transformer (LayoutLM, DiT).</div>
+        <div class="step"><div class="s-title">Recognise</div>CNN+LSTM/CTC (Tesseract, EasyOCR) or a transformer decoder. Plate/invoice use cases in the handout.</div>
+        <div class="step"><div class="s-title">Post-process</div>Language model / lexicon / regex (plate format) to fix visually ambiguous glyphs.</div>
+      </div>
+
+      <h2 id="ocr-metrics">OCR metrics</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Metric</th><th>Level</th></tr></thead>
+        <tbody>
+          <tr><td>Character / word / sentence accuracy</td><td>Exact match at that granularity.</td></tr>
+          <tr><td><strong>CER / WER</strong> via string <strong>edit distance</strong> (Levenshtein)</td><td>\((\mathrm{sub}+\mathrm{ins}+\mathrm{del})/\mathrm{length}\). The standard OCR error rate.</td></tr>
+          <tr><td><strong>mAP for text localisation</strong></td><td>Did we box the text regions (detection), independent of reading them.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="card">
+        <p style="margin-top:0"><strong>Mini numerical — CER.</strong> GT = <code>CAT</code>, OCR = <code>COT</code>. One substitution, length 3 → \(\mathrm{CER}=1/3\approx33\%\). Word accuracy is 0 (the word is wrong) even though two characters were right — that’s why you quote both.</p>
+      </div>
+
+      <h2 id="takeaways">Key takeaways</h2>
+      <div class="callout key">
+        <div class="c-head">◆ Remember these</div>
+        <ul>
+          <li>Viola–Jones: integral image + AdaBoost + cascade. DNN faces: MTCNN / RetinaFace. Metrics: TAR @ FAR, top-K.</li>
+          <li>OCR: localise then read. Tesseract / EasyOCR / LayoutLM. CER = edit distance / length; mAP for boxes.</li>
+          <li>Use cases: attendance camera; number plate; invoice parsing.</li>
+        </ul>
+      </div>
+
+      <div class="pager">
+        <a href="session17.html"><div class="pg-dir">← Previous</div><div class="pg-title">Session 17 · Edge Devices</div></a>
+        <a class="next" href="comprehensive.html"><div class="pg-dir">Next →</div><div class="pg-title">✦ Comprehensive exam</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

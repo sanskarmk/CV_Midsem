@@ -89,6 +89,24 @@
         <p style="margin-bottom:0">HSI/HSV = perceptual (decouples color from brightness); YCbCr = luminance+chroma (compression).</p>
       </div>
 
+      <h2>Classification, ViT, segmentation <span class="badge blue"><a href="session9.html" style="color:inherit">S9</a>–<a href="session12.html" style="color:inherit">S12</a></span></h2>
+      <div class="card">
+        <p style="margin-top:0">kNN: \(d_1=\sum|x_i-z_i|\), \(d_2=\sqrt{\sum(x_i-z_i)^2}\); majority of \(k\) neighbours. Train \(O(1)\), test \(O(MN)\).</p>
+        <p>Linear: \(f=Wx+b\). Softmax \(p_c=e^{s_c}/\sum_j e^{s_j}\). CE \(L=-\log p_y\). Binary → sigmoid+BCE; multilabel → independent sigmoids.</p>
+        <p>Attention: \(\mathrm{softmax}(QK^\top/\sqrt{d})\,V\). ViT: \(16\times16\) patches + [CLS] + pos-emb → transformer → class scores.</p>
+        <p>k-means: assign nearest centre, replace centre by mean. Mean-shift: climb KDE to a mode (bandwidth, not \(K\)).</p>
+        <p style="margin-bottom:0">IoU \(=|P\cap G|/|P\cup G|\). Pixel acc = correct pixels / all. mIoU averages IoU over classes.</p>
+      </div>
+
+      <h2>Detection, tracking, metrics <span class="badge blue"><a href="session13.html" style="color:inherit">S13</a>–<a href="session16.html" style="color:inherit">S16</a></span></h2>
+      <div class="card">
+        <p style="margin-top:0">\(P=\mathrm{TP}/(\mathrm{TP}+\mathrm{FP})\), \(R=\mathrm{TP}/(\mathrm{TP}+\mathrm{FN})\), \(F_1=2PR/(P+R)\). TP if IoU ≥ 0.5 (PASCAL).</p>
+        <p>11-point AP: average interpolated \(P\) at \(r=0,0.1,\ldots,1\). mAP = mean AP over classes.</p>
+        <p>Optical flow: \(I_x u + I_y v + I_t=0\). LK: \(M\begin{bmatrix}u\\v\end{bmatrix}=-[\sum I_x I_t,\;\sum I_y I_t]^\top\), \(M\) = Harris matrix (solvable at corners).</p>
+        <p>Kalman gain \(K=P^-H^\top(HP^-H^\top+R)^{-1}\); \(\hat x=\hat x^-+K(z-H\hat x^-)\).</p>
+        <p style="margin-bottom:0">ROC: TPR vs FPR. Perfect \((0,1)\); random = diagonal. CER = edit-distance / length.</p>
+      </div>
+
       <div class="pager">
         <a href="numericals.html"><div class="pg-dir">← Back</div><div class="pg-title">∑ All Numericals</div></a>
         <a class="next" href="index.html"><div class="pg-dir">Home →</div><div class="pg-title">★ Course Map</div></a>

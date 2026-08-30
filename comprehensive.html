@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comprehensive Exam — Pattern &amp; Checklist</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "comprehensive", title: "Comprehensive Exam", crumb: "Exam Prep · Comprehensive" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">EC-3 · from the 30 Aug tracking/revision lecture</span>
+      <h1>Comprehensive exam — pattern &amp; what to drill</h1>
+      <p class="lead">Stated live by Prof. Adhikary (with Prof. Sugata) in the object-tracking / wrap-up session. This is the <strong>open-book</strong> paper: manuals and PDFs are allowed, so they will not ask you to vomit a derivation. They will ask whether you know <em>which</em> tool to grab and <em>why</em>.</p>
+
+      <div class="callout exam">
+        <div class="c-head">✦ Pattern — quoted from the recording</div>
+        <ul style="margin:6px 0">
+          <li><strong>EC-3 = 40% of the course</strong> (40-mark paper). EC-1 30%, EC-2 (midsem) 30%.</li>
+          <li><strong>5–7 questions</strong> (they joked they are “not heartless” — not 8). <strong>Uneven marks</strong>: some 4, some 6–7, some 9–10. A correctly solved 10-marker is a “low-hanging fruit.”</li>
+          <li><strong>10–20% of the paper is pre-midsem</strong> (Sessions 1–8 / up to RANSAC). <strong>80–90% is post-midsem</strong> (classification → ViT → seg → detect → track → metrics → BoW / edge / optional).</li>
+          <li>Question types: <strong>system design, latency, numericals that mix topics</strong>. “We are not going to test you for rote learning, because you already have your manuals. If you know, you will answer; if you don’t, you won’t.”</li>
+          <li>Numericals “similar in kind” to the watermarked slides / sample paper — <strong>not copy-paste of the same numbers</strong>.</li>
+          <li>Open book: publisher textbooks + the material you carry. Concept first: “why this approach, why not the other.”</li>
+        </ul>
+      </div>
+
+      <div class="callout warn">
+        <div class="c-head">▲ He also said, on slides vs handout</div>
+        <p>A student asked: the handout numbering and the taught topics don’t match. Answer, in spirit: <strong>study from more than one resource</strong> (slides + recordings + this site + T1/T2). The comprehensive covers <strong>all topics</strong> in the handout, including webinar/optional modules. If it was taught or listed, it’s fair game — but 80–90% of <em>marks</em> sit after RANSAC.</p>
+      </div>
+
+      <h2>Highest-probability post-RANSAC checklist</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>He flagged / worked</th><th>Where</th></tr></thead>
+        <tbody>
+          <tr><td>kNN + train/val/test; binary CE vs softmax vs multilabel</td><td><a href="session9.html">S9</a></td></tr>
+          <tr><td>Q/K/V, why \(\sqrt{d}\), ViT pipeline — <em>don’t derive</em> attention in the hall</td><td><a href="session10.html">S10</a></td></tr>
+          <tr><td>k-means one iteration; mean-shift modes; semantic vs instance; SAM vs U-Net</td><td><a href="session11.html">S11</a></td></tr>
+          <tr><td>IoU of two boxes (he said “expect this”); FCN/U-Net skip connections</td><td><a href="session12.html">S12</a>, <a href="numericals.html#t19">N19</a></td></tr>
+          <tr><td>Sliding-window class imbalance (6/330); R-CNN → Fast → Faster; YOLO 7×7, 2 boxes/cell</td><td><a href="session13.html">S13–14</a></td></tr>
+          <tr><td>11-point interpolated AP / mAP (the “Mandeep” ranking numerical)</td><td><a href="session16.html">S16</a>, <a href="numericals.html#t20">N20</a></td></tr>
+          <tr><td>Lucas–Kanade (the only OF method in syllabus for exam); Kalman conceptual, not the full matrix grind</td><td><a href="session15.html">S15</a></td></tr>
+          <tr><td>BoW pipeline (you already did it in assignment 1)</td><td><a href="session14.html">S14</a></td></tr>
+          <tr><td>System design / latency on an edge board</td><td><a href="session17.html">S17</a></td></tr>
+        </tbody>
+      </table></div>
+
+      <h2>How to sit the open book</h2>
+      <div class="steps">
+        <div class="step"><div class="s-title">Tab this site</div>Session pages for the “why,” <a href="formulas.html">formulas</a> for the one-liners, <a href="numericals.html">numericals</a> for the method.</div>
+        <div class="step"><div class="s-title">Write assumptions</div>Same midsem habit: axes, IoU threshold, \(k\), binning, which YOLO version (v1 grid vs later anchors — he said v2 anchors are out of syllabus).</div>
+        <div class="step"><div class="s-title">Upgrade sentences</div>Keep a one-liner for each “why better than predecessor”: Fast vs R-CNN, Faster vs Fast, YOLO vs Faster, DoG vs LoG, ViT vs ResNet (data diet), MobileNet vs plain conv.</div>
+        <div class="step"><div class="s-title">Don’t derive</div>Attention / Kalman full algebra: “conceptually present; full brunt not in syllabus.” Sketch QKV and predict–update; move on.</div>
+      </div>
+
+      <div class="pager">
+        <a href="lectures.html"><div class="pg-dir">← Midsem lectures</div><div class="pg-title">▶ From the Lectures (S1–8)</div></a>
+        <a class="next" href="session9.html"><div class="pg-dir">Start post-RANSAC →</div><div class="pg-title">Session 9 · Image Classification</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session 15 — Object Tracking</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "session15", title: "Session 15 · Object Tracking", crumb: "Session 15 · Object Tracking" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Session 15</span>
+      <h1>Object Tracking</h1>
+      <p class="lead">A video is a stack of images — data is now a function of \((x,y,t)\). Tracking means locating a moving object over time. The lecture toolkit: motion detection, optical flow (Lucas–Kanade), tracking-by-detection, mean-shift / Camshift, Kalman filters, and DNN trackers (DeepSORT, FairMOT).</p>
+
+      <div class="toc">
+        <h4>On this page</h4>
+        <ul>
+          <li><a href="#vs">Detection vs tracking</a></li>
+          <li><a href="#motion">Motion detection</a></li>
+          <li><a href="#flow">Optical flow</a></li>
+          <li><a href="#lk">Lucas–Kanade</a></li>
+          <li><a href="#lk-num">LK / aperture numerical</a></li>
+          <li><a href="#tbd">Tracking by detection</a></li>
+          <li><a href="#ms">Mean-shift tracking</a></li>
+          <li><a href="#kalman">Kalman filters</a></li>
+          <li><a href="#dnn">DNN trackers</a></li>
+          <li><a href="#takeaways">Key takeaways</a></li>
+        </ul>
+      </div>
+
+      <div class="callout exam">
+        <div class="c-head">✦ From the recording — syllabus boundaries</div>
+        <p>Horn–Schunck, Lucas–Kanade, Farnebäck all exist; “<strong>from your curriculum perspective you will only be focusing on Lucas–Kanade</strong>.” Know LK’s assumptions and the Harris-matrix solvability test; you don’t need to grind the full LK derivation. Kalman: “mathematically the full brunt is not within your syllabus, but conceptually it is present” — predict / gain / update is enough. Tracking is “the last topic before you end-sem.”</p>
+      </div>
+
+      <h2 id="vs">Motion detection vs object tracking</h2>
+      <p><strong>Motion detection</strong> asks “did something move?” (frame differencing, background subtraction, IR/microwave sensors that open a door). <strong>Object tracking</strong> asks “which object is this, and where is it now?” — identity over time. Applications: autonomous vehicles, surveillance, AR, traffic speed, visual SLAM (simultaneous localisation and mapping), super-resolution from a burst of frames.</p>
+
+      <h2 id="motion">Motion detection</h2>
+      <ul>
+        <li><strong>Frame differencing</strong> — threshold \(|I_t - I_{t-1}|\). Cheap; fails with a moving camera and with slow objects.</li>
+        <li><strong>Background subtraction (GMM)</strong> — model each pixel’s background as a mixture of Gaussians; anything that doesn’t fit is foreground. Classic for a static camera. Challenges: noise, lighting changes, moving cameras.</li>
+        <li><strong>Motion segmentation</strong> — group pixels into coherently moving layers (not just fg/bg).</li>
+      </ul>
+      <p>Uses of motion beyond tracking: stabilisation, super-resolution (register → warp to a common frame → fuse → optional deblur), event/activity recognition.</p>
+
+      <h2 id="flow">Optical flow</h2>
+      <p>Optical flow is the <strong>apparent</strong> motion of brightness patterns — a vector field \((u(x,y), v(x,y))\) between two frames. Note: lighting change without physical motion still produces “flow.” Three key assumptions (from the slides):</p>
+      <ol>
+        <li><strong>Brightness constancy</strong> — a point looks the same in every frame.</li>
+        <li><strong>Small motion</strong> — points don’t jump far (so a Taylor expansion is valid).</li>
+        <li><strong>Spatial coherence</strong> — neighbours share the same \((u,v)\).</li>
+      </ol>
+      <p>Brightness constancy \(I(x,y,t)=I(x+u,y+v,t+1)\) plus small motion gives the <strong>optical-flow constraint</strong>:</p>
+      <div class="eq">\[ I_x u + I_y v + I_t = 0 \]</div>
+      <p>One equation, two unknowns — the <strong>aperture problem</strong>. Along an edge you can recover only the normal component of motion. Methods: <strong>Horn–Schunck</strong> (global smoothness over the whole image), <strong>Lucas–Kanade</strong> (local, small windows), <strong>Farnebäck</strong> (dense polynomial expansion, every pixel).</p>
+      <figure data-diagram="aperture" class="md" data-caption="Aperture problem: one constraint line in (u,v) space. A window on a corner (two gradient directions) pins down a unique flow; a window on a uniform patch or a single edge does not."></figure>
+
+      <h2 id="lk">Lucas–Kanade</h2>
+      <p>Lucas &amp; Kanade, 1981. Assume \((u,v)\) is constant in a \(K\times K\) window (e.g. 5×5 → 25 equations). Overdetermined linear system; least squares:</p>
+      <div class="eq">\[ \begin{bmatrix} \sum I_x^2 & \sum I_x I_y \\ \sum I_x I_y & \sum I_y^2 \end{bmatrix} \begin{bmatrix} u \\ v \end{bmatrix} = -\begin{bmatrix} \sum I_x I_t \\ \sum I_y I_t \end{bmatrix} \]</div>
+      <p>The left-hand matrix \(A^\top A\) is exactly the Harris <strong>second-moment matrix</strong> \(M\). Solvable when \(M\) is invertible, both eigenvalues are large, and they are comparable — i.e. at <strong>corners</strong>. Flat: both \(\lambda\) small. Edge: one \(\lambda\) dominates. That is why KLT tracking follows Harris corners.</p>
+
+      <h2 id="lk-num">Worked numerical — when is flow solvable?</h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> In a window, \(\sum I_x^2=8,\ \sum I_y^2=8,\ \sum I_x I_y=0,\ \sum I_x I_t=-4,\ \sum I_y I_t=-4\). Compute \((u,v)\) and classify the patch. Repeat if \(\sum I_y^2=\sum I_x I_y=\sum I_y I_t=0\) and \(\sum I_x^2=8,\ \sum I_x I_t=-4\).</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Window 1</div>\(M=\mathrm{diag}(8,8)\), invertible, \(\lambda_1=\lambda_2=8\) (corner). \((u,v)=(-4/8,-4/8)=(-0.5,-0.5)\).</div>
+          <div class="step"><div class="s-title">Window 2</div>\(M=\mathrm{diag}(8,0)\), singular (edge). Only the \(x\)-normal flow \(u=-0.5\) is determined; \(v\) is free — aperture problem.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Corner window: flow \((-0.5,-0.5)\). Edge window: not uniquely solvable. Track corners, not edges.</p></div>
+      </div>
+
+      <h2 id="tbd">Tracking by detection</h2>
+      <p>Run a detector every frame, then <strong>associate</strong> boxes across time (nearest neighbour, Hungarian algorithm, appearance embeddings). No explicit motion model — identity comes from matching. Works when the detector is reliable; struggles with occlusion and ID swaps. OpenCV’s face tracker is Camshift (mean-shift on a colour histogram). SIFT-based trackers oversample local features on (flat) objects.</p>
+
+      <h2 id="ms">Mean-shift tracking</h2>
+      <p>Represent the target by a colour histogram (or kernel-weighted histogram). In the next frame, place a window at the last position and <strong>mean-shift</strong> it uphill on the similarity surface (Bhattacharyya / histogram back-projection) until it sits on the object. Camshift additionally adapts window size. Same algorithm as Session 11, now in \((x,y)\) on a probability map instead of \((R,G,B,x,y)\). Comaniciu, Ramesh, Meer: <em>Kernel-Based Object Tracking</em>.</p>
+
+      <h2 id="kalman">Kalman filters</h2>
+      <p>Observations \(Z\) are noisy; we have a model of how the state \(X\) evolves. The Kalman filter is the optimal predictor–corrector when the system is <strong>linear</strong> and noise is Gaussian. Scenarios from class: a bird through a forest, a missile blip every few seconds, planets with intermittent observations.</p>
+      <p>Toy 1-D model: position \(X\), constant velocity \(X'\), interval \(\Delta\), plus Gaussian process noise (wind, etc.).</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">Predict (time update)</div>Propagate the state and its covariance to the next time: where <em>should</em> the object be, and how unsure are we?</div>
+        <div class="step"><div class="s-title">Compute Kalman gain \(K\)</div>\(K = P^- H^\top (H P^- H^\top + R)^{-1}\). If measurement noise \(R\) is huge, \(K\to0\) (trust the model). If the prediction is uncertain, \(K\to1\) (trust the sensor).</div>
+        <div class="step"><div class="s-title">Update (measurement update)</div>Correct: \(\hat{x} = \hat{x}^- + K(z - H\hat{x}^-)\). Then update covariance. Repeat.</div>
+      </div>
+      <figure data-diagram="kalman" class="md" data-caption="Kalman cycle: predict with the motion model, then correct with the (noisy) measurement, weighted by the Kalman gain."></figure>
+      <div class="card">
+        <p style="margin-top:0"><strong>Mini numerical — 1-D gain.</strong> Predicted position \(10\), predicted variance \(P^-=4\), measurement \(z=12\) with \(R=4\), \(H=1\). Gain \(K=4/(4+4)=0.5\). Updated state \(10+0.5(12-10)=\mathbf{11}\) — split the difference because model and sensor are equally trusted.</p>
+      </div>
+
+      <h2 id="dnn">DNN architectures for tracking</h2>
+      <p>Modern trackers combine a detector with learned appearance and a motion prior. Named in class: <strong>DeepSORT</strong> (Kalman + CNN embeddings + Hungarian association on top of a detector) and <strong>FairMOT</strong> (joint detection and re-ID in one network). Handout extras: <strong>SiamFC</strong> (Siamese similarity), <strong>GSDT</strong>, <strong>SMILEtrack</strong>, <strong>SPARSEtrack</strong>. Use case: pedestrian tracking. Traditional vs DNN: hand-crafted histograms / LK corners vs learned features that survive occlusion, at a GPU cost.</p>
+
+      <h2 id="takeaways">Key takeaways</h2>
+      <div class="callout key">
+        <div class="c-head">◆ Remember these</div>
+        <ul>
+          <li>Detection = “is there motion?” Tracking = “this is the same object at a new pose.”</li>
+          <li>Optical flow: \(I_x u + I_y v + I_t = 0\). Aperture problem; LK solves it in a window whose \(M\) is Harris-well-conditioned (corners).</li>
+          <li>Mean-shift / Camshift climb a colour-similarity surface. Kalman: predict then correct; \(K\) blends model vs measurement.</li>
+          <li>Tracking-by-detection + DeepSORT/FairMOT is the current default stack.</li>
+        </ul>
+      </div>
+
+      <div class="pager">
+        <a href="session14.html"><div class="pg-dir">← Previous</div><div class="pg-title">Session 14 · Visual Bag of Words</div></a>
+        <a class="next" href="session16.html"><div class="pg-dir">Next →</div><div class="pg-title">Session 16 · Metrics &amp; Wrap-up</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

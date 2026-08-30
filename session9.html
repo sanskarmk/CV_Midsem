@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session 9 — Image Classification</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "session9", title: "Session 9 · Image Classification", crumb: "Session 9 · Image Classification" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Session 9</span>
+      <h1>Image Classification</h1>
+      <p class="lead">Given an image, pick a label from a finite set — cat, dog, truck, … This is the core recognition task everything later (detection, segmentation, tracking) builds on. The lecture path is data-driven: collect labelled images, train a classifier, evaluate on held-out data.</p>
+
+      <div class="toc">
+        <h4>On this page</h4>
+        <ul>
+          <li><a href="#problem">The classification problem</a></li>
+          <li><a href="#pipeline">Train / validate / test</a></li>
+          <li><a href="#bow">Bag of visual words</a></li>
+          <li><a href="#knn">Nearest neighbour &amp; kNN</a></li>
+          <li><a href="#knn-demo">kNN, live</a></li>
+          <li><a href="#knn-num">kNN numerical</a></li>
+          <li><a href="#linear">Linear classifiers</a></li>
+          <li><a href="#loss">Loss, softmax, cross-entropy</a></li>
+          <li><a href="#softmax-num">Softmax numerical</a></li>
+          <li><a href="#takeaways">Key takeaways</a></li>
+        </ul>
+      </div>
+
+      <h2 id="problem">The classification problem</h2>
+      <p>Assume a discrete label set, e.g. \(\{\text{cat}, \text{dog}, \text{cow}, \text{apple}, \text{tomato}, \text{truck}, \ldots\}\). A classifier maps an image \(x\) to a label \(y\). What actually matters in recognition (from the slides):</p>
+      <div class="grid cols-3">
+        <div class="card"><h4 style="margin-top:0">Learning method</h4><p style="margin-bottom:0">kNN, linear classifier, neural net, deep net — how we turn features into a decision.</p></div>
+        <div class="card"><h4 style="margin-top:0">Representation</h4><p style="margin-bottom:0">Raw pixels, SIFT, HOG, or deep-learned features. A better descriptor often beats a fancier classifier.</p></div>
+        <div class="card"><h4 style="margin-top:0">Data</h4><p style="margin-bottom:0">PASCAL, CIFAR-10, ImageNet, COCO. Scale and diversity of labelled images dominate modern accuracy.</p></div>
+      </div>
+      <div class="callout intuition">
+        <div class="c-head">◆ Data-driven, not hand-coded</div>
+        <p>We do <strong>not</strong> write “if whiskers and pointed ears then cat.” We collect a database of images with labels, use ML to train a classifier, and evaluate it on images the model has never seen. CIFAR-10 (10 classes, 32×32 colour) is the running toy dataset in this lecture.</p>
+      </div>
+
+      <h2 id="pipeline">Train, validate, test</h2>
+      <p>Split the labelled set into three disjoint piles. Never tune on the test set.</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Split</th><th>Used for</th><th>Touched how often</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Train</strong></td><td>Fit the model (remember examples, learn \(W,b\))</td><td>Many times</td></tr>
+          <tr><td><strong>Validation</strong></td><td>Choose <em>hyperparameters</em> (\(k\), distance metric, learning rate…)</td><td>Several times</td></tr>
+          <tr><td><strong>Test</strong></td><td>Estimate generalisation — a single, final number</td><td><strong>Once</strong>, at the very end</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout warn">
+        <div class="c-head">▲ Hyperparameters are not learned</div>
+        <p>Choices like \(k\) and the distance metric are set by us, not by gradient descent. The methodology is: train the model, validate to pick hyperparameters, test once to report generalisability. Peeking at test accuracy while tuning is cheating — the test number stops meaning “unseen data.”</p>
+      </div>
+
+      <div class="callout intuition">
+        <div class="c-head">▶ From the recording</div>
+        <p>“Today we’ll be covering the image classification pipeline — training, validation — and two algorithms: nearest neighbour and linear classification. In session 10 we start with the actual CNNs, then transformers and Vision Transformers.” On losses: binary → <strong>binary cross-entropy + sigmoid</strong>; multi-class → <strong>softmax + cross-entropy</strong>; multi-label (cat <em>and</em> which breed) → a sigmoid per label, not a single softmax.</p>
+      </div>
+
+      <h2 id="bow">Bag of visual words</h2>
+      <p>Before deep nets, the classic pipeline turned an image into a histogram of “visual words” — the same idea as a bag-of-words document classifier, but with image patches instead of English words.</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">Extract local features</div>Detect keypoints (SIFT, Harris, dense grid) and describe each patch as a vector.</div>
+        <div class="step"><div class="s-title">Build a codebook</div>Run <strong>k-means</strong> on a huge pool of descriptors from the training set. The \(K\) cluster centres are the <strong>visual words</strong>.</div>
+        <div class="step"><div class="s-title">Quantize</div>Assign every descriptor in an image to its nearest visual word.</div>
+        <div class="step"><div class="s-title">Histogram</div>Count word occurrences → a \(K\)-D vector. Classify that vector (SVM, kNN, linear). Optionally add a spatial pyramid so layout isn’t totally thrown away.</div>
+      </div>
+      <figure data-diagram="bow" data-caption="Bag of visual words: local descriptors are quantized to a learned codebook, then the image is represented by a histogram of those ‘words’."></figure>
+      <div class="callout key">
+        <div class="c-head">◆ What it throws away, what it keeps</div>
+        <p>BoW is invariant to the <em>order</em> of patches (a cat is a cat even if you scramble parts) and cheap to match. The cost: it discards geometry. Two very different scenes can share the same word counts. That’s why later methods (HOG grids, CNNs, ViTs) keep spatial structure.</p>
+      </div>
+
+      <p><a href="session14.html">Full BoW / semantic-hierarchy page →</a></p>
+
+      <h2 id="knn">Nearest neighbour and kNN</h2>
+      <p><strong>Train:</strong> remember every training image and its label — \(O(1)\) “learning.” <strong>Predict:</strong> find the closest training image (or the \(k\) closest) and copy its label (majority vote).</p>
+      <p>Distance is a hyperparameter. Two common choices on flattened pixel vectors \(x, z \in \mathbb{R}^D\):</p>
+      <div class="eq">\[ L_1:\quad d_1(x,z)=\sum_i |x_i-z_i| \qquad\qquad L_2:\quad d_2(x,z)=\sqrt{\sum_i (x_i-z_i)^2} \]</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th></th><th>Training</th><th>Testing (N train, M test)</th></tr></thead>
+        <tbody>
+          <tr><td>kNN</td><td>\(O(1)\)</td><td>\(O(MN)\) — compare every test image to every training image</td></tr>
+          <tr><td>What we actually want</td><td>Slow is OK</td><td><strong>Fast</strong> — a deployed classifier must answer in milliseconds</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout pitfall">
+        <div class="c-head">▲ Why kNN fails on raw pixels</div>
+        <p>CIFAR-10 1-NN on raw pixels is only ~38% (chance is 10%). Pixel \(L_2\) thinks a shifted cat is far from itself, and a blue car may be “closer” to a blue truck than to a red car. You need a representation that cares about <em>content</em>, not camera pose and colour cast — which is exactly why SIFT/HOG and then CNNs exist.</p>
+      </div>
+
+      <h2 id="knn-demo">kNN, live</h2>
+      <p>A 2-D toy of the same algorithm. Click to drop a query (or drag the existing one). Change \(k\) and the metric and watch the vote:</p>
+      <div data-demo="knn"></div>
+
+      <h2 id="knn-num">Worked numerical — kNN</h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Training points: \(A=(1,1)\) cat, \(B=(2,1)\) cat, \(C=(3,4)\) dog, \(D=(6,2)\) dog. Query \(q=(2,3)\). Using \(L_2\) distance, classify with \(k=1\) and \(k=3\).</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Distances</div>\(d(q,A)=\sqrt{1+4}=\sqrt{5}\approx2.24\); \(d(q,B)=\sqrt{0+4}=2\); \(d(q,C)=\sqrt{1+1}=\sqrt{2}\approx1.41\); \(d(q,D)=\sqrt{16+1}=\sqrt{17}\approx4.12\).</div>
+          <div class="step"><div class="s-title">\(k=1\)</div>Nearest is \(C\) (dog) → <strong>dog</strong>.</div>
+          <div class="step"><div class="s-title">\(k=3\)</div>Nearest three: \(C\) dog, \(B\) cat, \(A\) cat. Majority = <strong>cat</strong>.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(k=1\) → dog; \(k=3\) → cat. Same query, different \(k\), different label — which is why \(k\) is chosen on the <em>validation</em> set, not the test set.</p></div>
+      </div>
+
+      <h2 id="linear">Linear classifiers — a parametric score</h2>
+      <p>Instead of storing the whole training set, learn a weight matrix \(W\) and bias \(b\) so a <strong>score function</strong> \(f(x,W)=Wx+b\) produces one score per class. The predicted label is \(\arg\max_c f_c\). Geometrically each class is a hyperplane: \(x\cdot w + b \ge 0\) on the positive side.</p>
+      <p>Each row of \(W\) is a <strong>template</strong> for that class. Scoring is template matching: how well does the image correlate with the “cat template,” the “car template,” …</p>
+      <figure data-diagram="linear-clf" class="md" data-caption="A linear classifier carves feature space with hyperplanes. Training chooses the hyperplane that scores the true class highest — which needs a loss function, not just a count of mistakes."></figure>
+      <div class="callout intuition">
+        <div class="c-head">◆ Why not just count misclassifications?</div>
+        <p>Number of mistakes is discrete (can’t break ties, no gradient). We want a loss that (i) is continuous, (ii) encourages a <em>margin</em> so we generalise, and (iii) works for more than two classes.</p>
+      </div>
+
+      <h2 id="loss">Loss, softmax and cross-entropy</h2>
+      <p>A <strong>loss</strong> (objective / cost) measures how unhappy we are with the scores given the true labels. Training = find \(W,b\) that minimise the loss.</p>
+      <p><strong>Softmax</strong> turns scores \(s\) into a probability distribution:</p>
+      <div class="eq">\[ p_c = \frac{e^{s_c}}{\sum_j e^{s_j}} \]</div>
+      <p><strong>Cross-entropy loss</strong> for true class \(y\) is \(L = -\log p_y\). If the model is confident and correct (\(p_y\to1\)), loss \(\to 0\); if it puts almost no mass on the true class, loss \(\to+\infty\). SVM / max-margin losses were popular; <strong>cross-entropy is the default classification loss now</strong>.</p>
+
+      <h2 id="softmax-num">Worked numerical — softmax + cross-entropy</h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Three-class scores \(s=(2.0,\,1.0,\,0.1)\), true class is class 0. Compute softmax probabilities and the cross-entropy loss.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Exponentials</div>\(e^{2.0}=7.389,\ e^{1.0}=2.718,\ e^{0.1}=1.105\). Sum \(=11.212\).</div>
+          <div class="step"><div class="s-title">Softmax</div>\(p=(0.659,\,0.242,\,0.099)\).</div>
+          <div class="step"><div class="s-title">Cross-entropy</div>\(L=-\log 0.659 \approx 0.417\).</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(p\approx(0.66,\,0.24,\,0.10)\), \(L\approx0.42\). If the true class had been class 2 (\(p=0.099\)), loss would be \(-\log 0.099\approx 2.31\) — much unhappier, as it should be.</p></div>
+      </div>
+
+      <h2 id="takeaways">Key takeaways</h2>
+      <div class="callout key">
+        <div class="c-head">◆ Remember these</div>
+        <ul>
+          <li>Classification = map image → discrete label. Method + representation + data all matter.</li>
+          <li>Train / validate / test: hyperparameters on val, test set used <strong>once</strong>.</li>
+          <li>BoW: quantize local features to a codebook, classify the histogram.</li>
+          <li>kNN: train \(O(1)\), test \(O(MN)\) — the wrong complexity for deployment; raw-pixel kNN is weak.</li>
+          <li>Linear classifier: \(f=Wx+b\), rows of \(W\) are templates. Softmax + cross-entropy is the standard loss.</li>
+          <li>Handout DNNs for this module: <strong>MobileNet, Xception</strong> (depthwise-separable — see <a href="session17.html">edge devices</a>).</li>
+          <li>Use cases: <strong>fruit sorting</strong> and <strong>apparel type</strong> via <strong>transfer learning</strong> — freeze an ImageNet backbone (MobileNet/Xception), replace the last layer, fine-tune on your small labelled set (Lab 5 in the handout).</li>
+          <li>Extra classification metrics (handout): <strong>Top-K</strong> (true class in the top K scores), <strong>macro-P/R/F1</strong> (unweighted mean over classes — fair when classes are rare), <strong>Brier score</strong> (mean squared error of predicted probabilities — punishes overconfidence), plus FLOPs / memory / inference time on named hardware.</li>
+          <li>Next: generalise the score function from linear to <strong>transformers / ViT</strong> (Session 10) and CNNs (used from Session 12 on).</li>
+        </ul>
+      </div>
+
+      <div class="pager">
+        <a href="session7.html"><div class="pg-dir">← Previous</div><div class="pg-title">Session 7 · SIFT &amp; RANSAC</div></a>
+        <a class="next" href="session10.html"><div class="pg-dir">Next →</div><div class="pg-title">Session 10 · Attention &amp; ViT</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

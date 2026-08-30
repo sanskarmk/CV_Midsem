@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session 16 — Performance Metrics &amp; Wrap-up</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "session16", title: "Session 16 · Metrics & Wrap-up", crumb: "Session 16 · Metrics & Wrap-up" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Session 16</span>
+      <h1>Performance Metrics &amp; Course Wrap-up</h1>
+      <p class="lead">A last pass on the numbers you quote for a detector or classifier: confusion-matrix precision/recall, IoU, the precision–recall curve, Average Precision / mAP, and ROC / AUC. Then a map of everything after RANSAC.</p>
+
+      <div class="toc">
+        <h4>On this page</h4>
+        <ul>
+          <li><a href="#cm">Confusion matrix, P and R</a></li>
+          <li><a href="#iou">IoU recap</a></li>
+          <li><a href="#pr">Precision–recall curve</a></li>
+          <li><a href="#ap">11-point AP numerical</a></li>
+          <li><a href="#map">mAP</a></li>
+          <li><a href="#roc">ROC and AUC</a></li>
+          <li><a href="#map-course">Course map after RANSAC</a></li>
+          <li><a href="#takeaways">Key takeaways</a></li>
+        </ul>
+      </div>
+
+      <div class="callout exam">
+        <div class="c-head">✦ He worked an 11-point mAP live</div>
+        <p>Green boxes = ground truth, red = detections, rank by confidence, mark TP/FP, then 11-point interpolated AP. “Don’t expect straightforward copies of the watermarked numericals — same <em>kind</em>, mixed with other concepts.” Full paper pattern: <a href="comprehensive.html">Comprehensive exam</a>.</p>
+      </div>
+
+      <h2 id="cm">Confusion matrix (revisited)</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th></th><th>Relevant</th><th>Non-relevant</th></tr></thead>
+        <tbody>
+          <tr><td>Retrieved / predicted +</td><td>TP</td><td>FP</td></tr>
+          <tr><td>Not retrieved / predicted −</td><td>FN</td><td>TN</td></tr>
+        </tbody>
+      </table></div>
+      <div class="eq">\[ P=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}}=P(\text{relevant}\mid\text{retrieved})\,,\qquad R=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FN}}=P(\text{retrieved}\mid\text{relevant}) \]</div>
+      <p>IoU, area under the PR curve, and mAP are built from these two plus overlap.</p>
+
+      <h2 id="iou">IoU recap</h2>
+      <p>\(\mathrm{IoU}=|A\cap B|/|A\cup B|\). For PASCAL VOC a box is a positive if IoU ≥ 0.5; duplicate detections of the same ground truth: first TP, rest FP. Segmentation uses the same ratio on pixel sets, then averages over classes (mIoU).</p>
+
+      <h2 id="pr">The precision–recall curve</h2>
+      <p>Dump every detection of one class, rank by confidence (high → low). At each rank compute running \(P\) and \(R\). Recall only stays or rises; precision zig-zags — down on an FP, up on a TP. The curve’s purpose: summarise the whole operating range, not a single threshold. A detector that is high-precision at high recall dominates one that only looks good at one point.</p>
+      <p>The lecture’s running sketch: 24 ROI proposals vs 15 ground truths — many FPs are inevitable; ranking by score is what makes AP meaningful.</p>
+      <figure data-diagram="pr-roc" data-caption="Left: precision–recall. AP is the area under the (interpolated, monotone) PR curve. Right: ROC plots TPR against FPR; the random classifier is the diagonal, perfect is (0,1)."></figure>
+
+      <h2 id="ap">Worked numerical — interpolated AP</h2>
+      <p>Dataset has <strong>5 apples</strong>. Ranked detections (confidence ↓), TP if IoU ≥ 0.5:</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Rank</th><th>Correct?</th><th>TP so far</th><th>Precision</th><th>Recall</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>TP</td><td>1</td><td>1/1 = 1.00</td><td>1/5 = 0.20</td></tr>
+          <tr><td>2</td><td>TP</td><td>2</td><td>2/2 = 1.00</td><td>2/5 = 0.40</td></tr>
+          <tr><td>3</td><td>FP</td><td>2</td><td>2/3 ≈ 0.67</td><td>0.40</td></tr>
+          <tr><td>4</td><td>TP</td><td>3</td><td>3/4 = 0.75</td><td>0.60</td></tr>
+          <tr><td>5</td><td>FP</td><td>3</td><td>3/5 = 0.60</td><td>0.60</td></tr>
+        </tbody>
+      </table></div>
+      <p>At rank 3 (the slide’s worked row): \(P=2/3\approx0.67\), \(R=2/5=0.4\). Interpolate: at each recall \(\hat{r}\), take the <em>max precision to the right</em> (any recall ≥ \(\hat{r}\)) so the orange zig-zag becomes a green monotone staircase, less sensitive to ranking jitter.</p>
+      <p><strong>PASCAL VOC 2008 11-point AP:</strong> sample interpolated precision at \(r=0, 0.1, \ldots, 1.0\) and average. In the lecture’s completed example this came out</p>
+      <div class="eq">\[ \mathrm{AP} = \frac{5\times 1.0 + 4\times 0.57 + 2\times 0.5}{11} \approx 0.753 \]</div>
+      <p>(five of the eleven recall knots sit under precision 1.0, four under 0.57, two under 0.5). AP always lies in \([0,1]\).</p>
+      <div class="callout exam">
+        <div class="c-head">✦ Exam-style method</div>
+        <p>① Rank by score. ② Mark TP/FP with the IoU rule (and the “first detection only” rule). ③ Fill cumulative P and R. ④ Interpolate. ⑤ Average at the 11 recall knots (or integrate the monotone curve). ⑥ mAP = mean over classes.</p>
+      </div>
+
+      <h2 id="map">mAP</h2>
+      <p><strong>mean Average Precision</strong> = average of per-class AP. The headline number for Faster R-CNN, SSD, YOLO, etc. COCO additionally averages AP across IoU thresholds 0.50:0.05:0.95, which punishes loose boxes.</p>
+
+      <h2 id="roc">ROC space and AUC</h2>
+      <p>For a <em>binary classifier with a score</em>, sweep the threshold and plot <strong>TPR</strong> \(=\mathrm{TP}/(\mathrm{TP}+\mathrm{FN})\) (recall, sensitivity) against <strong>FPR</strong> \(=\mathrm{FP}/(\mathrm{FP}+\mathrm{TN})\). Discrete classifiers (a hard yes/no) produce a <em>single point</em>.</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Point</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>\((0,0)\)</td><td>Never say positive — no false positives, no true positives.</td></tr>
+          <tr><td>\((1,1)\)</td><td>Always say positive.</td></tr>
+          <tr><td>\((0,1)\)</td><td><strong>Perfect</strong> classification.</td></tr>
+          <tr><td>Diagonal</td><td>Random performance (TPR = FPR).</td></tr>
+        </tbody>
+      </table></div>
+      <p>One point is better than another if it sits to the <strong>north-west</strong> (higher TPR, lower FPR, or both). Upper-right classifiers are “liberal” (weak evidence still called positive — catch all TPs, pay in FPs); lower-left are “conservative.” <strong>AUC-ROC</strong> is the area under this curve: 1 is perfect, 0.5 is random. Prefer PR / AP when positives are rare (detection); ROC is more common for balanced binary tasks.</p>
+
+      <h2 id="map-course">Course map — everything after RANSAC</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Session</th><th>Topic</th><th>Page</th></tr></thead>
+        <tbody>
+          <tr><td>9</td><td>Image classification: kNN, BoW, linear, softmax / CE</td><td><a href="session9.html">session 9</a></td></tr>
+          <tr><td>10</td><td>Attention, transformers, Vision Transformer</td><td><a href="session10.html">session 10</a></td></tr>
+          <tr><td>11</td><td>Classic segmentation: k-means, EM/MoG, mean-shift</td><td><a href="session11.html">session 11</a></td></tr>
+          <tr><td>12</td><td>FCN / U-Net, IoU, P/R, AP intro</td><td><a href="session12.html">session 12</a></td></tr>
+          <tr><td>13–14</td><td>Sliding window, R-CNN family, Mask R-CNN, YOLO</td><td><a href="session13.html">sessions 13–14</a></td></tr>
+          <tr><td>15</td><td>Optical flow, LK, mean-shift track, Kalman, DeepSORT</td><td><a href="session15.html">session 15</a></td></tr>
+          <tr><td>16</td><td>mAP, PR, ROC / AUC</td><td>this page</td></tr>
+        </tbody>
+      </table></div>
+      <p>Webinar-only in the course outline (not in these slide decks): deep-learning review, face detection/recognition, OCR, edge devices for CV. The DL ideas you need for the written paper are the CNN recap in Session 12 plus ViT in Session 10.</p>
+
+      <h2 id="takeaways">Key takeaways</h2>
+      <div class="callout key">
+        <div class="c-head">◆ Remember these</div>
+        <ul>
+          <li>\(P=\mathrm{TP}/(\mathrm{TP}+\mathrm{FP})\), \(R=\mathrm{TP}/(\mathrm{TP}+\mathrm{FN})\). IoU decides TP vs FP for boxes/masks.</li>
+          <li>AP = area under interpolated PR; 11-point VOC average; mAP averages AP over classes.</li>
+          <li>ROC: TPR vs FPR. Perfect = \((0,1)\); random = diagonal. AUC-ROC = 0.5 is chance.</li>
+          <li>Rare positives ⇒ trust PR/mAP, not accuracy or a single ROC point.</li>
+        </ul>
+      </div>
+
+      <div class="pager">
+        <a href="session15.html"><div class="pg-dir">← Previous</div><div class="pg-title">Session 15 · Object Tracking</div></a>
+        <a class="next" href="session17.html"><div class="pg-dir">Next →</div><div class="pg-title">Session 17 · Edge Devices</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

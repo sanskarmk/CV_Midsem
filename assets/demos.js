@@ -1012,6 +1012,153 @@
     document.addEventListener("visibilitychange", function () { if (document.hidden && raf) { cancelAnimationFrame(raf); raf = null; } else if (!document.hidden && stream && !raf) { raf = requestAnimationFrame(frame); } });
   };
 
+  /* ============================================================
+     kNN playground
+     ============================================================ */
+  DEMOS.knn = function (el) {
+    var pts = [
+      {x: 0.18, y: 0.22, yhat: 0}, {x: 0.28, y: 0.30, yhat: 0}, {x: 0.22, y: 0.45, yhat: 0},
+      {x: 0.35, y: 0.18, yhat: 0}, {x: 0.72, y: 0.70, yhat: 1}, {x: 0.80, y: 0.55, yhat: 1},
+      {x: 0.65, y: 0.78, yhat: 1}, {x: 0.88, y: 0.72, yhat: 1}, {x: 0.55, y: 0.40, yhat: 2},
+      {x: 0.48, y: 0.58, yhat: 2}, {x: 0.62, y: 0.32, yhat: 2}
+    ];
+    var q = {x: 0.50, y: 0.50};
+    var k = 3, metric = "l2", names = ["cat", "dog", "car"];
+    var colors = ["#5eead4", "#f472b6", "#6ea8fe"];
+    el.appendChild(head("k-nearest neighbours", "Drag the query (white). Change k and L1/L2 — the vote updates.", "Live Demo"));
+    var c = make("canvas"); c.width = 420; c.height = 320; c.style.width = "100%"; c.style.maxWidth = "420px"; c.style.cursor = "grab";
+    var ctrl = make("div", "ctrl");
+    ctrl.innerHTML = '<label>k</label><input type="range" min="1" max="7" step="2" value="3" id="kR"><span class="val" id="kV">3</span>' +
+      '<label>metric</label><select id="kM"><option value="l2">L₂</option><option value="l1">L₁</option></select>';
+    var out = make("div", "readout");
+    el.appendChild(c); el.appendChild(ctrl); el.appendChild(out);
+    function dist(a, b) {
+      var dx = a.x - b.x, dy = a.y - b.y;
+      return metric === "l1" ? Math.abs(dx) + Math.abs(dy) : Math.sqrt(dx * dx + dy * dy);
+    }
+    function draw() {
+      var ctx = c.getContext("2d"), W = c.width, H = c.height;
+      ctx.fillStyle = cv("--code-bg") || "#0b0f15"; ctx.fillRect(0, 0, W, H);
+      var ranked = pts.map(function (p) { return {p: p, d: dist(p, q)}; }).sort(function (a, b) { return a.d - b.d; });
+      var votes = [0, 0, 0];
+      ranked.slice(0, k).forEach(function (r) { votes[r.p.yhat]++; });
+      var pred = votes[0] >= votes[1] && votes[0] >= votes[2] ? 0 : votes[1] >= votes[2] ? 1 : 2;
+      pts.forEach(function (p) {
+        ctx.beginPath(); ctx.arc(p.x * W, p.y * H, 8, 0, 6.3); ctx.fillStyle = colors[p.yhat]; ctx.fill();
+      });
+      ranked.slice(0, k).forEach(function (r) {
+        ctx.beginPath(); ctx.moveTo(q.x * W, q.y * H); ctx.lineTo(r.p.x * W, r.p.y * H);
+        ctx.strokeStyle = colors[r.p.yhat]; ctx.stroke();
+      });
+      ctx.beginPath(); ctx.arc(q.x * W, q.y * H, 11, 0, 6.3); ctx.fillStyle = "#fff"; ctx.fill();
+      ctx.strokeStyle = colors[pred]; ctx.lineWidth = 3; ctx.stroke(); ctx.lineWidth = 1;
+      out.textContent = "k=" + k + "  " + metric.toUpperCase() + "  →  " + names[pred] + "   votes  cat:" + votes[0] + " dog:" + votes[1] + " car:" + votes[2];
+    }
+    var drag = false;
+    function pos(ev) {
+      var r = c.getBoundingClientRect();
+      q.x = clamp((ev.clientX - r.left) / r.width, 0.02, 0.98);
+      q.y = clamp((ev.clientY - r.top) / r.height, 0.02, 0.98);
+    }
+    c.onmousedown = function (e) { drag = true; pos(e); draw(); };
+    window.addEventListener("mousemove", function (e) { if (drag) { pos(e); draw(); } });
+    window.addEventListener("mouseup", function () { drag = false; });
+    ctrl.querySelector("#kR").oninput = function () { k = +this.value; ctrl.querySelector("#kV").textContent = k; draw(); };
+    ctrl.querySelector("#kM").onchange = function () { metric = this.value; draw(); };
+    draw();
+  };
+
+  /* ============================================================
+     k-means stepper
+     ============================================================ */
+  DEMOS.kmeans = function (el) {
+    var data = [[1.0, 1.1], [1.2, 0.9], [0.8, 1.3], [5.0, 5.1], [5.2, 4.8], [4.7, 5.3], [5.1, 4.9]];
+    var C = [[2.0, 2.0], [4.0, 4.0]];
+    var assign = [0, 0, 0, 1, 1, 1, 1], phase = "assign";
+    el.appendChild(head("k-means clustering", "Step through assign → update. Centres are the diamonds.", "Live Demo"));
+    var c = make("canvas"); c.width = 420; c.height = 280; c.style.width = "100%"; c.style.maxWidth = "420px";
+    var row = make("div", "btn-row");
+    var stepBtn = make("button", "btn primary", "Step");
+    var resetBtn = make("button", "btn", "Reset");
+    row.appendChild(stepBtn); row.appendChild(resetBtn);
+    var out = make("div", "readout");
+    el.appendChild(c); el.appendChild(row); el.appendChild(out);
+    function nearest(p) {
+      var d0 = (p[0] - C[0][0]) * (p[0] - C[0][0]) + (p[1] - C[0][1]) * (p[1] - C[0][1]);
+      var d1 = (p[0] - C[1][0]) * (p[0] - C[1][0]) + (p[1] - C[1][1]) * (p[1] - C[1][1]);
+      return d0 <= d1 ? 0 : 1;
+    }
+    function draw() {
+      var ctx = c.getContext("2d"), W = c.width, H = c.height;
+      ctx.fillStyle = cv("--code-bg") || "#0b0f15"; ctx.fillRect(0, 0, W, H);
+      function xy(p) { return [40 + p[0] / 6 * (W - 80), H - 30 - p[1] / 6 * (H - 50)]; }
+      data.forEach(function (p, i) {
+        var q = xy(p); ctx.beginPath(); ctx.arc(q[0], q[1], 7, 0, 6.3);
+        ctx.fillStyle = assign[i] ? "#f472b6" : "#5eead4"; ctx.fill();
+      });
+      C.forEach(function (p, i) {
+        var q = xy(p); ctx.save(); ctx.translate(q[0], q[1]); ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = i ? "#f472b6" : "#5eead4"; ctx.fillRect(-8, -8, 16, 16); ctx.restore();
+      });
+      out.textContent = "centres  c1=(" + C[0].map(function (v) { return v.toFixed(2); }).join(",") + ")  c2=(" + C[1].map(function (v) { return v.toFixed(2); }).join(",") + ")   next: " + phase;
+    }
+    stepBtn.onclick = function () {
+      if (phase === "assign") {
+        assign = data.map(nearest); phase = "update";
+      } else {
+        var acc = [[0, 0, 0], [0, 0, 0]];
+        data.forEach(function (p, i) { acc[assign[i]][0] += p[0]; acc[assign[i]][1] += p[1]; acc[assign[i]][2]++; });
+        C = acc.map(function (a) { return a[2] ? [a[0] / a[2], a[1] / a[2]] : [0, 0]; });
+        phase = "assign";
+      }
+      draw();
+    };
+    resetBtn.onclick = function () { C = [[2, 2], [4, 4]]; assign = data.map(nearest); phase = "assign"; draw(); };
+    draw();
+  };
+
+  /* ============================================================
+     IoU two boxes
+     ============================================================ */
+  DEMOS.iou = function (el) {
+    var gt = {x: 80, y: 50, w: 160, h: 140}, pr = {x: 140, y: 90, w: 160, h: 140};
+    el.appendChild(head("Intersection over Union", "Drag the predicted (pink) box. IoU ≥ 0.5 is a PASCAL true positive.", "Live Demo"));
+    var c = make("canvas"); c.width = 420; c.height = 280; c.style.width = "100%"; c.style.maxWidth = "420px"; c.style.cursor = "grab";
+    var out = make("div", "readout");
+    el.appendChild(c); el.appendChild(out);
+    function iou() {
+      var x1 = Math.max(gt.x, pr.x), y1 = Math.max(gt.y, pr.y);
+      var x2 = Math.min(gt.x + gt.w, pr.x + pr.w), y2 = Math.min(gt.y + gt.h, pr.y + pr.h);
+      var inter = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+      var uni = gt.w * gt.h + pr.w * pr.h - inter;
+      return {inter: inter, uni: uni, v: uni ? inter / uni : 0};
+    }
+    function draw() {
+      var ctx = c.getContext("2d");
+      ctx.fillStyle = cv("--code-bg") || "#0b0f15"; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.strokeStyle = "#5eead4"; ctx.lineWidth = 3; ctx.strokeRect(gt.x, gt.y, gt.w, gt.h);
+      ctx.fillStyle = "rgba(94,234,212,.12)"; ctx.fillRect(gt.x, gt.y, gt.w, gt.h);
+      ctx.strokeStyle = "#f472b6"; ctx.strokeRect(pr.x, pr.y, pr.w, pr.h);
+      ctx.fillStyle = "rgba(244,114,182,.12)"; ctx.fillRect(pr.x, pr.y, pr.w, pr.h);
+      var r = iou();
+      out.textContent = "IoU = " + r.inter + " / " + r.uni + " = " + r.v.toFixed(3) + (r.v >= 0.5 ? "  →  TP @ 0.5" : "  →  FP @ 0.5");
+    }
+    var drag = false, ox = 0, oy = 0;
+    c.onmousedown = function (e) {
+      var r = c.getBoundingClientRect(), sx = (e.clientX - r.left) * c.width / r.width, sy = (e.clientY - r.top) * c.height / r.height;
+      if (sx >= pr.x && sx <= pr.x + pr.w && sy >= pr.y && sy <= pr.y + pr.h) { drag = true; ox = sx - pr.x; oy = sy - pr.y; }
+    };
+    window.addEventListener("mousemove", function (e) {
+      if (!drag) return;
+      var r = c.getBoundingClientRect();
+      pr.x = clamp((e.clientX - r.left) * c.width / r.width - ox, 0, c.width - pr.w);
+      pr.y = clamp((e.clientY - r.top) * c.height / r.height - oy, 0, c.height - pr.h);
+      draw();
+    });
+    window.addEventListener("mouseup", function () { drag = false; });
+    draw();
+  };
+
   // expose registry incrementally
   window.CVDemos = window.CVDemos || {};
   window.CVDemos._DEMOS = DEMOS;

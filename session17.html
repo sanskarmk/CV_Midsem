@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session 17 — Edge Devices for CV</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "session17", title: "Session 17 · Edge Devices", crumb: "Session 17 · Edge Devices" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Handout · contact session 15 · webinar</span>
+      <h1>Edge Devices for Computer Vision</h1>
+      <p class="lead">Run detection/segmentation on the camera, not in the cloud — because of latency, bandwidth, privacy and power. The comprehensive exam can ask a <em>system-design / latency</em> question here (the professor flagged exactly that). The job is to pick a board and a model that fit the wattage and the millisecond budget.</p>
+
+      <div class="toc">
+        <h4>On this page</h4>
+        <ul>
+          <li><a href="#why">Why the edge</a></li>
+          <li><a href="#boards">The hardware menu</a></li>
+          <li><a href="#models">Models that fit</a></li>
+          <li><a href="#metrics">What you quote</a></li>
+          <li><a href="#design">Exam-style design</a></li>
+          <li><a href="#takeaways">Key takeaways</a></li>
+        </ul>
+      </div>
+
+      <h2 id="why">Why run vision on the device</h2>
+      <ul>
+        <li><strong>Latency</strong> — a pedestrian detector on a car cannot wait for a round-trip to a server.</li>
+        <li><strong>Bandwidth</strong> — 30 fps HD is a lot of uplink; sending boxes/embeddings is cheaper than video.</li>
+        <li><strong>Privacy / offline</strong> — factory floors, attendance cameras, drones with no link.</li>
+        <li><strong>Power / thermals</strong> — the constraint that actually picks the chip.</li>
+      </ul>
+      <p>Handout LO4: “Design optimized computer vision solutions for resource-constrained edge devices that balance performance with hardware limitations.”</p>
+
+      <h2 id="boards">The hardware menu (from the handout)</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Class</th><th>Examples</th><th>Fits</th></tr></thead>
+        <tbody>
+          <tr><td><strong>MCU + camera</strong></td><td>ESP32-CAM</td><td>Tiny models, motion trigger, JPEG snapshot. Not YOLO-v8.</td></tr>
+          <tr><td><strong>SBC (ARM)</strong></td><td>Raspberry Pi, Banana Pi</td><td>OpenCV + a small CNN (MobileNet, YOLO-nano) in Python/C++. USB camera.</td></tr>
+          <tr><td><strong>Intel CPU / NUC</strong></td><td>Core, Atom, NUC</td><td>OpenVINO + OneAPI. Movidius VPUs (Neural Compute Stick) as a USB accelerator.</td></tr>
+          <tr><td><strong>NVIDIA Jetson</strong></td><td>Nano, TX2, Orin</td><td>CUDA / cuDNN, TensorRT, DeepStream for multi-camera pipelines. The default “serious” edge GPU.</td></tr>
+          <tr><td><strong>Coral</strong></td><td>Google Coral (Edge TPU)</td><td>INT8 TFLite models only. Very high IPS/watt if you compile for the TPU.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="models">Models that actually fit</h2>
+      <p>From the classification / detection lectures: <strong>MobileNet</strong> and <strong>Xception</strong> (depthwise-separable convs) exist specifically so a Pi / phone can classify. YOLO-nano / YOLO-tiny for detection. Quantise to INT8 (Coral, OpenVINO). Distil or prune a teacher Faster R-CNN if you only need the student on-device. SAM / huge ViTs stay in the cloud; a ViT-Tiny can edge if you have a Jetson Orin.</p>
+      <div class="callout key">
+        <div class="c-head">◆ Depthwise-separable in one line</div>
+        <p>A 3×3 conv on \(C\) channels is \(9C^2\) muls per pixel. Depthwise 3×3 (\(9C\)) + 1×1 pointwise (\(C^2\)) is why MobileNet is ~8–9× cheaper — the reason it shows up in the handout next to classification metrics.</p>
+      </div>
+
+      <h2 id="metrics">What you quote (handout “model performance metrics”)</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Metric</th><th>Asks</th></tr></thead>
+        <tbody>
+          <tr><td>Accuracy / mAP / mIoU</td><td>Is it good enough for the task?</td></tr>
+          <tr><td><strong>FLOPs</strong></td><td>How much compute per image (theoretical).</td></tr>
+          <tr><td><strong>Memory footprint</strong> @ FP32/FP16/INT8</td><td>Does it fit in 512 MB / 4 GB?</td></tr>
+          <tr><td><strong>Inference time</strong> on named hardware</td><td>The only latency number that matters — always pair model + board.</td></tr>
+          <tr><td>Power (W) / IPS/W</td><td>Battery and thermals.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="design">Exam-style system design</h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Warehouse camera must flag a person in a restricted bay in &lt; 100 ms, no cloud, ~8 W budget. Sketch a stack.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Sensor</div>Fixed IP cam or Pi camera; 640×480 is enough for a person.</div>
+          <div class="step"><div class="s-title">Board</div>Coral or Jetson Nano — Pi 4 CPU-only will miss 100 ms on a decent detector.</div>
+          <div class="step"><div class="s-title">Model</div>INT8 YOLO-tiny / SSD-MobileNet. Not Faster R-CNN, not SAM.</div>
+          <div class="step"><div class="s-title">Pipeline</div>Capture → letterbox → infer → NMS → if person ∩ bay polygon, GPIO alarm. No video uplink.</div>
+          <div class="step"><div class="s-title">Quote</div>mAP @ 0.5 on a small in-domain set, latency on <em>that</em> board, watts at the wall.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer shape</span><p style="margin:4px 0">Constraint → board class → model family → quantisation → on-device post-process → the three numbers (mAP, ms, W). That is the “latency removal / system design” question type from the comprehensive-exam briefing.</p></div>
+      </div>
+
+      <h2 id="takeaways">Key takeaways</h2>
+      <div class="callout key">
+        <div class="c-head">◆ Remember these</div>
+        <ul>
+          <li>Edge because of latency, bandwidth, privacy, power — not because it’s fashionable.</li>
+          <li>Menu: ESP32 → Pi → Intel+OpenVINO/Movidius → Jetson (CUDA/DeepStream) → Coral (INT8 TPU).</li>
+          <li>MobileNet / YOLO-tiny / INT8; quote FLOPs, memory, <em>measured</em> ms on named hardware.</li>
+        </ul>
+      </div>
+
+      <div class="pager">
+        <a href="session16.html"><div class="pg-dir">← Previous</div><div class="pg-title">Session 16 · Metrics &amp; Wrap-up</div></a>
+        <a class="next" href="optional.html"><div class="pg-dir">Next →</div><div class="pg-title">Optional · Face &amp; OCR</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

@@ -37,6 +37,12 @@
           <li><a href="#t13">13 · RGB → CMYK conversion</a></li>
           <li><a href="#t14">14 · RANSAC iteration count</a></li>
           <li><a href="#t15">15 · Canny — all 4 steps (pipeline)</a></li>
+          <li><a href="#t16">16 · kNN classification</a></li>
+          <li><a href="#t17">17 · Softmax &amp; cross-entropy</a></li>
+          <li><a href="#t18">18 · k-means one iteration</a></li>
+          <li><a href="#t19">19 · IoU of two boxes</a></li>
+          <li><a href="#t20">20 · 11-point interpolated AP</a></li>
+          <li><a href="#t21">21 · Lucas–Kanade solvability</a></li>
         </ul>
       </div>
 
@@ -353,6 +359,49 @@
         <div class="step"><div class="s-title">④ Hysteresis</div>strong if \(\ge T_H\), weak if \(\in[T_L,T_H)\); keep weak only if 8-connected to a strong edge (ratio \(T_H:T_L\approx\)2:1–3:1).</div>
       </div>
       <div class="answer-box"><span class="a-tag">Full worked example</span><p style="margin:4px 0">See the complete computation — every matrix at every stage, ending in a clean 1-pixel vertical edge with the noise rejected — on <a href="session5.html#canny-num"><strong>Session 5 · Canny end-to-end →</strong></a></p></div>
+
+      <h2 id="t16">16 · kNN classification <span class="badge blue">Session 9</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>A query takes the majority label of its \(k\) nearest training points. Distance (\(L_1/L_2\)) and \(k\) are hyperparameters — pick them on the validation set.</p>
+      </div>
+      <p>Worked example (same numbers as the session page): points \(A(1,1)\) cat, \(B(2,1)\) cat, \(C(3,4)\) dog, \(D(6,2)\) dog, query \((2,3)\). \(k=1\) → dog (nearest is \(C\)); \(k=3\) → cat (C, B, A). See <a href="session9.html#knn-num">Session 9</a>.</p>
+
+      <h2 id="t17">17 · Softmax &amp; cross-entropy <span class="badge blue">Session 9</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>Softmax turns scores into a probability simplex; CE is \(-\log\) of the true-class probability. Binary → sigmoid+BCE; multilabel → a sigmoid per label (professor, classification lecture).</p>
+      </div>
+      <p>Scores \((2,1,0.1)\), true class 0 → \(p\approx(0.66,0.24,0.10)\), \(L\approx0.42\). Full working on <a href="session9.html#softmax-num">Session 9</a>.</p>
+
+      <h2 id="t18">18 · k-means one iteration <span class="badge blue">Session 11</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>Assign every point to the nearest centre, then replace each centre by the mean of its points. Repeat. Always converges; may be a local min; you pick \(K\).</p>
+      </div>
+      <p>Points \(2,3,8,10\), \(c=(2,8)\) → clusters \(\{2,3\},\{8,10\}\), new centres \(2.5\) and \(9\). See <a href="session11.html#kmeans-num">Session 11</a>.</p>
+
+      <h2 id="t19">19 · IoU of two boxes <span class="badge blue">Session 12</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>He flagged this for the semester exam. Intersection area over union area. PASCAL TP iff IoU ≥ 0.5 (and the first duplicate only).</p>
+      </div>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> GT \([0,0,4,4]\), pred \([1,1,5,5]\). IoU? TP at 0.5?</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Intersection</div>\([1,1,4,4]\) → \(3\times3=9\).</div>
+          <div class="step"><div class="s-title">Union</div>\(16+16-9=23\).</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(9/23\approx0.391\) → <strong>FP</strong> at threshold 0.5.</p></div>
+      </div>
+
+      <h2 id="t20">20 · 11-point interpolated AP <span class="badge blue">Session 16</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>Rank detections by confidence, mark TP/FP with IoU, fill running P and R, make P monotone (max to the right), average P at recall \(0,0.1,\ldots,1.0\). He worked this live (“Mandeep numerical”).</p>
+      </div>
+      <p>Lecture example: \(\mathrm{AP}=(5\times1.0+4\times0.57+2\times0.5)/11\approx0.753\). Method + table on <a href="session16.html#ap">Session 16</a>.</p>
+
+      <h2 id="t21">21 · Lucas–Kanade solvability <span class="badge blue">Session 15</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>The OF constraint is one equation, two unknowns (aperture). LK uses a window whose second-moment matrix is Harris’s \(M\). Unique flow only at corners. He said LK is the only OF method in the exam syllabus; skip the full derivation.</p>
+      </div>
+      <p>Worked two windows (corner vs edge) on <a href="session15.html#lk-num">Session 15</a>.</p>
 
       <div class="callout key">
         <div class="c-head">◆ Drill plan</div>

@@ -26,6 +26,7 @@
           <li><a href="#histeq">Histogram equalization</a></li>
           <li><a href="#filtering">Spatial filtering</a></li>
           <li><a href="#smoothing">Box vs Gaussian smoothing</a></li>
+          <li><a href="#cc">Connected components</a></li>
           <li><a href="#color">Color &amp; color spaces</a></li>
           <li><a href="#rgbcmyk">RGB vs CMYK</a></li>
           <li><a href="#takeaways">Key takeaways</a></li>
@@ -98,6 +99,10 @@
           <li><strong>Better frequency behaviour.</strong> Its Fourier transform is another Gaussian (no negative side-lobes), giving clean low-pass filtering. Weighting the centre more also preserves the central pixel's identity better.</li>
         </ul>
       </div>
+
+      <h2 id="cc">Connected components</h2>
+      <p>After a binary mask (threshold, skin map, Canny, …), pixels that touch each other are one object. Two conventions: <strong>4-connected</strong> (N/E/S/W only) vs <strong>8-connected</strong> (diagonals too). The algorithm is a flood-fill / union-find over the mask: assign each blob a unique label, then compute area, centroid, bounding box. That’s the classical “find the coins / find the characters” pipeline before you ever train a classifier.</p>
+      <p>Exam trap: changing 4↔8-connectivity can merge or split blobs (a diagonal touch is two objects under 4-connectivity, one under 8). Morphology (open/close) is usually run first so thin bridges don’t glue distinct objects.</p>
 
       <h2 id="color">Color &amp; color spaces</h2>
       <p>Light is an electromagnetic wave; the human-visible band is ~<strong>400–700 nm</strong>. We don't see objects directly — we see the light they <em>reflect or transmit</em>. So perceived color depends on three things: the light source's spectrum, the object's reflectance, and the sensor's spectral sensitivity.</p>

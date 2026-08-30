@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session 10 — Attention, Transformers &amp; ViT</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "session10", title: "Session 10 · Attention & ViT", crumb: "Session 10 · Attention & ViT" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Session 10</span>
+      <h1>Attention, Transformers &amp; Vision Transformers</h1>
+      <p class="lead">A CNN is a stack of local filters. A transformer lets every token look at every other token. Vision Transformer (ViT) takes that NLP architecture, chops an image into patches, and classifies with <em>almost</em> no convolutions.</p>
+
+      <div class="toc">
+        <h4>On this page</h4>
+        <ul>
+          <li><a href="#seq2seq">Encoder–decoder bottleneck</a></li>
+          <li><a href="#attention">Attention</a></li>
+          <li><a href="#transformers">Transformers &amp; self-attention</a></li>
+          <li><a href="#qkv">Query, key, value</a></li>
+          <li><a href="#mha">Multi-head &amp; positions</a></li>
+          <li><a href="#vit">Vision Transformer</a></li>
+          <li><a href="#vs-resnet">ViT vs ResNets</a></li>
+          <li><a href="#takeaways">Key takeaways</a></li>
+        </ul>
+      </div>
+
+      <div class="callout exam">
+        <div class="c-head">✦ From the recording — what he will / won’t ask</div>
+        <p>“This is only from an understanding perspective. I do not expect you to remember or derive it during your exams — just a reference is okay.” Know Q, K, V, why we scale by \(\sqrt{d}\), why positional embeddings, and the ViT patch → [CLS] pipeline. “Ever since this paper, CNNs are more of a Robin to Transformers’ Batman — still important, mostly as feature extractors.”</p>
+      </div>
+
+      <h2 id="seq2seq">The encoder–decoder bottleneck (review)</h2>
+      <p>Classic seq-to-seq translation: an <strong>encoder</strong> reads the source sentence into hidden states; a single <strong>context vector</strong> \(c\) (often just the encoder’s last hidden state) is handed to a <strong>decoder</strong> that generates the target. Forcing the whole source through one vector is a <strong>representational bottleneck</strong> — later decoder steps forget the beginning of a long sentence. Teacher forcing feeds the ground-truth previous token during training rather than the model’s own softmax output.</p>
+      <div class="callout intuition">
+        <div class="c-head">◆ The bank / river-bank problem</div>
+        <p>Without attention, every decoder step sees the <em>same</em> static \(c\). With attention, the decoder builds a <em>different, dynamic</em> context at each step — a weighted sum of <em>all</em> encoder hidden states, focused on the source words that are relevant right now. “Bank” in “river bank” attends to different encoder states than “bank” in “bank account.”</p>
+      </div>
+
+      <h2 id="attention">Attention in three steps</h2>
+      <p>At decoder step \(i\), with decoder state \(s_i\) and encoder states \(h_j\):</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">Score</div>How relevant is each encoder state to the current decoder state? Dot-product attention: \(\text{score}(s_i, h_j)=s_i^\top h_j\). A learned bilinear form \(s_i^\top W_s h_j\) is more powerful — \(W_s\) is trained end-to-end.</div>
+        <div class="step"><div class="s-title">Normalise</div>Softmax the scores to weights \(\alpha_{i,j}\) — a distribution over source positions.</div>
+        <div class="step"><div class="s-title">Context</div>\(c_i = \sum_j \alpha_{i,j}\, h_j\) — a weighted average of encoder states. The decoder now “attends to” a particular part of the source.</div>
+      </div>
+      <figure data-diagram="attention" class="md" data-caption="Attention: score every encoder state against the current decoder state, softmax to weights α, then take a weighted sum. Each output step gets its own context."></figure>
+
+      <h2 id="transformers">Transformers — “Attention Is All You Need”</h2>
+      <p>Vaswani et al., NeurIPS 2017. A transformer maps a sequence of input vectors \((x_1,\ldots,x_n)\) to a sequence of output vectors \((y_1,\ldots,y_n)\) of the same length. The key block is <strong>self-attention</strong>: comparisons are to <em>other elements of the same sequence</em>. No recurrent connections ⇒ every time step is independent ⇒ <strong>parallel</strong> (unlike LSTMs) and easy to scale.</p>
+      <p>Self-attention = the ability to compare an item of interest to a collection of other items so their relevance in the current context is revealed.</p>
+
+      <h2 id="qkv">Query, key, value</h2>
+      <p>Each input embedding \(x_i\) plays three roles, via three learned \(d\times d\) matrices (Vaswani used \(d=1024\)):</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Role</th><th>Intuition</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Query</strong> \(Q\)</td><td>The current focus of attention — “what am I looking for?”</td></tr>
+          <tr><td><strong>Key</strong> \(K\)</td><td>A preceding input being compared to that focus — “what do I contain?”</td></tr>
+          <tr><td><strong>Value</strong> \(V\)</td><td>The content actually mixed into the output — “what do I contribute?”</td></tr>
+        </tbody>
+      </table></div>
+      <p>Pack the \(N\) embeddings as rows of \(X\). Compute \(Q=XW_Q\), \(K=XW_K\), \(V=XW_V\). <strong>Scaled dot-product attention</strong> (the raw dot product can be huge, which saturates softmax):</p>
+      <div class="eq">\[ \mathrm{Attention}(Q,K,V)=\mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d}}\right)V \]</div>
+      <p>Each output \(y_i\) is computed independently, so the whole sequence is parallel. Causal (left-to-right) LMs zero the upper triangle of the score matrix (set to \(-\infty\) before softmax) so position \(i\) cannot look into the future.</p>
+
+      <h2 id="mha">Multi-head attention and positional embeddings</h2>
+      <p>Words relate in many ways at once (syntax, coreference, …). One self-attention layer is not enough. <strong>Heads</strong> = parallel self-attention layers at the same depth, each with its own \(W_Q,W_K,W_V\). Concatenate their outputs and project back to \(d\) so blocks can be stacked. Add <strong>LayerNorm</strong> and an MLP inside each transformer block.</p>
+      <p>Self-attention is permutation-invariant — it doesn’t know order. Fix: add a <strong>positional embedding</strong> to each token embedding. The original transformer used sines and cosines of different frequencies; ViT uses a <em>learned</em> vector per patch position.</p>
+
+      <h2 id="vit">Vision Transformer (ViT)</h2>
+      <p>Dosovitskiy et al., ICLR 2021 — “An Image is Worth 16×16 Words.” Take a standard NLP transformer and feed it image patches instead of word tokens.</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">Patchify</div>A \(224\times224\) image is split into a \(14\times14\) grid of \(16\times16\) RGB patches (or \(16\times16\) of \(14\times14\)). Each patch is shape \(3\times16\times16\). Smaller patch size ⇒ more patches ⇒ bigger model. One attention matrix has \(14^4=38{,}416\) entries (~150 KB); 48 layers × 16 heads ⇒ ~112 MB of attention maps.</div>
+        <div class="step"><div class="s-title">Linear projection</div>Flatten each patch and map it to a \(D\)-dimensional token. (This first layer is secretly a convolution: <code>Conv2D(p×p, 3→D, stride=p)</code>. The MLPs inside the transformer are stacks of \(1\times1\) convolutions. So “no convolutions” is not quite true.)</div>
+        <div class="step"><div class="s-title">Add position + [CLS]</div>Add a learned \(D\)-dim positional embedding per patch, and prepend a special learned <strong>classification token</strong>.</div>
+        <div class="step"><div class="s-title">Transformer encoder</div>Exact same architecture as NLP. The [CLS] output is linearly projected to \(C\) class scores.</div>
+      </div>
+      <figure data-diagram="vit" data-caption="ViT: split the image into patches, project to tokens, add a [CLS] token and positional embeddings, run a standard transformer encoder, read class scores off [CLS]."></figure>
+
+      <div class="callout key">
+        <div class="c-head">◆ ViT is also a segmenter (handout module 4)</div>
+        <p>The same patch-token backbone can emit a label <em>per patch</em> (or upsample tokens to pixels) instead of a single [CLS] score — SETR / SegFormer / SAM’s image encoder are this idea. For the exam: ViT classified in Session 10; for segmentation you still need a decoder (or a promptable mask head like SAM). U-Net remains the default when data is small (MRI); SAM when you can prompt.</p>
+      </div>
+
+      <h2 id="vs-resnet">ViT vs ResNets — the data diet</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Pretraining data</th><th>Result on ImageNet (after fine-tune)</th></tr></thead>
+        <tbody>
+          <tr><td>ImageNet-1k (1.2M / 1k classes)</td><td>ViT <strong>worse</strong> than ResNets — not enough data for a low-bias model.</td></tr>
+          <tr><td>ImageNet-21k (14M / 21k classes)</td><td>Big ViTs <strong>match</strong> big ResNets (BiT = ResNet-152×4).</td></tr>
+          <tr><td>JFT-300M (300M labelled, internal Google)</td><td>Large ViTs <strong>outperform</strong> large ResNets, and use hardware more efficiently (matmul vs conv). ViT: ~2.5k TPU-v3 core-days vs ResNet ~9.9k.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Notation: B / L / H = Base / Large / Huge; /32, /16, /14 = patch size (smaller patch = more tokens = bigger model).</p>
+      <div class="callout key">
+        <div class="c-head">◆ Less inductive bias, more data</div>
+        <p>The claim in the paper: ViTs have less inductive bias than ResNets (no built-in locality / translation equivariance beyond the first patch layer), so they need more pretraining data to learn good features. On small data, the convolutional prior wins; at JFT scale, the transformer pulls ahead. Variants you’ll see named: DeiT (data-efficient training), Swin (shifted windows), CLIP-style ViTs for vision–language.</p>
+      </div>
+      <div class="callout exam">
+        <div class="c-head">✦ Likely theory prompts</div>
+        <p>Explain Q/K/V; why scale by \(\sqrt{d}\); why positional embeddings; sketch the ViT pipeline; when does ViT beat a ResNet and why.</p>
+      </div>
+
+      <h2 id="takeaways">Key takeaways</h2>
+      <div class="callout key">
+        <div class="c-head">◆ Remember these</div>
+        <ul>
+          <li>Attention = score → softmax weights → weighted sum of values. Removes the seq2seq bottleneck.</li>
+          <li>Transformer = stacked self-attention + MLP, fully parallel. Multi-head = several relations at once.</li>
+          <li>\(\mathrm{softmax}(QK^\top/\sqrt{d})\,V\). Position is added, not inherent.</li>
+          <li>ViT: patches → tokens + [CLS] + pos-emb → transformer → class scores. Needs large-scale pretraining to beat ResNets.</li>
+        </ul>
+      </div>
+
+      <div class="pager">
+        <a href="session9.html"><div class="pg-dir">← Previous</div><div class="pg-title">Session 9 · Image Classification</div></a>
+        <a class="next" href="session11.html"><div class="pg-dir">Next →</div><div class="pg-title">Session 11 · Image Segmentation</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

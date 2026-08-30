@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sessions 13–14 — Object Detection</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "session13", title: "Sessions 13–14 · Object Detection", crumb: "Sessions 13–14 · Object Detection" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Sessions 13–14</span>
+      <h1>Object Detection — R-CNN family &amp; YOLO</h1>
+      <p class="lead">Not just “what is in the image” but <em>where</em> — a class label and a bounding box for every object. Sliding windows explode combinatorially; region-based CNNs and then single-shot detectors (YOLO) made it practical.</p>
+
+      <div class="toc">
+        <h4>On this page</h4>
+        <ul>
+          <li><a href="#task">Detection vs segmentation</a></li>
+          <li><a href="#slide">Sliding windows &amp; why it’s hard</a></li>
+          <li><a href="#eval">Evaluating boxes (IoU)</a></li>
+          <li><a href="#rcnn">R-CNN</a></li>
+          <li><a href="#fast">Fast &amp; Faster R-CNN</a></li>
+          <li><a href="#mask">Mask R-CNN</a></li>
+          <li><a href="#yolo">YOLO</a></li>
+          <li><a href="#compare">Who beats whom</a></li>
+          <li><a href="#more">Mean-shift, multilabel, skin</a></li>
+          <li><a href="#takeaways">Key takeaways</a></li>
+        </ul>
+      </div>
+
+      <div class="callout exam">
+        <div class="c-head">✦ From the recording</div>
+        <p>Worked the sliding-window count live: a 40×20 template on a duck image → <strong>330 windows, 6 positives</strong> — “off the bat, from a classical ML perspective, lots of unnecessary negatives.” Region proposals exist to stop scoring empty water. On IoU: “the closer to 1 the better, closer to 0 the worse — <strong>this is the sort of problem statement you can expect in your semester exams</strong>.” YOLO lecture: v1 = 7×7 grid, <strong>two boxes per cell</strong>; “YOLO v2 used anchor boxes, but that is not within the scope of your syllabus.” Faster than Faster R-CNN, less accurate; real-time is the pivot.</p>
+      </div>
+
+      <h2 id="task">Detection vs segmentation</h2>
+      <p><strong>Object detection</strong> locates and classifies objects by drawing a bounding box around each one. <strong>Segmentation</strong> assigns a class (or instance ID) to pixels. Detection is the box problem; instance segmentation (Mask R-CNN) does both.</p>
+
+      <h2 id="slide">Sliding windows — and why detection is hard</h2>
+      <p>Naive recipe: try every sub-window, at every position and scale, and classify it (“is this a tight box around a pedestrian?”). For a template of size \((b_y, b_x)\) on an \(H\times W\) image there are already \((H/b_y)\times(W/b_x)\) boxes — <em>before</em> extra scales \((b_y s, b_x s)\) and aspect ratios. Four ways to get a box wrong: left \(x\), right \(x\), top \(y\), bottom \(y\).</p>
+      <div class="callout intuition">
+        <div class="c-head">◆ Smarter than a random-number generator?</div>
+        <p>Guessing a 1k-way class is \(1/1000\). Guessing all four box corners within 10% of image size is \(1/10^4\). Both: \(1/10^7\). Detection is combinatorially harder than classification, and positives are extremely rare — almost every window is background. Always compare a detector against “guess” or “always the majority label.”</p>
+      </div>
+      <p>Classic pre-CNN: HOG + sliding window + linear SVM for pedestrians (Dalal &amp; Triggs, CVPR 2005). PASCAL VOC: 20 classes (aeroplane, bicycle, bird, boat, bottle, bus, car, cat, chair, cow, dining table, dog, horse, motorbike, person, potted plant, sheep, sofa, train, tv). COCO (2014): 80 categories, much harder (best mAP in the lecture’s era ~52%).</p>
+
+      <h2 id="eval">Evaluating boxes</h2>
+      <p>Standard overlap: <strong>IoU / Jaccard</strong> \(= |A\cap B|/|A\cup B|\). A detection is correct if IoU with a ground-truth box ≥ threshold (PASCAL: 0.5) and the class matches. Accuracy is useless: saying “no person” everywhere is ~99% accurate. Use precision–recall and mAP (Sessions 12 and 16).</p>
+
+      <h2 id="rcnn">R-CNN — regions + CNN features</h2>
+      <p>Girshick, Donahue, Darrell, Malik, CVPR 2014. Don’t slide a CNN over millions of windows. Propose ~<strong>2000</strong> candidate boxes with <strong>Selective Search</strong> (a segmentation-based grouping), then classify those.</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">Propose</div>~2000 region proposals per image (Selective Search).</div>
+        <div class="step"><div class="s-title">Warp + CNN</div>Warp each region to a fixed size, run AlexNet (pre-trained on ImageNet 1000-way, fine-tuned on PASCAL 21-way including background). Take fc7 activations (4096-D).</div>
+        <div class="step"><div class="s-title">SVM + box regression</div>Linear SVM per class. A bounding-box regressor refines the proposal. Hard-negative mining: negatives are proposals with 20–50% overlap, plus iterative retraining on the worst false positives.</div>
+      </div>
+      <p>PASCAL 2010 mAP: <strong>53.7%</strong> vs 35.1% Selective Search and 33.4% DPM — a step-change. <strong>Pros:</strong> accurate; any CNN backbone plugs in. <strong>Cons:</strong> three ad-hoc losses (softmax fine-tune, SVM hinge, L2 box regression); training ~84 h and lots of disk; inference <strong>~47 s/image</strong> (VGG16) because the CNN runs 2000 times.</p>
+      <figure data-diagram="detectors" data-caption="R-CNN runs a CNN per proposal. Fast R-CNN shares the conv net over the image. Faster R-CNN learns proposals (RPN). YOLO skips proposals and predicts on a grid in one shot."></figure>
+
+      <h2 id="fast">Fast R-CNN and Faster R-CNN</h2>
+      <p><strong>Fast R-CNN</strong> (Girshick 2015): run the CNN <em>once</em> on the whole image. For each proposal, <strong>RoI pool</strong> (later RoI align) crops the corresponding region of the feature map to a fixed grid (e.g. 7×7), then a small head predicts class and box. One network, one loss, much faster.</p>
+      <p>RoI geometry example from the slides: image \(H=600, W=800\), feature map \(6\times8\), box \((x,y,w,h)=(50,150,250,350)\) maps to \((0.5, 1.5, 2.5, 3.5)\) on the feature map — then that crop is resized to 7×7.</p>
+      <p><strong>Faster R-CNN</strong> (Ren, He, Girshick, Sun, NeurIPS 2015): throw away Selective Search. A <strong>Region Proposal Network (RPN)</strong> is a small conv net on the shared feature map that, at each location, scores \(k\) <strong>anchors</strong> (object / not) and regresses box deltas. RPN + detector share the backbone — proposals become almost free. This is the two-stage template everything since has riffed on.</p>
+
+      <h2 id="mask">Mask R-CNN</h2>
+      <p>He, Gkioxari, Dollár, Girshick, ICCV 2017. Add a small FCN head on each RoI that predicts a binary <strong>mask</strong>. Everything (class, box, mask) is learned together. That is instance segmentation. Same idea extends: if you can associate a quantity with a box and have data, you can train a head for it (PlaneRCNN predicts 3D planes from one RGB image).</p>
+
+      <h2 id="yolo">YOLO — You Only Look Once</h2>
+      <p>Redmon, Divvala, Girshick, Farhadi, CVPR 2016. <strong>No proposals.</strong> Split the image into a \(7\times7\) grid; at each cell predict class scores + 2 bounding boxes (and a confidence). One forward pass. ~<strong>7× faster</strong> than Faster R-CNN, worse accuracy/precision, immensely popular in robotics. Follow-ups: YOLOv2, v3, … (SSD is a sibling single-shot family).</p>
+      <div class="callout key">
+        <div class="c-head">◆ Two-stage vs one-stage</div>
+        <p>Two-stage (R-CNN family): propose, then classify/refine — slower, usually more accurate, better on small objects. One-stage (YOLO, SSD): dense predictions on a grid — real-time, a bit less precise. The exam question is almost always “why was Faster R-CNN better than R-CNN / Fast R-CNN?” or “YOLO vs Faster R-CNN.”</p>
+      </div>
+
+      <h2 id="compare">The upgrade ladder</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Method</th><th>Beats…</th><th>Because</th></tr></thead>
+        <tbody>
+          <tr><td><strong>R-CNN</strong></td><td>HOG+SVM / DPM</td><td>Deep features on Selective Search proposals; +20 mAP on PASCAL.</td></tr>
+          <tr><td><strong>Fast R-CNN</strong></td><td>R-CNN</td><td>CNN once per image + RoI pool; single multi-task loss; no 2000 warps.</td></tr>
+          <tr><td><strong>Faster R-CNN</strong></td><td>Fast R-CNN</td><td>Learned RPN shares features — proposals are nearly free, near real-time.</td></tr>
+          <tr><td><strong>Mask R-CNN</strong></td><td>Faster R-CNN (task)</td><td>Adds a mask head → instance segmentation, same two-stage core.</td></tr>
+          <tr><td><strong>YOLO</strong></td><td>Faster R-CNN (speed)</td><td>No proposals; one-shot grid. ~7× faster, lower mAP; robotics favourite.</td></tr>
+          <tr><td><strong>SSD</strong></td><td>YOLO v1 (multi-scale)</td><td>Default boxes on several feature maps — the other one-stage family in the handout, with Faster R-CNN, for multilabel detection.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="more">Mean-shift detection, multilabel, skin</h2>
+      <p><strong>Mean-shift as a detector</strong> (handout, contact session 10): run mean-shift on a colour / back-projection map and take modes as object centres — no sliding window, no CNN. Same climb-to-mode idea as segmentation; here each mode is a detection. Cheap, breaks when colour is not distinctive.</p>
+      <p><strong>Multiclass vs multilabel.</strong> Multiclass: one label per image/box, softmax (mutually exclusive). Multilabel: several labels can be true at once (a photo is “beach” <em>and</em> “person”), independent sigmoids. Detection is closer to multilabel at image level (many objects) and multiclass per box. <strong>Object localisation → multilabel classification</strong> in the handout is: find the box, then attach every tag that applies.</p>
+      <p><strong>Skin detection</strong> (handout use case): a pixel-wise colour classifier (thresholds in HSV/YCbCr, or a small CNN) that marks skin. Used as a fast proposal for faces/hands, or as a safety/moderation filter. Lighting and ethnicity shift the colour cluster — that’s why HSV (decouple brightness) beats raw RGB, and why a learned model beats a fixed threshold.</p>
+
+      <h2 id="takeaways">Key takeaways</h2>
+      <div class="callout key">
+        <div class="c-head">◆ Remember these</div>
+        <ul>
+          <li>Detection = class + box. Sliding windows explode; accuracy is the wrong metric.</li>
+          <li>R-CNN: 2000 Selective Search crops × CNN × SVM. Accurate, ~47 s/image.</li>
+          <li>Fast: share convs + RoI pool. Faster: learn the proposals (RPN + anchors).</li>
+          <li>Mask R-CNN = Faster + mask head. YOLO = no proposals, \(7\times7\) grid, real-time.</li>
+        </ul>
+      </div>
+
+      <div class="pager">
+        <a href="session12.html"><div class="pg-dir">← Previous</div><div class="pg-title">Session 12 · Semantic Seg &amp; Metrics</div></a>
+        <a class="next" href="session14.html"><div class="pg-dir">Next →</div><div class="pg-title">Session 14 · Visual Bag of Words</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session 11 — Image Segmentation</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "session11", title: "Session 11 · Image Segmentation", crumb: "Session 11 · Image Segmentation" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Session 11</span>
+      <h1>Image Segmentation</h1>
+      <p class="lead">Divide an image into regions that are more meaningful than raw pixels — so we can locate objects and boundaries. Classic methods cluster pixels by colour and position (k-means, mixtures of Gaussians, mean-shift) before deep nets take over in the next session.</p>
+
+      <div class="toc">
+        <h4>On this page</h4>
+        <ul>
+          <li><a href="#types">Types of segmentation</a></li>
+          <li><a href="#gestalt">Gestalt &amp; grouping</a></li>
+          <li><a href="#hist">Histogram &amp; k-means</a></li>
+          <li><a href="#kmeans-demo">k-means, live</a></li>
+          <li><a href="#kmeans-num">k-means numerical</a></li>
+          <li><a href="#em">Mixtures of Gaussians &amp; EM</a></li>
+          <li><a href="#meanshift">Mean-shift</a></li>
+          <li><a href="#takeaways">Key takeaways</a></li>
+        </ul>
+      </div>
+
+      <div class="callout intuition">
+        <div class="c-head">▶ From the recording</div>
+        <p>“Our fundamental segmentation theory is built on Gestalt psychology — we perceive objects in their entirety even before we see the parts.” Detection draws a box (“the general area where the dog is”); segmentation labels pixels. For MRI he pointed at U-Net; for a general-purpose model, “you will use SAM — Segment Anything.”</p>
+      </div>
+
+      <h2 id="types">Types of segmentation</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Kind</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Semantic</strong></td><td>Label every pixel with a class (car, tree, road). Instances of the same class are <em>not</em> separated.</td></tr>
+          <tr><td><strong>Instance</strong></td><td>Like semantic, but different objects of the same class get different IDs (car #1 vs car #2).</td></tr>
+          <tr><td><strong>Panoptic</strong></td><td>Both: stuff classes (sky, road) + thing instances (each car).</td></tr>
+          <tr><td><strong>Thresholding</strong></td><td>Simplest: pixel is foreground iff intensity \(\ge T\).</td></tr>
+          <tr><td><strong>Edge-based</strong></td><td>Find objects from sharp intensity changes (Canny, then fill).</td></tr>
+          <tr><td><strong>Region-based</strong></td><td>Group pixels that look similar in colour / intensity / texture.</td></tr>
+        </tbody>
+      </table></div>
+      <figure data-diagram="seg-types" data-caption="Semantic labels classes; instance splits objects of the same class; panoptic does both, including amorphous ‘stuff’ like sky."></figure>
+
+      <h2 id="gestalt">Gestalt: seeing the unified whole</h2>
+      <p>Humans perceive an object in its entirety before its parts. “What is an object?” is subjective, but Gestalt laws try to formalise grouping: <strong>proximity, similarity, continuation, closure, common fate</strong>. Two algorithmic strategies:</p>
+      <div class="grid cols-2">
+        <div class="card"><h4 style="margin-top:0">Top-down</h4><p style="margin-bottom:0">Pixels belong together because they come from the <em>same object</em> (need recognition).</p></div>
+        <div class="card"><h4 style="margin-top:0">Bottom-up</h4><p style="margin-bottom:0">Pixels belong together because they <em>look similar</em> (clustering on colour / texture / position).</p></div>
+      </div>
+      <p>This session is bottom-up. Next session (FCN, U-Net) is learned, closer to top-down.</p>
+
+      <h2 id="hist">Histogram-based segmentation and k-means</h2>
+      <p>A histogram counts how often each colour occurs. Modes of the histogram ≈ dominant colours ≈ segments. Goal: break the image into \(K\) regions by reducing it to \(K\) representative colours and mapping every pixel to the closest one. Choosing those colours is a <strong>clustering</strong> problem: minimise the sum of squared distances from each point to its nearest centre.</p>
+      <p><strong>k-means</strong> (the algorithm from the slides):</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">Initialise</div>Randomly pick cluster centres \(c_1,\ldots,c_K\).</div>
+        <div class="step"><div class="s-title">Assign</div>For each point \(p\), put it in the cluster of the closest \(c_i\).</div>
+        <div class="step"><div class="s-title">Update</div>Set \(c_i\) to the mean of points in cluster \(i\).</div>
+        <div class="step"><div class="s-title">Repeat</div>Until centres stop moving. Always converges; can be a <em>local</em> minimum of the objective — different inits give different answers. You must choose \(K\).</div>
+      </div>
+
+      <h2 id="kmeans-demo">k-means, live</h2>
+      <p>Step through assignment and update on a 2-D colour-like scatter. Watch centres jump, then settle:</p>
+      <div data-demo="kmeans"></div>
+
+      <h2 id="kmeans-num">Worked numerical — one k-means iteration</h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Points \(2, 3, 8, 10\). \(K=2\), initialise \(c_1=2,\ c_2=8\). Perform one full iteration (assign + update).</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Assign</div>\(2\to c_1\), \(3\to c_1\) (dist to 2 is 1, to 8 is 5); \(8\to c_2\), \(10\to c_2\).</div>
+          <div class="step"><div class="s-title">Update</div>\(c_1=(2+3)/2=2.5\), \(c_2=(8+10)/2=9\).</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">After one iteration: clusters \(\{2,3\}\) and \(\{8,10\}\); centres \(2.5\) and \(9\). Next assign still gives the same clusters → converged.</p></div>
+      </div>
+
+      <h2 id="em">Mixture of Gaussians and EM</h2>
+      <p>k-means gives hard assignments and spherical clusters. A <strong>generative</strong> model instead assumes points were sampled from a continuous density with parameters \(\theta\). A <strong>mixture of Gaussians (MoG)</strong> is \(K\) blobs with means \(\mu_b\), covariances \(V_b\), mixing weights \(\pi_b\). The likelihood of a point is a weighted sum of Gaussians.</p>
+      <p><strong>Expectation–Maximisation (EM)</strong> maximises that likelihood:</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">E-step</div>Given current blobs, compute the <em>ownership</em> probability that point \(x\) belongs to blob \(i\).</div>
+        <div class="step"><div class="s-title">M-step</div>Given ownerships, update \(\pi_b, \mu_b, V_b\) to maximise likelihood (weighted mean and covariance).</div>
+        <div class="step"><div class="s-title">Repeat</div>Until convergence.</div>
+      </div>
+      <p>Applications named in class: any clustering, any model estimation, missing data, outliers, <strong>colour segmentation, motion segmentation, foreground/background</strong>. Problems: local minima; you still need to know \(K\); you must choose the generative family.</p>
+
+      <h3>Agglomerative clustering (handout)</h3>
+      <p>Start with every pixel (or superpixel) as its own cluster. Repeatedly <strong>merge the closest pair</strong> until you have \(K\) regions or a distance cutoff. Linkage (single / complete / average / Ward) is the hyperparameter. Unlike k-means you don’t pick centres first — you grow a dendrogram. Costly on raw pixels, fine on SLIC superpixels.</p>
+
+      <h3>DNN segmenters named in the handout</h3>
+      <p><strong>Detectron</strong> family (Mask/Faster R-CNN zoo), <strong>SOLO / CondInst</strong> (instance seg without / with dynamic filters), <strong>SAM</strong> (promptable foundation model — points/boxes → mask), <strong>InternImage</strong> (large conv backbone). Satellite <strong>crop classification</strong> is the listed use case.</p>
+
+      <h2 id="meanshift">Mean-shift</h2>
+      <p>Non-parametric mode seeking — you do <em>not</em> pick \(K\). For images, run in \((R,G,B,x,y)\) so nearby similar-coloured pixels group together (Comaniciu &amp; Meer).</p>
+      <div class="steps">
+        <div class="step"><div class="s-title">Kernel density</div>The data define a smooth density (Gaussian kernel of chosen bandwidth).</div>
+        <div class="step"><div class="s-title">Climb</div>For each point: centre a window, compute the mean (centre of mass) of points in it, shift the window there, repeat until it stops. The shift vector always points uphill.</div>
+        <div class="step"><div class="s-title">Cluster</div>Points whose trajectories end at the same <strong>mode</strong> share an <strong>attraction basin</strong> → one segment.</div>
+      </div>
+      <figure data-diagram="meanshift" class="md" data-caption="Mean-shift: a window walks to the local centre of mass until it sits on a mode of the density. All points that drain into that mode form one cluster."></figure>
+      <div class="grid cols-2">
+        <div class="card"><h4 style="margin-top:0">Pros</h4><p style="margin-bottom:0">Good general-purpose segmentation; flexible number and shape of regions; robust to outliers.</p></div>
+        <div class="card"><h4 style="margin-top:0">Cons</h4><p style="margin-bottom:0">Must choose kernel size in advance; not suitable for high-dimensional features. Use for oversegmentation, multiple segmentations, tracking, clustering, filtering.</p></div>
+      </div>
+
+      <h2 id="takeaways">Key takeaways</h2>
+      <div class="callout key">
+        <div class="c-head">◆ Remember these</div>
+        <ul>
+          <li>Semantic vs instance vs panoptic; bottom-up (looks similar) vs top-down (same object).</li>
+          <li>k-means: assign to nearest centre, replace centre by mean. Always converges; local min; you pick \(K\).</li>
+          <li>EM / MoG: soft assignments + covariance. Same local-min / must-know-\(K\) issues.</li>
+          <li>Mean-shift: climb the KDE to modes; \(K\) is discovered. Bandwidth is the hyperparameter.</li>
+          <li>Agglomerative: merge closest pair (handout). SAM / Detectron / U-Net for learned seg.</li>
+        </ul>
+      </div>
+
+      <div class="pager">
+        <a href="session10.html"><div class="pg-dir">← Previous</div><div class="pg-title">Session 10 · Attention &amp; ViT</div></a>
+        <a class="next" href="session12.html"><div class="pg-dir">Next →</div><div class="pg-title">Session 12 · Semantic Seg &amp; Metrics</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

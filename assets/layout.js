@@ -17,9 +17,20 @@
       { id: "session4", ix: "4", label: "Edge Detection & Gradients", href: "session4.html" },
       { id: "session5", ix: "5", label: "Canny & Hough Transform", href: "session5.html" },
       { id: "session6", ix: "6", label: "Harris Corners & HOG", href: "session6.html" },
-      { id: "session7", ix: "7", label: "SIFT & RANSAC", href: "session7.html" }
+      { id: "session7",  ix: "7",  label: "SIFT & RANSAC", href: "session7.html" },
+      { id: "session9",  ix: "9",  label: "Image Classification", href: "session9.html" },
+      { id: "session10", ix: "10", label: "Attention & ViT", href: "session10.html" },
+      { id: "session11", ix: "11", label: "Image Segmentation", href: "session11.html" },
+      { id: "session12", ix: "12", label: "Semantic Seg & Metrics", href: "session12.html" },
+      { id: "session13", ix: "13", label: "Object Detection", href: "session13.html" },
+      { id: "session14", ix: "14", label: "Visual Bag of Words", href: "session14.html" },
+      { id: "session15", ix: "15", label: "Object Tracking", href: "session15.html" },
+      { id: "session16", ix: "16", label: "Metrics & Wrap-up", href: "session16.html" },
+      { id: "session17", ix: "17", label: "Edge Devices", href: "session17.html" },
+      { id: "optional",  ix: "W",  label: "Face & OCR (optional)", href: "optional.html" }
     ]},
     { group: "Exam Prep", items: [
+      { id: "comprehensive", ix: "EC3", label: "Comprehensive Exam", href: "comprehensive.html" },
       { id: "exam",    ix: "✦", label: "Midsem — Overview", href: "exam.html" },
       { id: "exam-q1", ix: "Q1", label: "Q1 · Sampling & Contrast", href: "exam-q1.html" },
       { id: "exam-q2", ix: "Q2", label: "Q2 · Transforms & Hough", href: "exam-q2.html" },
