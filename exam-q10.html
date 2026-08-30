@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EC-3 Q10 — IoU, FCN &amp; U-Net</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "exam-q10", title: "EC-3 Q10", crumb: "Comprehensive · Q10" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Predicted · Question 10 · 8 Marks</span>
+      <h1>IoU, Fully Convolutional Nets &amp; U-Net</h1>
+      <p class="lead">Session 12. He flagged IoU of two boxes as “the sort of problem statement you can expect in your semester exams.”</p>
+
+      <div class="card">
+        <h4 style="margin-top:0">📄 Question</h4>
+        <p><span class="q-num">Q10(a)</span> Ground-truth box \([x_1,y_1,x_2,y_2]=[0,0,6,6]\), prediction \([2,2,8,8]\). Compute IoU. Is this a true positive at PASCAL’s threshold 0.5? At 0.3? <span class="badge marks">4M</span></p>
+        <p><span class="q-num">Q10(b)</span> How do you turn a classifier CNN into a semantic segmenter? Why skip connections in U-Net? What is transpose convolution for? <span class="badge marks">4M</span></p>
+      </div>
+
+      <h2>Solution — Q10(a)</h2>
+      <div class="eq">\[ \mathrm{IoU}=\frac{|A\cap B|}{|A\cup B|}=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}+\mathrm{FN}} \]</div>
+      <div class="steps">
+        <div class="step"><div class="s-title">Intersection</div>\([2,2,6,6]\) → width \(4\), height \(4\) → area \(16\).</div>
+        <div class="step"><div class="s-title">Box areas</div>GT \(6\times6=36\), pred \(6\times6=36\).</div>
+        <div class="step"><div class="s-title">Union</div>\(36+36-16=56\).</div>
+        <div class="step"><div class="s-title">IoU</div>\(16/56=2/7\approx\mathbf{0.286}\).</div>
+        <div class="step"><div class="s-title">Thresholds</div>PASCAL 0.5: \(0.286&lt;0.5\) → <strong>FP</strong>. At 0.3 still FP (\(0.286&lt;0.3\)). Duplicate detections of the same GT: first TP, rest FP.</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(\mathrm{IoU}=16/56\approx0.29\) → false positive at 0.5 <em>and</em> at 0.3. Accuracy is the wrong metric here (a detector that says “nothing” everywhere is ~99% accurate).</p></div>
+
+      <h2>Solution — Q10(b)</h2>
+      <div class="steps">
+        <div class="step"><div class="s-title">FCN</div>Replace the last fully-connected layers with \(1\times1\) convolutions. The net now emits a coarse <em>map</em> of class scores for any spatial size (Long et al., 2014).</div>
+        <div class="step"><div class="s-title">U-shape</div>Downsample (conv+pool) for context, then <strong>upsample</strong> back to input resolution. “If I have pooled, I’ll unpool. If I have convolved, I’ll do transpose convolution.” True deconvolution does not exist — we use transpose conv.</div>
+        <div class="step"><div class="s-title">Skips</div>Pooling throws away localisation. U-Net <strong>concatenates</strong> matching encoder feature maps onto the decoder so edges survive. ResNet residuals are a related “smooth the lost topology” trick so GD can find a minimum.</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Model answer</span><p style="margin:4px 0">Classifier → FCN by swapping FC for \(1\times1\) conv. U-Net = encoder–decoder + skip concatenations. Transpose conv = learned upsample. mIoU = IoU averaged over classes.</p></div>
+
+      <h2>Practice questions</h2>
+
+      <details class="qa"><summary><span class="q-num">P10.1</span> Lecture boxes: GT \([0,0,4,4]\), pred \([1,1,5,5]\). IoU? TP at 0.5? <span class="badge marks">3M</span></summary>
+        <div class="qa-body">
+          <div class="steps">
+            <div class="step"><div class="s-title">Intersection</div>\([1,1,4,4]\) → \(3\times3=9\)</div>
+            <div class="step"><div class="s-title">Union</div>\(16+16-9=23\)</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(9/23\approx0.391\) → <strong>FP</strong> at 0.5. (Session 12 mini numerical.)</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P10.2</span> Two boxes overlap in a \(2\times2\) square; each box is \(4\times4\). IoU? <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Intersection \(=4\), union \(=16+16-4=28\), \(\mathrm{IoU}=4/28=1/7\approx0.14\).</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P10.3</span> Precision and recall from TP=3, FP=1, FN=2. Why not quote accuracy? <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="steps">
+            <div class="step"><div class="s-title">P, R, F1</div>\(P=3/(3+1)=0.75\), \(R=3/(3+2)=0.60\), \(F_1=2\cdot0.75\cdot0.60/(0.75+0.60)=0.667\).</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(P=0.75\), \(R=0.60\). Accuracy counts true negatives — in detection almost every window is background, so “never fire” looks accurate.</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P10.4</span> Name two extra segmentation metrics from the handout besides IoU. <span class="badge marks">1M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0"><strong>Pixel accuracy</strong> (can be fooled by class imbalance) and <strong>boundary error</strong> (ABPE / BDE — how far predicted contours sit from GT contours). mIoU is the one that punishes missing the small object.</p></div>
+        </div>
+      </details>
+
+      <div class="callout intuition">
+        <div class="c-head">◆ Demo</div>
+        <p>Drag boxes on <a href="session12.html#iou-demo">IoU, live</a>.</p>
+      </div>
+
+      <div class="pager">
+        <a href="exam-q9.html"><div class="pg-dir">← Previous</div><div class="pg-title">Q9 · Segmentation</div></a>
+        <a class="next" href="exam-q11.html"><div class="pg-dir">Next →</div><div class="pg-title">Q11 · Object Detection</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EC-3 Q13 — Object Tracking</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "exam-q13", title: "EC-3 Q13", crumb: "Comprehensive · Q13" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Predicted · Question 13 · 8 Marks</span>
+      <h1>Optical Flow, Lucas–Kanade &amp; Kalman</h1>
+      <p class="lead">Session 15. LK is the only optical-flow method in the exam syllabus; Kalman is conceptual plus a 1-D gain numerical — not the full matrix grind.</p>
+
+      <div class="card">
+        <h4 style="margin-top:0">📄 Question</h4>
+        <p><span class="q-num">Q13(a)</span> State the optical-flow constraint and the aperture problem. In a window, \(\sum I_x^2=10,\ \sum I_y^2=10,\ \sum I_x I_y=0,\ \sum I_x I_t=-5,\ \sum I_y I_t=-5\). Compute \((u,v)\) and classify the patch. What happens if \(\sum I_y^2=\sum I_x I_y=\sum I_y I_t=0\) with the other sums unchanged? <span class="badge marks">5M</span></p>
+        <p><span class="q-num">Q13(b)</span> Predicted position \(8\), predicted variance \(P^-=9\), measurement \(z=14\) with \(R=3\), \(H=1\). Compute the Kalman gain and the updated state. Interpret \(K\). <span class="badge marks">3M</span></p>
+      </div>
+
+      <h2>Solution — Q13(a)</h2>
+      <div class="eq">\[ I_x u + I_y v + I_t = 0 \]</div>
+      <p>One equation, two unknowns — you only recover the <strong>normal</strong> component along an edge (aperture problem). Lucas–Kanade assumes \((u,v)\) constant in a window; the left-hand matrix is Harris’s \(M\).</p>
+      <div class="eq">\[ \begin{bmatrix} \sum I_x^2 & \sum I_x I_y \\ \sum I_x I_y & \sum I_y^2 \end{bmatrix} \begin{bmatrix} u \\ v \end{bmatrix} = -\begin{bmatrix} \sum I_x I_t \\ \sum I_y I_t \end{bmatrix} \]</div>
+      <div class="steps">
+        <div class="step"><div class="s-title">Window 1</div>\(M=\mathrm{diag}(10,10)\), invertible, \(\lambda_1=\lambda_2=10\) → <strong>corner</strong>. \((u,v)=(-5/10,-5/10)=(-0.5,-0.5)\).</div>
+        <div class="step"><div class="s-title">Window 2</div>\(M=\mathrm{diag}(10,0)\), singular → <strong>edge</strong>. Only \(u=-0.5\) is determined; \(v\) is free. Do not track edges; track corners (KLT).</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Corner: flow \((-0.5,-0.5)\). Edge: not uniquely solvable. Horn–Schunck / Farnebäck are named in the slides; <strong>LK is the syllabus method</strong>.</p></div>
+
+      <h2>Solution — Q13(b)</h2>
+      <div class="eq">\[ K=\frac{P^-}{P^-+R}=\frac{9}{9+3}=0.75, \qquad \hat{x}=8+0.75(14-8)=8+4.5=\mathbf{12.5} \]</div>
+      <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(K=0.75\), updated state \(12.5\). Sensor is trusted more than the model (\(R=3&lt;P^-=9\)), so the update sits closer to 14 than to 8. If \(R\to\infty\), \(K\to0\) (ignore the sensor). Predict then correct; DeepSORT = this + CNN embeddings + Hungarian.</p></div>
+
+      <h2>Practice questions</h2>
+
+      <details class="qa"><summary><span class="q-num">P13.1</span> Lecture window: \(\sum I_x^2=\sum I_y^2=8\), cross=0, \(\sum I_x I_t=\sum I_y I_t=-4\). Flow? <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Corner, \((u,v)=(-0.5,-0.5)\). (Session 15.)</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P13.2</span> Mini Kalman: \(P^-=4\), \(R=4\), \(\hat{x}^-=10\), \(z=12\). <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(K=4/(4+4)=0.5\), \(\hat{x}=10+0.5(2)=\mathbf{11}\) — split the difference because model and sensor are equally trusted.</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P13.3</span> Mean-shift / Camshift tracking in two sentences. Tracking-by-detection vs Kalman. <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span>
+            <p style="margin:4px 0">Represent the target by a colour histogram; in the next frame, climb the back-projection / Bhattacharyya surface (mean-shift). Camshift also adapts window size.</p>
+            <p style="margin:4px 0">Tracking-by-detection: detect every frame, associate boxes (Hungarian / embeddings) — no motion model. Kalman: explicit predict–update when the dynamics are roughly linear-Gaussian (bird through trees, missile blips).</p>
+          </div>
+        </div>
+      </details>
+
+      <div class="pager">
+        <a href="exam-q12.html"><div class="pg-dir">← Previous</div><div class="pg-title">Q12 · Visual BoW</div></a>
+        <a class="next" href="exam-q14.html"><div class="pg-dir">Next →</div><div class="pg-title">Q14 · AP &amp; mAP</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EC-3 Q14 — AP &amp; mAP</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "exam-q14", title: "EC-3 Q14", crumb: "Comprehensive · Q14" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Predicted · Question 14 · 8 Marks</span>
+      <h1>Precision–Recall, Interpolated AP &amp; mAP</h1>
+      <p class="lead">Session 16. Same <em>kind</em> as the lecture “Mandeep” ranking numerical — new numbers, same method. He said not to expect a copy-paste of the watermarked slides.</p>
+
+      <div class="card">
+        <h4 style="margin-top:0">📄 Question</h4>
+        <p>A class has <strong>4</strong> ground-truth objects. Ranked detections (confidence ↓), TP if IoU ≥ 0.5:</p>
+        <p>TP, FP, TP, TP, FP.</p>
+        <p><span class="q-num">Q14(a)</span> Fill running precision and recall after each detection. <span class="badge marks">3M</span></p>
+        <p><span class="q-num">Q14(b)</span> Interpolate (max precision for any recall \(\ge\hat{r}\)) and compute the PASCAL 11-point AP. <span class="badge marks">4M</span></p>
+        <p><span class="q-num">Q14(c)</span> If a second class has AP \(=0.40\), what is mAP? How does COCO’s AP differ? <span class="badge marks">1M</span></p>
+      </div>
+
+      <h2>Solution — Q14(a)</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Rank</th><th>Correct?</th><th>TP so far</th><th>Precision</th><th>Recall</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>TP</td><td>1</td><td>1/1 = 1.00</td><td>1/4 = 0.25</td></tr>
+          <tr><td>2</td><td>FP</td><td>1</td><td>1/2 = 0.50</td><td>0.25</td></tr>
+          <tr><td>3</td><td>TP</td><td>2</td><td>2/3 ≈ 0.67</td><td>2/4 = 0.50</td></tr>
+          <tr><td>4</td><td>TP</td><td>3</td><td>3/4 = 0.75</td><td>3/4 = 0.75</td></tr>
+          <tr><td>5</td><td>FP</td><td>3</td><td>3/5 = 0.60</td><td>0.75</td></tr>
+        </tbody>
+      </table></div>
+      <p>Recall is non-decreasing; precision zig-zags (drops on an FP, can rise on a later TP). First duplicate of the same GT would also be FP.</p>
+
+      <h2>Solution — Q14(b)</h2>
+      <p>Interpolated \(P(\hat{r})=\max\{\,P : R\ge\hat{r}\,\}\). Sample at \(\hat{r}=0,0.1,\ldots,1.0\):</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Recall knots</th><th>Max P to the right</th></tr></thead>
+        <tbody>
+          <tr><td>0.0, 0.1, 0.2</td><td>1.00 (the first TP)</td></tr>
+          <tr><td>0.3, 0.4, 0.5, 0.6, 0.7</td><td>0.75 (rank-4 TP beats 0.67 and 0.60)</td></tr>
+          <tr><td>0.8, 0.9, 1.0</td><td>0 (never reached recall 1.0; max R = 0.75)</td></tr>
+        </tbody>
+      </table></div>
+      <div class="eq">\[ \mathrm{AP}=\frac{3\times 1.00 + 5\times 0.75 + 3\times 0}{11}=\frac{3+3.75}{11}=\frac{6.75}{11}\approx\mathbf{0.614} \]</div>
+      <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(\mathrm{AP}\approx0.61\). Interpolation turns the orange zig-zag into a monotone staircase so a single ranking jitter does not crash the score. Method: rank → TP/FP → running P/R → interpolate → average 11 knots.</p></div>
+
+      <h2>Solution — Q14(c)</h2>
+      <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(\mathrm{mAP}=(0.614+0.40)/2\approx\mathbf{0.51}\). COCO additionally averages AP across IoU thresholds \(0.50:0.05:0.95\), which punishes loose boxes. PASCAL’s headline is AP @ IoU 0.5.</p></div>
+
+      <h2>Practice questions</h2>
+
+      <details class="qa"><summary><span class="q-num">P14.1</span> 5 apples, ranked TP, TP, FP, TP, FP. Running P and R at rank 3? <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">TP so far = 2, \(P=2/3\approx0.67\), \(R=2/5=0.40\). (Lecture row.)</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P14.2</span> Lecture 11-point result: five knots at 1.0, four at 0.57, two at 0.5. AP? <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\((5\times1+4\times0.57+2\times0.5)/11=(5+2.28+1)/11=8.28/11\approx\mathbf{0.753}\).</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P14.3</span> ROC vs PR: what does each plot, and what is a random classifier? <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">PR: precision vs recall (the detection plot; AP = area). ROC: TPR vs FPR; random = diagonal, AUC 0.5; perfect = \((0,1)\). Discrete classifiers are a single point. Face verification often quotes TAR @ a fixed FAR instead.</p></div>
+        </div>
+      </details>
+
+      <div class="pager">
+        <a href="exam-q13.html"><div class="pg-dir">← Previous</div><div class="pg-title">Q13 · Tracking</div></a>
+        <a class="next" href="exam-q15.html"><div class="pg-dir">Next →</div><div class="pg-title">Q15 · Edge, Face &amp; OCR</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

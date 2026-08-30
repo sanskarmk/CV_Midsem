@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EC-3 Q8 — Attention &amp; ViT</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "exam-q8", title: "EC-3 Q8", crumb: "Comprehensive · Q8" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Predicted · Question 8 · 6 Marks</span>
+      <h1>Attention, Scaled Dot-Product &amp; Vision Transformers</h1>
+      <p class="lead">Session 10. He said: do <em>not</em> derive attention in the hall — know Q/K/V, why \(\sqrt{d}\), positional embeddings, and the ViT pipeline.</p>
+
+      <div class="card">
+        <h4 style="margin-top:0">📄 Question</h4>
+        <p><span class="q-num">Q8(a)</span> What problem of classical seq2seq does attention fix? Define Q, K, V and write the scaled dot-product formula. Why divide by \(\sqrt{d}\)? <span class="badge marks">3M</span></p>
+        <p><span class="q-num">Q8(b)</span> Sketch the ViT classification pipeline. When does a ViT beat a ResNet, and why? How can the same backbone be used for segmentation? <span class="badge marks">3M</span></p>
+      </div>
+
+      <h2>Solution — Q8(a)</h2>
+      <p>Classical encoder–decoder crushes the whole source into <strong>one context vector</strong>. Late decoder steps forget the start of a long sentence — a <strong>representational bottleneck</strong>.</p>
+      <p><strong>Attention</strong> lets each output step score every encoder state and take a weighted sum. For self-attention on a sequence \(X\):</p>
+      <div class="eq">\[ Q=XW_Q,\quad K=XW_K,\quad V=XW_V, \qquad \mathrm{Attention}(Q,K,V)=\mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d}}\right)V \]</div>
+      <p>\(Q\) = “what am I looking for”, \(K\) = “what do I contain”, \(V\) = “what do I pass on”. The softmax of the scores is the attention weights \(\alpha\).</p>
+      <div class="answer-box"><span class="a-tag">Why \(\sqrt{d}\)</span><p style="margin:4px 0">Dot products of \(d\)-dimensional unit-ish vectors have variance \(\propto d\). For \(d=64\), unscaled scores are huge, softmax saturates (tiny gradients). Dividing by \(\sqrt{d}\) keeps logits in a healthy range. You will not be asked to derive this — state it.</p></div>
+
+      <h2>Solution — Q8(b)</h2>
+      <div class="steps">
+        <div class="step"><div class="s-title">Patch</div>Split the image into e.g. \(16\times16\) patches; flatten each; linear-project to a token.</div>
+        <div class="step"><div class="s-title">[CLS] + pos-emb</div>Prepend a learnable class token. Add <strong>positional embeddings</strong> (transformers have no built-in order).</div>
+        <div class="step"><div class="s-title">Encoder</div>Stack of self-attention + MLP blocks. Read the [CLS] token (or pool) → linear classifier.</div>
+        <div class="step"><div class="s-title">Data diet</div>On ImageNet-1k, ViT <strong>loses</strong> to ResNets (too little data for a low-bias model). On ImageNet-21k / JFT-300M, large ViTs <strong>match then beat</strong> large ResNets — less inductive bias, so they need a pretraining feast. CNNs bake in locality; ViTs must learn it.</div>
+        <div class="step"><div class="s-title">Segmentation</div>Emit a label <em>per patch</em> (or upsample tokens) + a decoder / promptable mask head (SETR, SegFormer, SAM). U-Net still wins on small medical sets; SAM when you can prompt.</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Model answer</span><p style="margin:4px 0">Patches → tokens + [CLS] + pos-emb → transformer → class scores. ViT beats ResNet only after large-scale pretraining. For segmentation, keep the encoder and add a decoder; do not claim ViT-as-classifier is already a segmenter.</p></div>
+
+      <h2>Practice questions</h2>
+
+      <details class="qa"><summary><span class="q-num">P8.1</span> Softmax attention weights for scores \(s=(2.0,\, 0.0,\, 0.5)\). <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="steps">
+            <div class="step"><div class="s-title">Exponentials</div>\(e^{2}=7.389,\ e^{0}=1,\ e^{0.5}=1.649\). Sum \(=10.038\).</div>
+            <div class="step"><div class="s-title">Weights</div>\(\alpha\approx(0.736,\, 0.100,\, 0.164)\).</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">The query puts ~74% of its mass on token 1. Context = \(0.736\,v_1 + 0.100\,v_2 + 0.164\,v_3\).</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P8.2</span> A \(224\times224\) image, patch size \(16\). How many patch tokens does ViT see (before [CLS])? <span class="badge marks">1M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\((224/16)^2 = 14^2 = \mathbf{196}\) tokens. Plus 1 [CLS] → 197 into the encoder.</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P8.3</span> Why does a transformer need positional embeddings? <span class="badge marks">1M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Self-attention is a <em>set</em> operation — permuting tokens does not change the output. Vision and language are ordered, so we add a position vector (learned or sinusoidal) to each token. Without it, “the cat sat” = “sat cat the”, and a top-left patch equals a bottom-right one.</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P8.4</span> “CNNs are Robin to Transformers’ Batman” — what did he mean, and what is still CNN’s job? <span class="badge marks">1M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Since ViT, transformers own the SOTA headlines; CNNs remain the default <strong>feature extractor</strong> (backbones of Faster R-CNN, U-Net, MobileNet on edge). On small data the conv prior still wins.</p></div>
+        </div>
+      </details>
+
+      <div class="pager">
+        <a href="exam-q7.html"><div class="pg-dir">← Previous</div><div class="pg-title">Q7 · kNN &amp; Softmax</div></a>
+        <a class="next" href="exam-q9.html"><div class="pg-dir">Next →</div><div class="pg-title">Q9 · Segmentation</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

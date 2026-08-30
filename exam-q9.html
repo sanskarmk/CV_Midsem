@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EC-3 Q9 — Image Segmentation</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "exam-q9", title: "EC-3 Q9", crumb: "Comprehensive · Q9" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Predicted · Question 9 · 7 Marks</span>
+      <h1>k-means, Mean-Shift &amp; Segmentation Types</h1>
+      <p class="lead">Session 11. One k-means iteration is the numerical he is most likely to set; semantic vs instance is the theory pair.</p>
+
+      <div class="card">
+        <h4 style="margin-top:0">📄 Question</h4>
+        <p><span class="q-num">Q9(a)</span> Distinguish semantic, instance and panoptic segmentation. When would you pick SAM over U-Net? <span class="badge marks">3M</span></p>
+        <p><span class="q-num">Q9(b)</span> Points \(1, 2, 6, 7, 8\). \(K=2\), initialise \(c_1=1,\ c_2=8\). Perform <strong>one</strong> full k-means iteration (assign + update). Has it converged? <span class="badge marks">4M</span></p>
+      </div>
+
+      <h2>Solution — Q9(a)</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th></th><th>Asks</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Semantic</strong></td><td>Class of every pixel; instances merge</td><td>All cars are the same colour</td></tr>
+          <tr><td><strong>Instance</strong></td><td>Separate object IDs (usually things, not stuff)</td><td>Car #1 vs car #2</td></tr>
+          <tr><td><strong>Panoptic</strong></td><td>Both: stuff (sky, road) + numbered things</td><td>Cityscapes-style maps</td></tr>
+        </tbody>
+      </table></div>
+      <div class="answer-box"><span class="a-tag">SAM vs U-Net</span><p style="margin:4px 0"><strong>U-Net</strong> when labelled data is small and the task is fixed (MRI organs) — skip connections recover localisation that pooling destroyed. <strong>SAM</strong> when you can <em>prompt</em> (point/box) a foundation model and don’t have a big pixel-labelled set for that domain. Detectron/Mask R-CNN if you need instance IDs end-to-end.</p></div>
+
+      <h2>Solution — Q9(b)</h2>
+      <div class="steps">
+        <div class="step"><div class="s-title">Assign (nearest centre)</div>\(1\to c_1\) (dist 0 vs 7); \(2\to c_1\) (1 vs 6); \(6\to c_2\) (5 vs 2); \(7\to c_2\); \(8\to c_2\).</div>
+        <div class="step"><div class="s-title">Clusters</div>\(\{1,2\}\) and \(\{6,7,8\}\).</div>
+        <div class="step"><div class="s-title">Update</div>\(c_1=(1+2)/2=1.5\), \(c_2=(6+7+8)/3=7\).</div>
+        <div class="step"><div class="s-title">Converged?</div>Re-assign with \((1.5, 7)\): \(1,2\) still to \(c_1\); \(6\) is closer to 7 than to 1.5 (dist 1 vs 4.5) → same clusters. <strong>Yes, converged after one iteration.</strong></div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">New centres \(1.5\) and \(7\). Clusters \(\{1,2\}\) and \(\{6,7,8\}\). Converged. Always converges; may be a <em>local</em> min — you still pick \(K\).</p></div>
+
+      <h2>Practice questions</h2>
+
+      <details class="qa"><summary><span class="q-num">P9.1</span> Lecture numbers: points \(2,3,8,10\), \(c=(2,8)\). One iteration. <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Assign \(\{2,3\}\) and \(\{8,10\}\); centres \(2.5\) and \(9\). Next assign unchanged → converged. (Session 11 numerical.)</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P9.2</span> How does mean-shift segmentation differ from k-means? How is the same idea used as a <em>detector</em>? <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span>
+            <p style="margin:4px 0">Mean-shift does <strong>not</strong> pick \(K\). Every point climbs the density (kernel) until a mode; points that fall into the same mode are a cluster. Bandwidth \(h\) replaces \(K\).</p>
+            <p style="margin:4px 0">As a <strong>detector</strong>: run mean-shift on a colour / back-projection map; each mode is an object centre — no sliding window, no CNN. Breaks when colour is not distinctive. Camshift is this idea in tracking.</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P9.3</span> One sentence each: EM/MoG vs k-means; agglomerative clustering. <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span>
+            <p style="margin:4px 0"><strong>EM/MoG:</strong> soft assignment (ownership probabilities) + elliptical blobs with mixing weights; k-means is hard assignment + spherical clusters of equal weight.</p>
+            <p style="margin:4px 0"><strong>Agglomerative:</strong> start with every point a cluster, repeatedly merge the closest pair (linkage = hyperparameter). No initial centres; you cut the dendrogram.</p>
+          </div>
+        </div>
+      </details>
+
+      <div class="callout intuition">
+        <div class="c-head">◆ Demo</div>
+        <p><a href="session11.html#kmeans-demo">k-means, live</a> — step assign/update until the centres stop jumping.</p>
+      </div>
+
+      <div class="pager">
+        <a href="exam-q8.html"><div class="pg-dir">← Previous</div><div class="pg-title">Q8 · Attention &amp; ViT</div></a>
+        <a class="next" href="exam-q10.html"><div class="pg-dir">Next →</div><div class="pg-title">Q10 · IoU &amp; FCN</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

@@ -38,7 +38,17 @@
       { id: "exam-q4", ix: "Q4", label: "Q4 · Laplacian & Operators", href: "exam-q4.html" },
       { id: "exam-q5", ix: "Q5", label: "Q5 · Hough & Corners", href: "exam-q5.html" },
       { id: "exam-q6", ix: "Q6", label: "Q6 · HOG & RANSAC", href: "exam-q6.html" },
+      { id: "exam-q7", ix: "Q7", label: "Q7 · kNN & Softmax", href: "exam-q7.html" },
+      { id: "exam-q8", ix: "Q8", label: "Q8 · Attention & ViT", href: "exam-q8.html" },
+      { id: "exam-q9", ix: "Q9", label: "Q9 · Segmentation", href: "exam-q9.html" },
+      { id: "exam-q10", ix: "Q10", label: "Q10 · IoU & FCN", href: "exam-q10.html" },
+      { id: "exam-q11", ix: "Q11", label: "Q11 · Object Detection", href: "exam-q11.html" },
+      { id: "exam-q12", ix: "Q12", label: "Q12 · Visual BoW", href: "exam-q12.html" },
+      { id: "exam-q13", ix: "Q13", label: "Q13 · Tracking", href: "exam-q13.html" },
+      { id: "exam-q14", ix: "Q14", label: "Q14 · AP & mAP", href: "exam-q14.html" },
+      { id: "exam-q15", ix: "Q15", label: "Q15 · Edge, Face & OCR", href: "exam-q15.html" },
       { id: "practice", ix: "✎", label: "Questions for Practice", href: "practice.html" },
+      { id: "practice-ec3", ix: "✎", label: "EC-3 Practice Paper", href: "practice-ec3.html" },
       { id: "lectures", ix: "▶", label: "From the Lectures", href: "lectures.html" }
     ]},
     { group: "Reference", items: [

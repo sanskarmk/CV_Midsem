@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EC-3 Q11 — Object Detection</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "exam-q11", title: "EC-3 Q11", crumb: "Comprehensive · Q11" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Predicted · Question 11 · 10 Marks</span>
+      <h1>Sliding Windows, R-CNN Family &amp; YOLO</h1>
+      <p class="lead">Sessions 13–14. High-probability 10-marker: class imbalance, the upgrade ladder, YOLO v1 grid. Anchors (YOLOv2) are out of syllabus.</p>
+
+      <div class="card">
+        <h4 style="margin-top:0">📄 Question</h4>
+        <p><span class="q-num">Q11(a)</span> A \(64\times48\) image is scanned with a \(16\times16\) window, stride 8. How many windows? If 4 contain an object, what is the positive rate? Why are region proposals used? <span class="badge marks">3M</span></p>
+        <p><span class="q-num">Q11(b)</span> For each step R-CNN → Fast R-CNN → Faster R-CNN, state <em>what</em> was slow and <em>what</em> the successor fixed. What does Mask R-CNN add? <span class="badge marks">4M</span></p>
+        <p><span class="q-num">Q11(c)</span> YOLO v1 uses a \(7\times7\) grid, 2 boxes per cell, 20 PASCAL classes. How many numbers does the network emit? Why is it faster than Faster R-CNN, and what do you give up? <span class="badge marks">3M</span></p>
+      </div>
+
+      <h2>Solution — Q11(a)</h2>
+      <div class="eq">\[ n_x=\left\lfloor\frac{W-w}{s}\right\rfloor+1,\quad n_y=\left\lfloor\frac{H-h}{s}\right\rfloor+1 \]</div>
+      <div class="steps">
+        <div class="step"><div class="s-title">Count</div>\(n_x=(64-16)/8+1=7\), \(n_y=(48-16)/8+1=5\) → \(7\times5=\mathbf{35}\) windows.</div>
+        <div class="step"><div class="s-title">Class imbalance</div>\(4/35\approx11\%\) positives. The lecture duck: \(6/330\approx1.8\%\) — “lots of unnecessary negatives.”</div>
+        <div class="step"><div class="s-title">Proposals</div>Selective Search / RPN scores ~2000 likely object regions instead of every slide, so the classifier is not drowned in empty water / sky.</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">35 windows, ~11% positive. Sliding windows explode (scale × aspect × position); proposals exist to stop scoring empty background. Accuracy is the wrong metric.</p></div>
+
+      <h2>Solution — Q11(b)</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Method</th><th>Bottleneck it inherited</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td><strong>R-CNN</strong></td><td>~2000 crops, CNN run <em>per crop</em> (~47 s/image, VGG16); three separate losses</td><td>—</td></tr>
+          <tr><td><strong>Fast R-CNN</strong></td><td>Still Selective Search (~2 s) on CPU</td><td>CNN <em>once</em> per image + RoI pool; single multi-task loss</td></tr>
+          <tr><td><strong>Faster R-CNN</strong></td><td>—</td><td><strong>RPN</strong> learns proposals on the shared map; proposals nearly free</td></tr>
+          <tr><td><strong>Mask R-CNN</strong></td><td>Boxes only</td><td>FCN mask head on each RoI → instance segmentation</td></tr>
+        </tbody>
+      </table></div>
+      <div class="answer-box"><span class="a-tag">One-liners</span><p style="margin:4px 0">Fast vs R-CNN: share convs. Faster vs Fast: learn the proposals. Mask: add a mask. SSD is the other one-stage family (default boxes on several maps).</p></div>
+
+      <h2>Solution — Q11(c)</h2>
+      <p>Each cell predicts \(B\) boxes of 5 numbers \((x,y,w,h,\mathrm{conf})\) plus \(C\) class scores:</p>
+      <div class="eq">\[ 7\times7\times(2\times5 + 20) = 49\times 30 = \mathbf{1470} \]</div>
+      <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">1470 outputs, <strong>one forward pass</strong> — no proposals. ~7× faster than Faster R-CNN, lower mAP / worse on small objects. Robotics favourite. <strong>YOLOv2 anchors are not in syllabus</strong> — stop at the 7×7, 2-box grid.</p></div>
+
+      <h2>Practice questions</h2>
+
+      <details class="qa"><summary><span class="q-num">P11.1</span> Image \(H=600, W=800\), feature map \(6\times8\). Box \((x,y,w,h)=(50,150,250,350)\). Where does it land on the feature map? <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <p>Scale \(600/6=100\) in \(y\), \(800/8=100\) in \(x\).</p>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\((0.5,\ 1.5,\ 2.5,\ 3.5)\) on the feature map, then RoI-pooled to \(7\times7\). (Slide geometry.)</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P11.2</span> Lecture duck: 330 windows, 6 positives. If a classifier labels every window “duck”, precision? If it labels none, accuracy (approx)? <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Always-duck: \(P=6/330\approx1.8\%\), \(R=100\%\). Never-duck: accuracy \(=324/330\approx98\%\), recall \(=0\). That is why we use P/R and mAP, not accuracy.</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P11.3</span> Multiclass vs multilabel in detection. One use of mean-shift as a detector. Skin detection in one line. <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span>
+            <p style="margin:4px 0">Per box: multiclass (softmax). Per image: multilabel (many objects). Mean-shift on a colour map → modes = centres. Skin: HSV/YCbCr (or small CNN) pixel classifier as a cheap face/hand proposal.</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P11.4</span> YOLO vs Faster R-CNN — two bullets. <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Two-stage (Faster): propose then classify — slower, usually more accurate, better small objects. One-stage (YOLO/SSD): dense grid — real-time, a bit less precise. Exam pivot is almost always this sentence.</p></div>
+        </div>
+      </details>
+
+      <div class="pager">
+        <a href="exam-q10.html"><div class="pg-dir">← Previous</div><div class="pg-title">Q10 · IoU &amp; FCN</div></a>
+        <a class="next" href="exam-q12.html"><div class="pg-dir">Next →</div><div class="pg-title">Q12 · Visual BoW</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EC-3 Q15 — Edge, Face &amp; OCR</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "exam-q15", title: "EC-3 Q15", crumb: "Comprehensive · Q15" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Predicted · Question 15 · 7 Marks</span>
+      <h1>Edge Devices, Face Detection &amp; OCR</h1>
+      <p class="lead">Session 17 + optional webinars. He flagged a <em>system-design / latency</em> question. Comprehensive = all handout topics, including face and OCR.</p>
+
+      <div class="card">
+        <h4 style="margin-top:0">📄 Question</h4>
+        <p><span class="q-num">Q15(a)</span> A factory gate camera must recognise a number plate in &lt; 80 ms, no cloud, ~10 W, night IR. Sketch board + model + pipeline and the three numbers you would quote. Why not Faster R-CNN or SAM? <span class="badge marks">4M</span></p>
+        <p><span class="q-num">Q15(b)</span> Why was Viola–Jones real-time in 2001? Name two DNN face models and the metric TAR @ FAR = \(10^{-3}\). GT text <code>BITS</code>, OCR <code>B1TS</code>: CER? <span class="badge marks">3M</span></p>
+      </div>
+
+      <h2>Solution — Q15(a)</h2>
+      <div class="steps">
+        <div class="step"><div class="s-title">Constraint</div>&lt; 80 ms, 10 W, on-prem, IR night → edge GPU/TPU, not a cloud ViT.</div>
+        <div class="step"><div class="s-title">Board</div>Jetson Nano / Orin Nano, or Coral if you can compile INT8 TFLite. Pi CPU-only will miss 80 ms on a decent detector. ESP32 is too small for plate OCR.</div>
+        <div class="step"><div class="s-title">Model</div>INT8 YOLO-tiny / SSD-MobileNet for the plate <em>box</em>; a tiny CRNN / Tesseract-lite for the crop. Depthwise-separable (MobileNet/Xception) is why classification fits a Pi.</div>
+        <div class="step"><div class="s-title">Pipeline</div>Capture → letterbox → detect plate → warp crop → OCR → regex (state format) → GPIO / log. No video uplink (privacy + bandwidth).</div>
+        <div class="step"><div class="s-title">Quote</div>mAP @ 0.5 on an in-domain night set, latency <em>on that board</em>, watts at the wall. FLOPs alone are not latency.</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Why not Faster / SAM</span><p style="margin:4px 0">Faster R-CNN is two-stage (RPN + head) — too slow/heavy for 80 ms on 10 W. SAM is a promptable foundation model; it belongs in the cloud. Shape: constraint → board class → model family → quantisation → on-device post-process → (mAP, ms, W).</p></div>
+
+      <h2>Solution — Q15(b)</h2>
+      <div class="steps">
+        <div class="step"><div class="s-title">Viola–Jones</div>Haar features in \(O(1)\) via the <strong>integral image</strong>; AdaBoost picks a few of them; an <strong>attentional cascade</strong> rejects most non-face windows after 1–2 features. Only survivors pay for later stages → real-time on 2001 CPUs.</div>
+        <div class="step"><div class="s-title">DNN faces</div>MTCNN (propose → refine → landmarks), RetinaFace (single-shot + landmarks). FastFace for edge/attendance.</div>
+        <div class="step"><div class="s-title">TAR @ FAR</div>True-accept rate at a fixed false-accept rate — the operating point a bank cares about (how many real users you let in while keeping impostors at \(10^{-3}\)).</div>
+        <div class="step"><div class="s-title">CER</div>GT <code>BITS</code>, OCR <code>B1TS</code>: one substitution (I→1), length 4 → \(\mathrm{CER}=1/4=25\%\). Word accuracy is 0 — quote both.</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Cascade + integral image; MTCNN / RetinaFace; TAR@FAR is the verification point; \(\mathrm{CER}=25\%\). WER uses the same edit distance at word level.</p></div>
+
+      <h2>Practice questions</h2>
+
+      <details class="qa"><summary><span class="q-num">P15.1</span> A 3×3 conv on \(C=32\) channels vs depthwise-separable: muls per pixel? <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="steps">
+            <div class="step"><div class="s-title">Standard</div>\(9C^2=9\times1024=9216\)</div>
+            <div class="step"><div class="s-title">DW + PW</div>\(9C + C^2=288+1024=1312\) ≈ \(7\times\) cheaper</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">9216 vs 1312. That is why MobileNet/Xception appear next to classification metrics in the handout.</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P15.2</span> Match board to job: ESP32-CAM, Raspberry Pi, Jetson Orin, Coral. <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">ESP32: motion trigger / JPEG, not YOLO-v8. Pi: OpenCV + MobileNet. Coral: INT8 TFLite only, high IPS/W. Orin: TensorRT / DeepStream multi-cam. Intel NUC: OpenVINO + Movidius stick.</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P15.3</span> OCR pipeline in three steps. LayoutLM / DiT — what are they for? <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Localise text → recognise (CTC/transformer) → lexicon/regex post-process. LayoutLM / DiT are document transformers for layout (tables, invoices), not just glyph reading. Plate/invoice are the handout use cases.</p></div>
+        </div>
+      </details>
+
+      <div class="pager">
+        <a href="exam-q14.html"><div class="pg-dir">← Previous</div><div class="pg-title">Q14 · AP &amp; mAP</div></a>
+        <a class="next" href="practice-ec3.html"><div class="pg-dir">Next →</div><div class="pg-title">✎ EC-3 Practice Paper</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

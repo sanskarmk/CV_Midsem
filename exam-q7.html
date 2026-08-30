@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EC-3 Q7 — kNN &amp; Softmax</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "exam-q7", title: "EC-3 Q7", crumb: "Comprehensive · Q7" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Predicted · Question 7 · 6 Marks</span>
+      <h1>kNN Classification, Softmax &amp; Cross-Entropy</h1>
+      <p class="lead">Session 9. Predicted EC-3 style — same kind as the classification lecture numericals, not a copy of the slide numbers.</p>
+
+      <div class="card">
+        <h4 style="margin-top:0">📄 Question</h4>
+        <p><span class="q-num">Q7(a)</span> Training points: \(A=(0,0)\) cat, \(B=(0,2)\) cat, \(C=(3,0)\) dog, \(D=(3,3)\) dog. Query \(q=(1,1)\). Using Euclidean distance, classify with \(k=1\) and \(k=3\). Why must \(k\) be chosen on the validation set, not the test set? <span class="badge marks">4M</span></p>
+        <p><span class="q-num">Q7(b)</span> A 3-class linear classifier outputs scores \(s=(1.0,\, 3.0,\, 0.0)\). The true class is class 1. Compute the softmax probabilities and the cross-entropy loss. <span class="badge marks">2M</span></p>
+      </div>
+
+      <h2>Solution — Q7(a)</h2>
+      <div class="steps">
+        <div class="step"><div class="s-title">Distances to \(q=(1,1)\)</div>\(d(A)=\sqrt{1+1}=\sqrt{2}\approx1.41\); \(d(B)=\sqrt{1+1}=\sqrt{2}\approx1.41\); \(d(C)=\sqrt{4+1}=\sqrt{5}\approx2.24\); \(d(D)=\sqrt{4+4}=\sqrt{8}\approx2.83\).</div>
+        <div class="step"><div class="s-title">\(k=1\)</div>Two-way tie \(A\) and \(B\), both cats → <strong>cat</strong>. (If the examiner wants a unique nearest, break ties by index / smaller \(x\); both still cat.)</div>
+        <div class="step"><div class="s-title">\(k=3\)</div>Nearest three: \(A\) cat, \(B\) cat, \(C\) dog. Majority = <strong>cat</strong>.</div>
+        <div class="step"><div class="s-title">Why validation</div>The test set is used <em>once</em> to report generalisation. Tuning \(k\) on test leaks the answer and overfits. Train fits; val picks hyperparameters (\(k\), metric); test is the sealed exam.</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(k=1\) → cat; \(k=3\) → cat. Choose \(k\) on validation, never on test.</p></div>
+
+      <h2>Solution — Q7(b)</h2>
+      <div class="eq">\[ p_c = \frac{e^{s_c}}{\sum_j e^{s_j}}, \qquad L=-\log p_y \]</div>
+      <div class="steps">
+        <div class="step"><div class="s-title">Exponentials</div>\(e^{1}=2.718,\ e^{3}=20.086,\ e^{0}=1\). Sum \(=23.804\).</div>
+        <div class="step"><div class="s-title">Softmax</div>\(p\approx(0.114,\, 0.844,\, 0.042)\).</div>
+        <div class="step"><div class="s-title">True class is 1</div>\(L=-\log 0.844 \approx 0.170\).</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(p\approx(0.11,\,0.84,\,0.04)\), \(L\approx0.17\). Confident and correct → small loss. Binary problems use sigmoid + BCE; multilabel uses a sigmoid per label, not one softmax.</p></div>
+
+      <h2>Practice questions</h2>
+      <p>Try each before revealing the worked answer.</p>
+
+      <details class="qa"><summary><span class="q-num">P7.1</span> Same four points as Q7(a), query \(q=(2,2)\), \(k=1\) and \(k=3\). <span class="badge marks">3M</span></summary>
+        <div class="qa-body">
+          <div class="steps">
+            <div class="step"><div class="s-title">Distances</div>\(d(A)=\sqrt{8}\approx2.83\); \(d(B)=\sqrt{4+0}=2\); \(d(C)=\sqrt{1+4}=\sqrt{5}\approx2.24\); \(d(D)=\sqrt{1+1}=\sqrt{2}\approx1.41\).</div>
+            <div class="step"><div class="s-title">\(k=1\)</div>Nearest \(D\) dog → <strong>dog</strong>.</div>
+            <div class="step"><div class="s-title">\(k=3\)</div>\(D\) dog, \(B\) cat, \(C\) dog → majority <strong>dog</strong>.</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">Both \(k=1\) and \(k=3\) → dog. Contrast with Q7(a): moving the query two units flips the label.</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P7.2</span> Scores \(s=(2.0,\,1.0,\,0.1)\), true class 0. Softmax and CE. <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <p>This is the lecture numerical (Session 9).</p>
+          <div class="steps">
+            <div class="step"><div class="s-title">Exponentials</div>\(7.389+2.718+1.105=11.212\)</div>
+            <div class="step"><div class="s-title">Softmax / CE</div>\(p\approx(0.659,\,0.242,\,0.099)\), \(L=-\log 0.659\approx0.417\)</div>
+          </div>
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(p\approx(0.66,0.24,0.10)\), \(L\approx0.42\). If true class were 2, \(L=-\log 0.099\approx2.31\).</p></div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P7.3</span> Distinguish binary vs multiclass vs multilabel losses. <span class="badge marks">2M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span>
+            <p style="margin:4px 0"><strong>Binary</strong> (yes/no): one logit, <strong>sigmoid + binary cross-entropy</strong>.</p>
+            <p style="margin:4px 0"><strong>Multiclass</strong> (exactly one of \(C\) labels): <strong>softmax + CE</strong> — mutually exclusive.</p>
+            <p style="margin:4px 0"><strong>Multilabel</strong> (cat <em>and</em> indoor): a <strong>sigmoid per label</strong>, sum of BCEs — not a single softmax, because two labels can both be true.</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="qa"><summary><span class="q-num">P7.4</span> Why is “number of mistakes” a bad training loss for a linear classifier? <span class="badge marks">1M</span></summary>
+        <div class="qa-body">
+          <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">It is discrete (no useful gradient, can’t break near-misses from disasters) and does not encourage a <em>margin</em>. Softmax/CE is continuous and punishes a low probability on the true class even when \(\arg\max\) is already correct.</p></div>
+        </div>
+      </details>
+
+      <div class="callout intuition">
+        <div class="c-head">◆ Want to feel it?</div>
+        <p>Open the <a href="session9.html#knn-demo">kNN demo</a> and drag the query / change \(k\). Formula sheet: <a href="formulas.html">softmax / CE</a>.</p>
+      </div>
+
+      <div class="pager">
+        <a href="exam-q6.html"><div class="pg-dir">← Previous</div><div class="pg-title">Q6 · HOG &amp; RANSAC</div></a>
+        <a class="next" href="exam-q8.html"><div class="pg-dir">Next →</div><div class="pg-title">Q8 · Attention &amp; ViT</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

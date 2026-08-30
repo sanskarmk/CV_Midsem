@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Questions for Practice — Predicted EC-3</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "practice-ec3", title: "EC-3 Practice Paper", crumb: "Exam Prep · EC-3 Practice" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Exam Prep · Predicted comprehensive</span>
+      <h1>Questions for Practice — EC-3</h1>
+      <p class="lead">A <strong>predicted 40-mark open-book paper</strong> in the shape he described: 7 uneven questions, ~15% a short pre-RANSAC recap, 85% after RANSAC, mix of numericals and “why this not that.” Cover each solution until you have tried it. Full per-topic drills: <a href="exam-q7.html">Q7–Q15</a>.</p>
+
+      <div class="callout exam">
+        <div class="c-head">✦ How to sit this mock</div>
+        <p>~<strong>90 minutes</strong>. Open book (this site + slides). Write the formula, substitute, box the answer. A correctly solved 10-marker is the “low-hanging fruit.”</p>
+      </div>
+
+      <div class="toc">
+        <h4>Mock paper · 40 marks</h4>
+        <ul>
+          <li><a href="#eq1">EQ1 · Pre-midsem recap (DoG / RANSAC) · 4M</a></li>
+          <li><a href="#eq2">EQ2 · Softmax + kNN · 5M</a></li>
+          <li><a href="#eq3">EQ3 · k-means + ViT one-liners · 6M</a></li>
+          <li><a href="#eq4">EQ4 · IoU + U-Net · 6M</a></li>
+          <li><a href="#eq5">EQ5 · R-CNN ladder + YOLO tensor · 8M</a></li>
+          <li><a href="#eq6">EQ6 · LK flow + Kalman gain · 6M</a></li>
+          <li><a href="#eq7">EQ7 · 11-point AP + edge stack · 5M</a></li>
+        </ul>
+      </div>
+
+      <h2 id="eq1">EQ1 · Pre-midsem recap <span class="badge marks">4M</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><span class="q-num">(a)</span> Why does SIFT use Difference-of-Gaussians rather than a raw Laplacian? <span class="badge marks">2M</span></p>
+        <p><span class="q-num">(b)</span> RANSAC with 30% outliers, minimal sample \(s=2\), success probability 99%. Roughly how many iterations? <span class="badge marks">2M</span></p>
+      </div>
+      <h4>Solution</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">(a)</div>DoG \(\approx\) scale-normalised LoG but is almost free from the Gaussian pyramid. Extrema in \((x,y,\sigma)\) give scale-invariant blobs.</div>
+        <div class="step"><div class="s-title">(b)</div>\(N=\log(1-p)/\log(1-(1-e)^s)=\log(0.01)/\log(1-0.7^2)=\log(0.01)/\log(0.51)\approx 6.6\) → <strong>7</strong>.</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answers</span><p style="margin:4px 0">(a) Cheap LoG via the pyramid. (b) About 7 iterations. This is the 10–20% pre-midsem slice.</p></div>
+
+      <h2 id="eq2">EQ2 · Softmax + kNN <span class="badge marks">5M</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><span class="q-num">(a)</span> Scores \(s=(0,\,2,\,2)\), true class 0. Softmax and CE. <span class="badge marks">3M</span></p>
+        <p><span class="q-num">(b)</span> Train: \((0,0)\) A, \((4,0)\) B, \((0,4)\) B. Query \((1,1)\), \(k=1\). Label? <span class="badge marks">2M</span></p>
+      </div>
+      <h4>Solution</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">(a) Exp</div>\(e^0=1,\ e^2=7.389\) twice. Sum \(=15.778\). \(p\approx(0.063,\,0.468,\,0.468)\). \(L=-\log 0.063\approx 2.76\).</div>
+        <div class="step"><div class="s-title">(b)</div>\(d(A)=\sqrt{2}\approx1.41\); \(d(B_1)=\sqrt{9+1}\approx3.16\); \(d(B_2)\) same. \(k=1\) → <strong>A</strong>.</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answers</span><p style="margin:4px 0">(a) Model is confident on the wrong classes → large CE. (b) Label A. Tune \(k\) on val, not test. Binary → sigmoid+BCE; multilabel → per-label sigmoid.</p></div>
+
+      <h2 id="eq3">EQ3 · k-means + ViT <span class="badge marks">6M</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><span class="q-num">(a)</span> Points \(0,1,4,10\). \(K=2\), \(c=(0,10)\). One k-means iteration. <span class="badge marks">3M</span></p>
+        <p><span class="q-num">(b)</span> \(224\times224\) image, patch 16. Tokens into ViT (with [CLS])? Why pos-emb? When does ViT beat ResNet? <span class="badge marks">3M</span></p>
+      </div>
+      <h4>Solution</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">(a) Assign</div>\(0,1\to c_1\) (near 0); \(4\to c_1\) (dist 4 vs 6); \(10\to c_2\). Centres: \(c_1=(0+1+4)/3=\mathbf{5/3}\), \(c_2=\mathbf{10}\).</div>
+        <div class="step"><div class="s-title">(b)</div>\(14^2+1=\mathbf{197}\) tokens. Attention is permutation-invariant → add positions. ViT wins after ImageNet-21k / JFT-scale pretraining; on 1k, ResNet inductive bias wins. Segmentation: per-patch labels + decoder / SAM.</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answers</span><p style="margin:4px 0">(a) Centres \(1.67\) and \(10\). (b) 197 tokens; pos-emb; data diet. Do not derive \(QK^\top/\sqrt{d}\) in the hall — write the formula and the \(\sqrt{d}\) reason (softmax saturation).</p></div>
+
+      <h2 id="eq4">EQ4 · IoU + U-Net <span class="badge marks">6M</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><span class="q-num">(a)</span> GT \([0,0,5,5]\), pred \([0,0,4,10]\). IoU? TP at 0.5? <span class="badge marks">3M</span></p>
+        <p><span class="q-num">(b)</span> How does an FCN differ from a classifier CNN? Role of U-Net skips and transpose conv? <span class="badge marks">3M</span></p>
+      </div>
+      <h4>Solution</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">(a) Intersection</div>\([0,0,4,5]\) → \(4\times5=20\). Areas \(25\) and \(40\). Union \(25+40-20=45\). \(\mathrm{IoU}=20/45=4/9\approx0.44\) → <strong>FP</strong> at 0.5.</div>
+        <div class="step"><div class="s-title">(b)</div>FC: last layers are \(1\times1\) convs → a score <em>map</em>. Skips copy high-res encoder features so pooling does not kill edges. Transpose conv = learned upsample (“deconvolution does not exist”).</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answers</span><p style="margin:4px 0">(a) \(\approx0.44\), FP. (b) Map not vector; skips for localisation; transpose conv to go back up.</p></div>
+
+      <h2 id="eq5">EQ5 · Detection ladder <span class="badge marks">8M</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><span class="q-num">(a)</span> \(80\times80\) image, \(20\times20\) window, stride 10. Window count? <span class="badge marks">2M</span></p>
+        <p><span class="q-num">(b)</span> One sentence each: Fast vs R-CNN, Faster vs Fast, YOLO vs Faster. YOLO v1 tensor size for 7×7, 2 boxes, 20 classes. <span class="badge marks">6M</span></p>
+      </div>
+      <h4>Solution</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">(a)</div>\(((80-20)/10+1)^2=7^2=\mathbf{49}\) windows.</div>
+        <div class="step"><div class="s-title">(b)</div>Fast: CNN once + RoI pool (not 2000 warps). Faster: RPN shares features. YOLO: no proposals, one shot, ~7× faster, lower mAP. Tensor \(7\times7\times30=\mathbf{1470}\). Anchors = out of syllabus.</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answers</span><p style="margin:4px 0">49 windows; 1470 outputs. Mask R-CNN = Faster + mask head.</p></div>
+
+      <h2 id="eq6">EQ6 · LK + Kalman <span class="badge marks">6M</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><span class="q-num">(a)</span> \(\sum I_x^2=4,\ \sum I_y^2=1,\ \sum I_x I_y=0,\ \sum I_x I_t=-2,\ \sum I_y I_t=0\). Unique flow? Classify the patch. <span class="badge marks">3M</span></p>
+        <p><span class="q-num">(b)</span> \(P^-=1\), \(R=4\), \(\hat{x}^-=0\), \(z=10\). \(K\) and \(\hat{x}\). <span class="badge marks">3M</span></p>
+      </div>
+      <h4>Solution</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">(a)</div>\(M=\mathrm{diag}(4,1)\), invertible but \(\lambda\) unbalanced → <strong>edge-ish</strong> (one dominant gradient). Formal unique solution \((u,v)=(-2/4,\,0)=(-0.5,\,0)\), but KLT prefers both \(\lambda\) large and similar (corners). Aperture: the small \(\lambda_y\) is noisy.</div>
+        <div class="step"><div class="s-title">(b)</div>\(K=1/(1+4)=0.2\), \(\hat{x}=0+0.2(10)=\mathbf{2}\). Trust the model; the sensor is noisy.</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answers</span><p style="margin:4px 0">(a) Unique numbers exist but the patch is a poor track point. (b) \(K=0.2\), \(\hat{x}=2\). DeepSORT = Kalman + embeddings + Hungarian.</p></div>
+
+      <h2 id="eq7">EQ7 · AP + edge design <span class="badge marks">5M</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><span class="q-num">(a)</span> 2 GT. Ranked: TP, FP, TP. 11-point AP (interpolate). <span class="badge marks">3M</span></p>
+        <p><span class="q-num">(b)</span> Warehouse person-in-bay, &lt;100 ms, 8 W, no cloud. Board + model in one line. <span class="badge marks">2M</span></p>
+      </div>
+      <h4>Solution</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">(a) Running</div>R1: \(P=1, R=0.5\). R2: \(P=0.5, R=0.5\). R3: \(P=2/3, R=1\).</div>
+        <div class="step"><div class="s-title">(a) Interpolate</div>Knots \(0\)–\(0.4\): max P = 1.0. Knots \(0.5\)–\(1.0\): max P = \(2/3\) (the last TP). \(\mathrm{AP}=(5\times1 + 6\times 2/3)/11=(5+4)/11=\mathbf{9/11}\approx0.82\).</div>
+        <div class="step"><div class="s-title">(b)</div>Coral or Jetson Nano + INT8 YOLO-tiny / SSD-MobileNet; not Faster R-CNN, not SAM. Quote mAP, ms on <em>that</em> board, W.</div>
+      </div>
+      <div class="answer-box"><span class="a-tag">Answers</span><p style="margin:4px 0">(a) \(\mathrm{AP}\approx0.82\). (b) Constraint → board → tiny one-stage detector → INT8 → (mAP, ms, W). Face/OCR if asked: cascade + TAR@FAR; CER = edit distance / length.</p></div>
+
+      <div class="callout key">
+        <div class="c-head">◆ After this mock</div>
+        <p>Missed a type? Per-topic solutions are <a href="exam-q7.html">Q7–Q15</a>. Method sheets: <a href="numericals.html#t16">Numericals 16–21</a>. Pattern: <a href="comprehensive.html">EC-3 briefing</a>.</p>
+      </div>
+
+      <div class="pager">
+        <a href="exam-q15.html"><div class="pg-dir">← Solved set</div><div class="pg-title">Q15 · Edge, Face &amp; OCR</div></a>
+        <a class="next" href="practice.html"><div class="pg-dir">Midsem mock →</div><div class="pg-title">✎ Questions for Practice</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>
