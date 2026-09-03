@@ -53,6 +53,7 @@
     ]},
     { group: "Reference", items: [
       { id: "numericals", ix: "∑", label: "Numericals — Step by Step", href: "numericals.html" },
+      { id: "class-numericals", ix: "▶∑", label: "Numericals Solved in Class", href: "class-numericals.html" },
       { id: "formulas",   ix: "ƒ", label: "Formula Cheat-Sheet", href: "formulas.html" }
     ]}
   ];

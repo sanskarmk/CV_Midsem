@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Numericals Solved in Class — from the Transcripts</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "class-numericals", title: "Numericals Solved in Class", crumb: "Reference · From the Transcripts" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Reference · reconstructed from the 8 post-midsem recordings</span>
+      <h1>Numericals solved in class</h1>
+      <p class="lead">Every numerical Prof. Adhikary actually worked on the board in the recorded sessions, reconstructed step by step from the <code>.vtt</code> transcripts — each with the <strong>timestamp</strong> to jump back to, and a flag wherever his own arithmetic wobbled or the recording garbled a step. This is the companion to <a href="numericals.html">Numericals — Step by Step</a>: that page teaches the method, this one records what he actually did.</p>
+
+      <div class="callout key"><div class="c-head">◆ What he said would be asked</div>
+        <p>Two answers to the same student question, a week apart. Together they define the examinable set.</p>
+        <p><strong>Optical-flow session, 01:45:12 – 01:45:41</strong> — (1) mAP evaluation, 9-point and 11-point interpolated AP; (2) histogram equalization; (3) corner detection. <em>“Numericals are much more easier… because you will be carrying open books this time.”</em></p>
+        <p><strong>Revision session, 01:21:25 – 01:21:51</strong> — “the single biggest numerical instances”: (1) IoU → precision/recall → interpolated AP → mAP; (2) k-means clustering; (3) mean-shift vectorization / mode seeking.</p>
+      </div>
+
+      <div class="toc">
+        <h4>The nine worked numericals</h4>
+        <ul>
+          <li><a href="#n1">N1 · Convolution output size — S12 · 00:50:43</a></li>
+          <li><a href="#n2">N2 · Transpose convolution 3×3 → 5×5 — S12 · 01:03:12</a></li>
+          <li><a href="#n3">N3 · IoU by box area — S12 · 01:33:04</a></li>
+          <li><a href="#n4">N4 · 9-point AP, six ground truths — S12 · 01:46:41</a></li>
+          <li><a href="#n5">N5 · IoU from corner coordinates — S13 · 00:38:33</a></li>
+          <li><a href="#n6">N6 · 9-point AP, four ground truths — S13 · 00:47:10</a></li>
+          <li><a href="#n7">N7 · Mean-shift mode seeking (1-D) — S16 · 00:14:51</a></li>
+          <li><a href="#n8">N8 · 11-point mAP with a duplicate — S16 · 01:04:10</a></li>
+          <li><a href="#n9">N9 · Lucas–Kanade solvability — S15 · 01:16:03</a></li>
+          <li><a href="#rules">Carry-forward rules he repeats</a></li>
+          <li><a href="#gaps">Examinable but never worked on tape</a></li>
+        </ul>
+      </div>
+
+      <!-- ============ N1 ============ -->
+      <h2 id="n1">N1 · Convolution output size <span class="badge blue">Session 12 · 00:50:43</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> A \(7\times7\) input is convolved with a \(3\times3\) kernel, padding \(P=0\) (valid), stride \(S=1\). Output dimension?</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Formula (dictated 00:52:02)</div>\(\text{out} = \left\lfloor \dfrac{N - K + 2P}{S} \right\rfloor + 1\)</div>
+          <div class="step"><div class="s-title">Substitute</div>\(\left\lfloor \dfrac{7 - 3 + 0}{1} \right\rfloor + 1 = 4 + 1 = 5\)</div>
+          <div class="step"><div class="s-title">Both axes</div>Shrink identically → \(5\times5\).</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0"><strong>5 × 5</strong></p></div>
+      </div>
+      <div class="callout exam"><div class="c-head">✦ In his words · 00:53:26</div><p>“7 minus 3, 4, 4 by 1 is 4, 4 plus 1 is 5. So the end dimension of this would be 5 cross 5 from convolution operation.” The VGG trace he runs next (224 → 112 → … → 32) halves via 2×2 max pooling at stride 2, not via the convolutions.</p></div>
+
+      <!-- ============ N2 ============ -->
+      <h2 id="n2">N2 · Transpose convolution, 3×3 → 5×5 <span class="badge blue">Session 12 · 01:03:12</span></h2>
+      <p>Two questions in one: <em>which stride and padding get me from 3 to 5</em>, then <em>what does the arithmetic actually do</em>.</p>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q (part A).</strong> Input \(i=3\), kernel \(K=3\), required output \(O=5\). Find \(S\) and \(P\).</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Formula (01:04:10)</div>\(O = (i-1)\cdot S - 2P + K\)</div>
+          <div class="step"><div class="s-title">Substitute</div>\(5 = (3-1)S - 2P + 3 \;\Rightarrow\; 2 = 2S - 2P \;\Rightarrow\; 1 = S - P\)</div>
+          <div class="step"><div class="s-title">Choose</div>\(P=0\) — “padding is introducing data that does not exist” — hence \(S=1\).</div>
+          <div class="step"><div class="s-title">Verify</div>\((3-1)(1) - 0 + 3 = 5\) ✓</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0"><strong>S = 1, P = 0</strong></p></div>
+      </div>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q (part B).</strong> Input \(\begin{bmatrix}1&2&3\\4&5&6\\7&8&9\end{bmatrix}\), kernel \(\begin{bmatrix}1&0&1\\0&1&0\\1&0&1\end{bmatrix}\). Perform the transpose convolution.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Initialise</div>A \(5\times5\) accumulator of zeros. Convolution slides one kernel over the image; transpose convolution reverses it — <em>each input element stamps a weighted copy of the whole kernel</em> into the accumulator.</div>
+          <div class="step"><div class="s-title">Stamp element 1</div>at (0,0) → \(1\times\)kernel into rows 0–2, cols 0–2: <code>1 0 1 / 0 1 0 / 1 0 1</code></div>
+          <div class="step"><div class="s-title">Stamp element 2</div>at (0,1) → \(2\times\)kernel one column right, rows 0–2, cols 1–3: <code>2 0 2 / 0 2 0 / 2 0 2</code></div>
+          <div class="step"><div class="s-title">Repeat &amp; sum</div>All nine elements, each offset by \(S=1\); add the nine intermediate matrices cumulatively.</div>
+        </div>
+        <div class="tbl-wrap">
+        <table>
+          <caption style="caption-side:top;text-align:left;padding:8px 13px;font-size:13px;opacity:.75">Final 5 × 5 output</caption>
+          <tbody>
+            <tr><td class="num">1</td><td class="num">2</td><td class="num">4</td><td class="num">2</td><td class="num">3</td></tr>
+            <tr><td class="num">4</td><td class="num">6</td><td class="num">12</td><td class="num">8</td><td class="num">6</td></tr>
+            <tr><td class="num">8</td><td class="num">14</td><td class="num">25</td><td class="num">16</td><td class="num">12</td></tr>
+            <tr><td class="num">4</td><td class="num">12</td><td class="num">18</td><td class="num">14</td><td class="num">6</td></tr>
+            <tr><td class="num">7</td><td class="num">8</td><td class="num">16</td><td class="num">8</td><td class="num">9</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">The \(5\times5\) matrix above. Check: \(\sum\text{out} = \sum\text{in}\times\sum\text{kernel} = 45\times5 = 225\) ✓</p></div>
+      </div>
+      <div class="callout warn"><div class="c-head">⚠ Flag</div><p>He stamps only the first two elements on the board, then says “you will continue to do it for all pixels… in the end you will get a 5 cross 5 output.” The completed matrix above applies his own rule to the remaining seven — it was <strong>never read out in class</strong>. He also mis-speaks the first stamp row as <code>1 1 1</code> and a student corrects him to <code>1 0 1</code> at 01:08:23.</p></div>
+
+      <!-- ============ N3 ============ -->
+      <h2 id="n3">N3 · IoU by box area <span class="badge blue">Session 12 · 01:33:04</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Ground truth (green) spans \(x: 50\to250,\; y: 50\to200\). The prediction (red) overlaps it over a \(180\times120\) region. Find IoU.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Area of overlap</div>\(180 \times 120 = 21{,}600\)</div>
+          <div class="step"><div class="s-title">Ground-truth area</div>\((250-50)\times(200-50) = 200\times150 = 30{,}000\)</div>
+          <div class="step"><div class="s-title">Union</div>\(A_{gt} + A_{pred} - A_{\cap} = 37{,}800\) — the overlap must be subtracted once, because adding the two areas counts it twice.</div>
+          <div class="step"><div class="s-title">Divide</div>\(\text{IoU} = 21{,}600 / 37{,}800 = 0.571\)</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0"><strong>IoU ≈ 0.57</strong> — above the 0.5 accept threshold, but he calls it unsatisfactory: “you would want this overlap to be somewhere close to 0.95.”</p></div>
+      </div>
+      <div class="callout pitfall"><div class="c-head">✖ The mistake he names · 01:36:00</div><p>“This is where most of you make mistakes within your exam. You did not subtract the area of overlap, because you are adding it twice.”</p></div>
+      <div class="callout warn"><div class="c-head">⚠ Flag</div><p>The prediction box's own corners are garbled on tape (“70… 250… 17 minus 250”). Only three numbers survive cleanly: <code>21,600</code>, <code>37,800</code>, <code>0.57</code>. Back-solving, the prediction area must be \(37{,}800 + 21{,}600 - 30{,}000 = 29{,}400\). He mentions the Dice coefficient here and defers it; it is never worked.</p></div>
+
+      <!-- ============ N4 ============ -->
+      <h2 id="n4">N4 · 9-point AP, six ground truths <span class="badge blue">Session 12 · 01:46:41</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> 6 ground truths, 9 detections ranked by descending confidence, IoU threshold 0.5. Compute the 9-point interpolated AP.</p>
+        <h4>Step 1 — rank, label, accumulate</h4>
+        <div class="tbl-wrap">
+        <table>
+          <thead><tr><th class="num">Rank</th><th class="num">Conf</th><th class="num">IoU</th><th class="num">Verdict</th><th class="num">ΣTP</th><th class="num">ΣFP</th><th class="num">Precision</th><th class="num">Recall</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td class="num">0.99</td><td class="num">0.64</td><td class="num">TP</td><td class="num">1</td><td class="num">0</td><td class="num">1.000</td><td class="num">0.17</td></tr>
+            <tr><td class="num">2</td><td class="num">0.92</td><td class="num">—</td><td class="num">FP</td><td class="num">1</td><td class="num">1</td><td class="num">0.500</td><td class="num">0.17</td></tr>
+            <tr><td class="num">3</td><td class="num">—</td><td class="num">—</td><td class="num">FP</td><td class="num">1</td><td class="num">2</td><td class="num">0.333</td><td class="num">0.17</td></tr>
+            <tr><td class="num">4</td><td class="num">—</td><td class="num">—</td><td class="num">TP</td><td class="num">2</td><td class="num">2</td><td class="num">0.500</td><td class="num">0.33</td></tr>
+            <tr><td class="num">5</td><td class="num">—</td><td class="num">—</td><td class="num">TP</td><td class="num">3</td><td class="num">2</td><td class="num">0.600</td><td class="num">0.50</td></tr>
+            <tr><td class="num">6</td><td class="num">—</td><td class="num">0.70</td><td class="num">TP</td><td class="num">4</td><td class="num">2</td><td class="num">0.667</td><td class="num">0.67</td></tr>
+            <tr><td class="num">7</td><td class="num">—</td><td class="num">0.79</td><td class="num">FP</td><td class="num">4</td><td class="num">3</td><td class="num">0.571</td><td class="num">0.67</td></tr>
+            <tr><td class="num">8</td><td class="num">—</td><td class="num">0.53</td><td class="num">FP ←</td><td class="num">4</td><td class="num">4</td><td class="num">0.500</td><td class="num">0.67</td></tr>
+            <tr><td class="num">9</td><td class="num">—</td><td class="num">—</td><td class="num">TP</td><td class="num">5</td><td class="num">4</td><td class="num">0.556</td><td class="num">0.83</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p>Rank 8 is the teaching point: <strong>IoU 0.53 clears the threshold and is still a false positive</strong>, because its ground truth was already claimed by a higher-confidence detection. Recall denominators are 6 throughout; 5 TPs against 6 GTs leaves \(FN=1\), which he states at 01:51:30.</p>
+        <h4>Step 2 — 9-point interpolated precision</h4>
+        <p>At each recall level \(r\), take the maximum precision over every row with recall \(\ge r\).</p>
+        <div class="tbl-wrap">
+        <table>
+          <thead><tr><th class="num">Recall</th><th class="num">0.1</th><th class="num">0.2</th><th class="num">0.3</th><th class="num">0.4</th><th class="num">0.5</th><th class="num">0.6</th><th class="num">0.7</th><th class="num">0.8</th><th class="num">0.9</th></tr></thead>
+          <tbody><tr><td class="num">Interp. P</td><td class="num">1.000</td><td class="num">0.667</td><td class="num">0.667</td><td class="num">0.667</td><td class="num">0.667</td><td class="num">0.667</td><td class="num">0.600</td><td class="num">0.600</td><td class="num">0.600</td></tr></tbody>
+        </table>
+        </div>
+        <h4>Step 3 — average</h4>
+        <div class="steps">
+          <div class="step"><div class="s-title">Sum</div>\(1 + 5(0.667) + 3(0.600) = 1 + 3.3333 + 1.8 = 6.1333\)</div>
+          <div class="step"><div class="s-title">Divide by 9</div>\(AP = 6.1333/9 = 0.6815\)</div>
+          <div class="step"><div class="s-title">mAP</div>One class here, so mAP = AP. For several classes, mAP is the mean of the per-class APs.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0"><strong>AP = mAP ≈ 0.68</strong> — he states “6.1333” and “divide it by 9” at 02:00:43 but never speaks the quotient.</p></div>
+      </div>
+      <div class="callout warn"><div class="c-head">⚠ Flags</div><p>He first says <strong>5</strong> ground truths and corrects to <strong>6</strong> at 01:48:32. He gives F1 at 01:44:11 as \(PR/(P+R)\) — the factor of 2 is missing. And the interpolated 0.600 at recall 0.7–0.9 doesn't match the derived precision column, whose tail maximum is 0.571; he audibly self-corrects from “0.55” to “0.6” at 01:59:29, and 0.6 is what his own 6.1333 sum uses.</p></div>
+
+      <!-- ============ N5 ============ -->
+      <h2 id="n5">N5 · IoU from corner coordinates <span class="badge blue">Session 13 · 00:38:33</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Ground truth: bottom-left \((1,1)\), top-right \((6,5)\). Prediction: bottom-left \((2,2)\), top-right \((8,7)\). Accept threshold IoU &gt; 0.5. Accept or reject?</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Intersection corners</div>\(x: \max(1,2)=2 \to \min(6,8)=6\); \(y: \max(1,2)=2 \to \min(5,7)=5\)</div>
+          <div class="step"><div class="s-title">Intersection area</div>\((6-2)\times(5-2) = 4\times3 = 12\)</div>
+          <div class="step"><div class="s-title">Ground-truth area</div>\((6-1)\times(5-1) = 5\times4 = 20\)</div>
+          <div class="step"><div class="s-title">Prediction area</div>\((8-2)\times(7-2) = 6\times5 = 30\)</div>
+          <div class="step"><div class="s-title">Union</div>\(20 + 30 - 12 = 38\)</div>
+          <div class="step"><div class="s-title">Divide</div>\(\text{IoU} = 12/38 = 0.3158\)</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0"><strong>IoU ≈ 0.32 → reject</strong> (false positive). He says “0.315” aloud at 00:41:54.</p></div>
+      </div>
+      <div class="callout warn"><div class="c-head">⚠ Flag — there is a decoy in this transcript</div><p>At 00:35:20 he sets up a <em>different</em> pair — GT \((2,2)\)–\((8,8)\), prediction \((4,4)\)–\((10,10)\). A student queries the corner convention at 00:36:27 and he abandons those numbers at 00:37:51 (“we'll change the values a little bit”). <strong>The solved problem is the second set only.</strong> He also mislabels an intersection corner at 00:39:48 and is corrected; the areas are unaffected.</p></div>
+
+      <!-- ============ N6 ============ -->
+      <h2 id="n6">N6 · 9-point AP, four ground truths <span class="badge blue">Session 13 · 00:47:10</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> 4 ground truths, predictions P1–P6 ranked by descending confidence, IoU threshold 0.5, with IoUs 0.91, 0.93, 0.42, 0.76, 0.00, 0.69. Compute the 9-point AP.</p>
+        <h4>Step 1 — the ranking table</h4>
+        <div class="tbl-wrap">
+        <table>
+          <thead><tr><th class="num">Rank</th><th class="num">IoU</th><th class="num">Verdict</th><th class="num">ΣTP</th><th class="num">ΣFP</th><th class="num">Precision</th><th class="num">Recall</th></tr></thead>
+          <tbody>
+            <tr><td class="num">P1</td><td class="num">0.91</td><td class="num">TP</td><td class="num">1</td><td class="num">0</td><td class="num">1.000</td><td class="num">0.25</td></tr>
+            <tr><td class="num">P2</td><td class="num">0.93</td><td class="num">TP</td><td class="num">2</td><td class="num">0</td><td class="num">1.000</td><td class="num">0.50</td></tr>
+            <tr><td class="num">P3</td><td class="num">0.42</td><td class="num">FP</td><td class="num">2</td><td class="num">1</td><td class="num">0.667</td><td class="num">0.50</td></tr>
+            <tr><td class="num">P4</td><td class="num">0.76</td><td class="num">TP</td><td class="num">3</td><td class="num">1</td><td class="num">0.750</td><td class="num">0.75</td></tr>
+            <tr><td class="num">P5</td><td class="num">0.00</td><td class="num">FP</td><td class="num">3</td><td class="num">2</td><td class="num">0.600</td><td class="num">0.75</td></tr>
+            <tr><td class="num">P6</td><td class="num">0.69</td><td class="num">TP</td><td class="num">4</td><td class="num">2</td><td class="num">0.667</td><td class="num">1.00</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p>Precision = ΣTP / rank; recall = ΣTP / 4. He misspeaks P6's precision as 4/5, a student corrects him, and he fixes it to 4/6 at 00:50:08.</p>
+        <h4>Step 2 — 9-point interpolation</h4>
+        <div class="tbl-wrap">
+        <table>
+          <thead><tr><th class="num">Recall</th><th class="num">0.1</th><th class="num">0.2</th><th class="num">0.3</th><th class="num">0.4</th><th class="num">0.5</th><th class="num">0.6</th><th class="num">0.7</th><th class="num">0.8</th><th class="num">0.9</th></tr></thead>
+          <tbody><tr><td class="num">Interp. P</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">0.750</td><td class="num">0.750</td><td class="num">0.667</td><td class="num">0.667</td></tr></tbody>
+        </table>
+        </div>
+        <p>Past recall 0.75 only the last row survives the slice, which is why 0.8 and 0.9 drop to 0.667 — he re-explains exactly this at 01:01:45.</p>
+        <h4>Step 3 — average</h4>
+        <div class="steps">
+          <div class="step"><div class="s-title">Sum</div>\(5(1.000) + 2(0.750) + 2(0.667) = 5 + 1.5 + 1.333 = 7.833\)</div>
+          <div class="step"><div class="s-title">Divide by 9</div>\(AP = 7.833/9 = 0.8704\)</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0"><strong>AP ≈ 0.87.</strong> mAP = (AP<sub>car</sub> + AP<sub>human</sub> + …) / number of classes — defined at 01:01:18, no numbers attached.</p></div>
+      </div>
+      <div class="callout warn"><div class="c-head">⚠ Flags</div><p>The final division is digit-soup on tape — the components (“1 1 1 1 1”, “plus 1.5”, “0.67, 0.67”, “/ 9”) are audible but the quotient is never spoken. Only four of the six confidence scores survive the audio (0.90, 0.82, 0.65, 0.60) and can't be mapped to ranks; the ranking itself is unambiguous, which is all the arithmetic needs. He also floats a hypothetical <strong>P7 at confidence 0.59, IoU exactly 0.5</strong>, labels it FP because all four GTs are already matched, then excludes it at 00:52:58.</p></div>
+
+      <!-- ============ N7 ============ -->
+      <h2 id="n7">N7 · Mean-shift mode seeking, 1-D <span class="badge blue">Session 16 · 00:14:51</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Points \(\{20, 22, 27\}\), bandwidth \(h=6\), seed \(X_0=20\), window \([X-h,\, X+h]\). Find the mode.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Iteration 1</div>Window \([20-6,\,20+6] = [14,\,26]\) → captures \(\{20,22\}\); 27 falls outside. \(X_1 = (20+22)/2 = 21\)</div>
+          <div class="step"><div class="s-title">Iteration 2</div>Window \([15,\,27]\) → captures \(\{20,22,27\}\). \(X_2 = (20+22+27)/3 = 69/3 = 23\)</div>
+          <div class="step"><div class="s-title">Iteration 3</div>Window \([17,\,29]\) → captures all three. \(X_3 = 69/3 = 23\)</div>
+          <div class="step"><div class="s-title">Stop</div>\(X_3 = X_2\) → the mean has stopped shifting; the mode is reached.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0"><strong>Mode = 23, after 3 iterations.</strong> For 2-D, run the identical loop on \(x\) and \(y\); the converged point is the centre of mass of the region of interest — the tracked window for the next frame.</p></div>
+      </div>
+      <div class="callout warn"><div class="c-head">⚠ Flag</div><p>At 00:19:29 the transcript renders iteration 3 as “20 plus 22 plus <strong>23</strong> divided by 3”. That is a transcription slip — \(20+22+23=65\), giving 21.67, not the 23 he and the class agree on. The intended sum is \(20+22+27=69\).</p></div>
+      <div class="callout exam"><div class="c-head">✦ In his words · 00:19:48</div><p>“Do you see this? X2 is equal to X3. So it tells the mean shift algorithm that basically you have reached the mode.”</p></div>
+
+      <!-- ============ N8 ============ -->
+      <h2 id="n8">N8 · 11-point mAP with a duplicate detection <span class="badge blue">Session 16 · 01:04:10</span></h2>
+      <p>The one he walks slowest, because the point is not the arithmetic — it is <em>why detection E is a false positive despite clearing the IoU threshold</em>.</p>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Two images (green = ground truth, red = detection). 3 ground truths, 6 detections A, C, F, D, B, E in descending confidence, IoU threshold 0.5. Compute the 11-point mAP.</p>
+        <h4>Step 1 — verdicts</h4>
+        <div class="tbl-wrap">
+        <table>
+          <thead><tr><th class="num">Rank</th><th class="num">Det</th><th class="num">Verdict</th><th>Reason</th><th class="num">ΣTP</th><th class="num">ΣFP</th><th class="num">Precision</th><th class="num">Recall</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td class="num">A</td><td class="num">TP</td><td>Overlap well above 0.5</td><td class="num">1</td><td class="num">0</td><td class="num">1.000</td><td class="num">0.333</td></tr>
+            <tr><td class="num">2</td><td class="num">C</td><td class="num">FP</td><td>No ground-truth box under it</td><td class="num">1</td><td class="num">1</td><td class="num">0.500</td><td class="num">0.333</td></tr>
+            <tr><td class="num">3</td><td class="num">F</td><td class="num">FP</td><td>Zero overlap</td><td class="num">1</td><td class="num">2</td><td class="num">0.333</td><td class="num">0.333</td></tr>
+            <tr><td class="num">4</td><td class="num">D</td><td class="num">TP</td><td>Higher overlap</td><td class="num">2</td><td class="num">2</td><td class="num">0.500</td><td class="num">0.667</td></tr>
+            <tr><td class="num">5</td><td class="num">B</td><td class="num">TP</td><td>~70% overlap</td><td class="num">3</td><td class="num">2</td><td class="num">0.600</td><td class="num">1.000</td></tr>
+            <tr><td class="num">6</td><td class="num">E</td><td class="num">FP ←</td><td>IoU &gt; 0.5, but D already claimed that ground truth at higher confidence</td><td class="num">3</td><td class="num">3</td><td class="num">0.500</td><td class="num">1.000</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <h4>Step 2 — 11-point interpolation</h4>
+        <p>Eleven levels, 0.0 through 1.0. (9-point runs 0.1 → 0.9 — the only difference.)</p>
+        <div class="tbl-wrap">
+        <table>
+          <thead><tr><th class="num">Recall</th><th class="num">0.0</th><th class="num">0.1</th><th class="num">0.2</th><th class="num">0.3</th><th class="num">0.4</th><th class="num">0.5</th><th class="num">0.6</th><th class="num">0.7</th><th class="num">0.8</th><th class="num">0.9</th><th class="num">1.0</th></tr></thead>
+          <tbody><tr><td class="num">Interp. P</td><td class="num">1.0</td><td class="num">1.0</td><td class="num">1.0</td><td class="num">1.0</td><td class="num">0.6</td><td class="num">0.6</td><td class="num">0.6</td><td class="num">0.6</td><td class="num">0.6</td><td class="num">0.6</td><td class="num">0.6</td></tr></tbody>
+        </table>
+        </div>
+        <p>Levels 0.0–0.3 sit at or below the first recall value (0.333), so the whole table is in range and the max is 1.0. From 0.4 upward only the rows at recall 0.667 and 1.0 remain, whose best precision is 0.6.</p>
+        <h4>Step 3 — average</h4>
+        <div class="steps">
+          <div class="step"><div class="s-title">Sum</div>\(4(1.0) + 7(0.6) = 4 + 4.2 = 8.2\)</div>
+          <div class="step"><div class="s-title">Divide by 11</div>\(AP = 8.2/11 = 0.7455\)</div>
+          <div class="step"><div class="s-title">mAP</div>Single class → mAP = AP.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0"><strong>AP = mAP ≈ 0.745.</strong> He settles on 8.2 aloud at 01:12:45 and says “8.2 divided by 11”; the decimal is never spoken.</p></div>
+      </div>
+      <div class="callout pitfall"><div class="c-head">✖ The duplicate rule · 01:07:22 &amp; 01:26:35</div><p>“Still it will turn out to be a false positive. Why? Because D, which already had a higher confidence score, was already tagged as a true positive… that's why the first step is arrange everything in descending order of the confidence score.”</p></div>
+      <div class="callout warn"><div class="c-head">⚠ Flags — three things to ignore on this slide</div><p>The ground-truth count is <strong>3</strong>, not the 4 printed (corrected mid-walkthrough at 01:06:35). The slide's cumulative TP/FP columns are <strong>formally withdrawn</strong> at 01:08:59 — “ignore these two columns… I think there is something wrong”; he recomputes precision directly as 1/1, 1/2, 1/3, 2/4, 3/5, 3/6. And he says “precision” at 01:09:32 while dictating the recall column. The A–Y slide he walks afterwards (01:14:35) carries his own warning that it contains errors — detection M is disputed, N has no stated verdict, W is skipped entirely; treat it as verdict practice only, not as a numerical.</p></div>
+
+      <!-- ============ N9 ============ -->
+      <h2 id="n9">N9 · Lucas–Kanade least squares &amp; solvability <span class="badge blue">Session 15 · 01:16:03</span></h2>
+      <p>Symbolic rather than arithmetic, but it is set up as a solve and it reuses the corner-detection matrix he named as examinable.</p>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> The optical flow constraint gives \(I_x u + I_y v + I_t = 0\) — one equation, two unknowns. Using a \(5\times5\) window, solve for \((u,v)\) and state when it is solvable.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Spatial coherence</div>Assume every pixel in the window shares the same \((u,v)\): \(5\times5 = 25\) equations, 2 unknowns.</div>
+          <div class="step"><div class="s-title">Stack</div>\(A\,d = b\), with \(A\): 25×2, \(d\): 2×1, \(b\): 25×1 — an over-determined system.</div>
+          <div class="step"><div class="s-title">Least squares</div>\(A^{\mathsf T}A\, d = A^{\mathsf T}b\)</div>
+          <div class="step"><div class="s-title">The matrix</div>\(A^{\mathsf T}A = \begin{bmatrix}\sum I_x^2 &amp; \sum I_xI_y\\ \sum I_xI_y &amp; \sum I_y^2\end{bmatrix}\) — the second-moment matrix, identical to Harris corner detection.</div>
+          <div class="step"><div class="s-title">Solvability</div>\(A^{\mathsf T}A\) must be invertible <em>and</em> both eigenvalues large.</div>
+        </div>
+        <div class="tbl-wrap">
+        <table>
+          <thead><tr><th class="num">Condition</th><th>Region</th><th>Flow estimate</th></tr></thead>
+          <tbody>
+            <tr><td class="num">\(\lambda_1,\lambda_2\) both small</td><td>Flat / textureless</td><td>No intensity variation → no motion recoverable</td></tr>
+            <tr><td class="num">\(\lambda_1 \gg \lambda_2\)</td><td>Edge</td><td>Aperture problem — only normal flow</td></tr>
+            <tr><td class="num">\(\lambda_1,\lambda_2\) both large</td><td>Corner</td><td>Trackable — this is what you pick</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">\(d = (A^{\mathsf T}A)^{-1}A^{\mathsf T}b\), valid at corners only — which is why patches are selected with Harris / Shi-Tomasi “good features to track” rather than at random.</p></div>
+      </div>
+      <div class="callout exam"><div class="c-head">✦ In his words · 01:19:20 – 01:20:18</div><p>“If you remember your corner detection, we had a similar matrix… A transpose A should be invertible, and at the same time eigenvalues should not be too small. Neither should one be larger than the other one — both should be large, then only we can track it.”</p></div>
+
+      <!-- ============ RULES ============ -->
+      <h2 id="rules">Carry-forward rules he repeats across every metrics numerical</h2>
+      <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Rule</th><th>What it means</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Subtract once</strong></td><td>Union = A + B − intersection. Adding the two areas without removing the double-counted overlap is the error he names explicitly.</td></tr>
+          <tr><td><strong>Rank first</strong></td><td>Step one of every AP question is sorting detections by <em>descending</em> confidence. Every TP/FP verdict downstream depends on that order.</td></tr>
+          <tr><td><strong>One GT, one TP</strong></td><td>A second detection on an already-matched ground truth is a false positive even at IoU 0.9. Decide on confidence and IoU alone — “no other considerations to be taken.”</td></tr>
+          <tr><td><strong>9 vs 11 point</strong></td><td>9-point runs recall 0.1 → 0.9 and divides by 9. 11-point runs 0.0 → 1.0 and divides by 11. Same rule: max precision at recall ≥ the level.</td></tr>
+          <tr><td><strong>Ask for IoU</strong></td><td>If a question gives boxes but no IoU or confidence values, ask the examiner rather than eyeballing — he flags his own slides as unreliable on this.</td></tr>
+          <tr><td><strong>Recall denominator</strong></td><td>Always the number of ground truths, never the number of detections.</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <!-- ============ GAPS ============ -->
+      <h2 id="gaps">Examinable, but never worked on this footage</h2>
+      <p>Named as expected numerical topics but taught pre-midsem or only conceptually, so there is no worked solution to reconstruct from the recordings. Use <a href="numericals.html">Numericals — Step by Step</a> for the method on each.</p>
+      <div class="callout intuition"><div class="c-head">◆ Histogram equalization</div><p>Named at 01:45:30 in the optical-flow session. The classical-segmentation session touches histograms at 00:33:28 for thresholding, but never runs the equalization arithmetic. Work it from the pre-midsem slides — CDF mapping over a small grey-level table.</p></div>
+      <div class="callout intuition"><div class="c-head">◆ Corner detection</div><p>Named at 01:45:34 and reused symbolically in N9. Pre-midsem material. The makeup-paper dispute in the image-classification session confirms Harris separates flat / edge / corner only — strong/weak edge thresholding belongs to Canny.</p></div>
+      <div class="callout intuition"><div class="c-head">◆ k-means clustering</div><p>Named at 01:21:36 in revision. The classical-segmentation session covers it conceptually at 00:47:15 – 00:58:05 (centroid init → assign → update → converge) and demos it in OpenCV, but no hand-worked centroid iteration is done. Expect it in the same shape as N7 — a short assign-and-recompute loop.</p></div>
+      <div class="callout pitfall"><div class="c-head">✖ Explicitly excluded</div><p>GMM / EM derivations and numericals — “I do not expect any of the numerical results from this” (01:19:16). The 1999/2002 mean-shift papers — “Will it come in the exam? Absolutely not” (01:55:53). Kalman filter mathematics — only the predict → update cycle is examinable. Transformer/ViT derivations and YOLO v2 anchor boxes are also out.</p></div>
+
+      <div class="callout key"><div class="c-head">◆ Exam shape</div><p>40-mark paper, 6–7 questions, <strong>variable</strong> marks per question (4–10). 10–20% pre-midsem, 80–90% post-midsem. Open book, watermarked slides only. Numericals will be simplified and concept-grounded rather than straight reproductions of these slide examples.</p></div>
+
+      <div class="pager">
+        <a href="numericals.html"><div class="pg-dir">← Method</div><div class="pg-title">∑ Numericals — Step by Step</div></a>
+        <a class="next" href="formulas.html"><div class="pg-dir">Next →</div><div class="pg-title">ƒ Formula Cheat-Sheet</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>
