@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Post-Midsem Theory — Two-Hour Revision</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "revision-theory", title: "Post-Midsem Theory Revision", crumb: "Exam Prep · Theory Revision" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Exam Prep · theory only, no numericals</span>
+      <h1>Post-midsem theory, in two hours</h1>
+      <p class="lead">Everything after the midsem, organised the way the exam will ask for it. Each topic follows the same five beats — <strong>the problem → the idea → why it works → where it breaks → what replaced it</strong> — because that chain <em>is</em> the answer to a design question. Memorising definitions gets you 40%; being able to say why the previous method failed gets you the rest.</p>
+
+      <div class="callout key"><div class="c-head">◆ The one thing to internalise</div>
+        <p>The whole post-midsem syllabus is a single story told four times: <strong>someone builds a method, it hits a bottleneck, the next method removes exactly that bottleneck and inherits a new one.</strong> Classification, segmentation, detection and tracking are four runs of that same loop. If you can name the bottleneck at each step, you can answer any case study — because a case study is just "given this constraint, which point on the chain do you stop at?"</p>
+      </div>
+
+      <div class="toc">
+        <h4>Route through it</h4>
+        <ul>
+          <li><a href="#spine">0 · The spine — what / where / following</a></li>
+          <li><a href="#cls">1 · Image classification</a></li>
+          <li><a href="#vit">2 · Attention, Transformers, ViT</a></li>
+          <li><a href="#seg1">3 · Classical segmentation</a></li>
+          <li><a href="#seg2">4 · Deep segmentation and U-Net</a></li>
+          <li><a href="#det">5 · Object detection — two-stage</a></li>
+          <li><a href="#yolo">6 · YOLO — single-stage</a></li>
+          <li><a href="#metrics">7 · Metrics, as theory</a></li>
+          <li><a href="#track">8 · Tracking</a></li>
+          <li><a href="#design">9 · System design and deployment</a></li>
+          <li><a href="#chains">10 · The five chains, compressed</a></li>
+          <li><a href="#selftest">11 · Twenty-question self-test</a></li>
+        </ul>
+      </div>
+
+      <!-- ============ 0 ============ -->
+      <h2 id="spine">0 · The spine</h2>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>Three questions, in increasing difficulty. <strong>What is in this image?</strong> — classification, one label per image. <strong>Where is it?</strong> — detection (a box, coarse) or segmentation (a pixel mask, exact). <strong>Where is it going?</strong> — tracking, across frames.</p>
+        <p>Each question costs more than the last. Classification maps an image to one label. Detection must produce a class <em>and</em> four coordinates simultaneously — if your class accuracy is 1-in-1000 and each coordinate is 1-in-10⁴, the joint probability of being right collapses. That compounding is why detection needed a decade of architectures and classification did not.</p>
+      </div>
+      <div class="callout exam"><div class="c-head">✦ Design instinct</div><p>Choosing between them is a <em>use-case</em> question, never a technical one. Does the answer need an area or a boundary? Segmentation — tumour size, defect area, drivable surface. Does it need presence and rough position, fast? Detection — obstacle ahead, person in the cell. Does the same object need identity across time? Tracking. Getting this choice wrong costs more marks than getting the architecture wrong.</p></div>
+
+      <!-- ============ 1 ============ -->
+      <h2 id="cls">1 · Image classification <span class="badge blue">Session 9</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ The problem</div>
+        <p>Map an image to a discrete label. Sounds easy; it is not, because the same object produces wildly different pixel matrices under <strong>illumination change, deformation, occlusion, background clutter, viewpoint change, scale change and intra-class variation</strong>. A classifier must be invariant to all of them while staying sensitive to the thing that actually distinguishes classes. That tension is the whole problem.</p>
+      </div>
+      <h4>The three attempts, in order</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">Nearest neighbour</div><strong>Idea:</strong> memorise every training image; classify by distance (L1 or L2) to all of them, majority-vote over k. <strong>Why it fails:</strong> the cost structure is backwards — O(1) to train, O(N) to predict, when deployment needs the opposite. And raw pixel distance is not semantic distance: shift the image a few pixels, mirror it, or change the lighting, and the distance explodes while the content is unchanged. On CIFAR-10 it reaches only ~20%.</div>
+        <div class="step"><div class="s-title">Linear classifier</div><strong>Idea:</strong> stop memorising, learn parameters. Flatten the image, compute scores = Wx + b. Three ways to read it: <em>algebraically</em> as scores, <em>visually</em> as one learned template per class, <em>geometrically</em> as hyperplanes cutting the feature space. <strong>Why it fails:</strong> "one template per class" is the fatal phrase. A horse facing left and a horse facing right must share one template, so the template becomes a blurry two-headed average. And a hyperplane cannot separate XOR or concentric circles — no linear boundary exists. Roughly 40% on CIFAR-10.</div>
+        <div class="step"><div class="s-title">CNN</div><strong>Idea:</strong> learn a <em>hierarchy</em> of features rather than one template — edges, then textures, then parts, then objects — with nonlinear activations between layers so the decision boundary can bend. <strong>Why it works:</strong> weight sharing gives translation tolerance for free, and depth buys nonlinearity. LeNet-era CNNs jumped CIFAR-10 to ~55–58%.</div>
+      </div>
+      <div class="callout key"><div class="c-head">◆ The transferable insight</div><p>The progression is <strong>memorisation → single linear template → learned hierarchy</strong>. The same progression appears again in segmentation (thresholding → k-means → learned encoder) and in detection (template matching → learned proposals). When a case study asks "why not just use a simpler method," the answer is almost always one of these three failures: cost at inference time, one-template-per-class rigidity, or an inability to represent a nonlinear boundary.</p></div>
+      <h4>Supporting theory you should be able to state</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">Binary vs multi-class vs multi-label</div>Sigmoid + binary cross-entropy for one yes/no. Softmax + cross-entropy for one-of-N — softmax outputs are the per-class confidence scores everything downstream uses. Multi-label is staged: detect the object, then classify its subtype (dog → breed, defect → defect type).</div>
+        <div class="step"><div class="s-title">Why train/val/test, not train/test</div>If you tune hyperparameters on the test set, the test set has leaked into the model and no longer estimates generalisation. Validation absorbs the tuning; test is touched once. <strong>k-fold cross-validation</strong> exists because a single split may be unrepresentative — each fold should be a representative subsample of the population.</div>
+        <div class="step"><div class="s-title">Bag of Visual Words</div>The pre-deep-learning pipeline: detect keypoints (SIFT), describe them, build a histogram of visual words, feed the histogram to an SVM or random forest. Worth knowing as the thing CNNs replaced — it turned an image into a fixed-length tabular row so that classical ML could be applied at all.</div>
+        <div class="step"><div class="s-title">Regularisation</div>L2 penalises large weights, reducing overfitting. In the margin-based (SVM) view, the margin is the tie-breaker between many hyperplanes that all achieve zero loss — it picks the one that generalises.</div>
+      </div>
+
+      <!-- ============ 2 ============ -->
+      <h2 id="vit">2 · Attention, Transformers, Vision Transformers <span class="badge blue">Session 10</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ The problem it was invented for</div>
+        <p>An encoder–decoder compresses an entire input sequence into <strong>one fixed context vector</strong>, and every decoder step reads that same vector. Two consequences: an information bottleneck (a 50-word sentence and a 5-word sentence get the same budget), and uniform weighting (every input token contributes equally to every output token, which is nonsense — translating "bank" needs the words near it, not the whole paragraph). LSTMs mitigate long-range forgetting but do not remove the bottleneck.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="s-title">Attention — the fix</div>Give every decoder step <em>its own</em> context vector. Score the decoder's current state against every encoder state (dot product), softmax the scores into weights, and take the weighted sum. The weights are learned. Now step 3 can look mostly at input token 7 while step 4 looks elsewhere.</div>
+        <div class="step"><div class="s-title">Self-attention — the generalisation</div>Drop the encoder/decoder distinction and let a sequence attend to <em>itself</em>. Each token emits a <strong>Query</strong> (what am I looking for), a <strong>Key</strong> (what do I offer) and a <strong>Value</strong> (what I actually pass on) via learned projections. Attention = softmax(QKᵀ/√d<sub>k</sub>)·V. The √d<sub>k</sub> scaling keeps the dot products out of the saturated region of the softmax.</div>
+        <div class="step"><div class="s-title">Why it beat RNNs</div><strong>Parallelism.</strong> Recurrence forces sequential computation; attention computes all pairwise interactions at once. That, plus a much larger effective context window, is the entire practical argument.</div>
+        <div class="step"><div class="s-title">The block</div>Self-attention → residual connection → layer norm → feed-forward MLP → residual → norm, stacked. Residuals smooth the loss landscape and keep gradients alive through depth. <strong>Multi-head</strong> attention runs several attention operations in parallel with separate Q/K/V projections, so different heads can specialise; the heads are learned, not assigned.</div>
+        <div class="step"><div class="s-title">Positional embeddings</div>Attention is permutation-invariant — it has no idea what order the tokens came in. Position must be injected explicitly (absolute, relative, or rotary/RoPE). Remember this: it is the reason ViT works at all.</div>
+      </div>
+      <h4>Vision Transformer</h4>
+      <div class="callout intuition"><div class="c-head">◆ The one idea</div>
+        <p>Cut the image into fixed patches (16×16), flatten each patch into a vector, linearly project it into an embedding — <em>now a patch is a token</em> and the entire text machinery applies unchanged. Add positional embeddings so the model knows where each patch sat, prepend a classification token, run the transformer, read the class off the head.</p>
+        <p>The deep consequence: <strong>transformers are modality-agnostic.</strong> Once anything — text, image, audio, video — is embedded into tokens, the same architecture consumes it. That is why multimodal models exist at all, and it is the intuition behind CLIP and VLMs.</p>
+      </div>
+      <div class="callout pitfall"><div class="c-head">✖ Where ViT breaks — and this is the design question</div>
+        <p>A CNN has <em>built-in</em> priors: locality (nearby pixels matter to each other) and translation equivariance (a cat is a cat wherever it appears). A ViT has neither — it must <em>learn</em> them from data. So ViTs are <strong>data-hungry</strong>: with modest data a ResNet wins; past a large pre-training threshold the ViT overtakes it, because it was never constrained by the priors in the first place. They are also compute-expensive.</p>
+        <p><strong>The exam answer:</strong> ViT for general-purpose representation at scale with pre-training available. CNN-based specialists (YOLO, Faster R-CNN, U-Net) for a specific task under data or compute constraints. A generalist does not beat a specialist on the specialist's own task.</p>
+      </div>
+
+      <!-- ============ 3 ============ -->
+      <h2 id="seg1">3 · Classical segmentation <span class="badge blue">Session 11</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Framing</div>
+        <p>Segmentation is <strong>per-pixel classification</strong>. Three flavours: <strong>semantic</strong> (label each pixel by class, all cars are "car"), <strong>instance</strong> (separate car 1 from car 2 — you can count), <strong>panoptic</strong> (both: countable "things" plus uncountable "stuff" like road and sky).</p>
+        <p>The theoretical grounding is <strong>Gestalt psychology</strong> — the study of why humans group things. Its laws are the assumptions every classical algorithm encodes: <em>proximity</em> (near things group), <em>similarity</em> (alike things group), <em>common fate</em> (things moving together group — this is the bridge to video), <em>continuity</em>, <em>closure</em> (we complete occluded boundaries), <em>common region</em>, <em>symmetry</em>. Grouping can be <strong>bottom-up</strong> (pixels group because they look alike) or <strong>top-down</strong> (pixels group because they belong to the same known object).</p>
+      </div>
+      <h4>The chain of four, each fixing the last</h4>
+      <div class="steps">
+        <div class="step"><div class="s-title">1 · Histogram thresholding</div><strong>Idea:</strong> plot the intensity histogram, find the modes, split at the valleys. <strong>Breaks because:</strong> a histogram has <em>no spatial information</em> — two completely different images can have identical histograms. The number of modes is arbitrary, noise creates spurious peaks, and pixels near the boundary get misassigned. Smoothing helps only a little.</div>
+        <div class="step"><div class="s-title">2 · k-means</div><strong>Fixes:</strong> gives you an actual clustering procedure instead of eyeballed valleys. Treat each pixel as a point in RGB space, initialise k centroids, assign to nearest, recompute, repeat. <strong>Breaks because:</strong> k is a hyperparameter you cannot derive; assignment is <em>hard</em> (a pixel is fully in one cluster); the decision boundaries are piecewise-linear, so it cannot model curved or elliptical regions; and, crucially, <em>still no spatial term</em> — the same green in a tree and in the grass lands in one cluster.</div>
+        <div class="step"><div class="s-title">3 · GMM with EM</div><strong>Fixes:</strong> soft assignment and non-linear boundaries. A generative model — the image is assumed to be a mixture of Gaussian blobs with means and covariances. <strong>E-step:</strong> given the current blobs, compute each pixel's responsibility (probability of belonging to each blob). <strong>M-step:</strong> given the responsibilities, re-estimate the blobs. Iterate. Elliptical clusters of different shapes and sizes become representable, and outliers get low probability rather than a forced label. <strong>Breaks because:</strong> you still choose the number of components by hand, you additionally have to choose the generative family, and it is slow. <em>(Derivations and numericals here are explicitly out of syllabus — know the E/M intuition, not the formulas.)</em></div>
+        <div class="step"><div class="s-title">4 · Mean-shift</div><strong>Fixes: both remaining problems at once.</strong> (a) Augment the feature space from (R,G,B) to <strong>(R,G,B,x,y)</strong> — position becomes part of the feature, so the tree-green and grass-green finally separate. <em>This is literally positional encoding, the same trick as in transformers.</em> (b) Seed many kernel density estimators across the space and let each climb to its local mode; trajectories converging to the same peak define a basin of attraction, and <strong>the number of basins is the number of clusters</strong> — so k is discovered, not chosen. <strong>Breaks because:</strong> bandwidth h is now the sensitive hyperparameter (too small = expensive and over-segmented, too large = no convergence), and a histogram over a high-dimensional feature space is infeasible — hyperspectral, LiDAR and X-ray data kill it.</div>
+      </div>
+      <div class="callout key"><div class="c-head">◆ Why this chain is worth memorising</div><p>It is the cleanest example in the course of <em>bottleneck-driven design</em>, and every step names its own successor. Thresholding lacks a procedure → k-means. k-means is hard and linear → GMM. GMM needs k → mean-shift. Mean-shift dies in high dimensions and needs hand-crafted features → deep learning. A hybrid also exists in practice: run mean-shift to <em>discover</em> the number of modes, then feed that k to k-means or GMM.</p></div>
+
+      <!-- ============ 4 ============ -->
+      <h2 id="seg2">4 · Deep segmentation and U-Net <span class="badge blue">Session 12</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ The architectural problem</div>
+        <p>A classification CNN outputs 1×1×F — one vector for the whole image. Segmentation needs H×W×F — a full-resolution prediction. But the CNN's whole mechanism is <em>reducing</em> spatial dimensions to build semantic abstraction. So you need a network that goes down and then comes back up: an <strong>encoder–decoder</strong>.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="s-title">Downsampling — the encoder</div>Convolutions (valid padding shrinks; same padding preserves), strides (bigger stride = faster, less information, important for edge inference), and max pooling. Each stage trades spatial resolution for semantic depth: edges → textures → parts → objects.</div>
+        <div class="step"><div class="s-title">Upsampling — the decoder</div><strong>Unpooling</strong> either duplicates neighbours or writes values back at remembered max locations and zero-fills the rest — disliked, because storing positions costs memory and zero-filling destroys data. <strong>Transpose convolution</strong> is the learned alternative: instead of sliding a kernel over the image, every input element stamps a weighted copy of the kernel into an accumulator, and the stamps sum. Note it is <em>not</em> a mathematical deconvolution — the encoder and decoder kernels are learned independently, so it does not invert anything.</div>
+        <div class="step"><div class="s-title">The failure this produces</div>Compress-then-reconstruct gives you blobby, low-frequency masks. The high-frequency boundary detail was destroyed in the encoder and the decoder has no way to invent it.</div>
+        <div class="step"><div class="s-title">Skip connections — the fix, and U-Net</div>Route each encoder stage's feature map directly across to the matching decoder stage. Two forms: <strong>additive residuals</strong> (ResNet/Inception — mainly a gradient and loss-landscape benefit) and <strong>concatenation</strong> (U-Net — the feature maps are stacked, so genuine high-frequency detail reaches the decoder). U-Net is a symmetric encoder–decoder with concatenated skips and a per-pixel softmax output. It remains competitive against transformer architectures, and domain variants like nnU-Net dominate biomedical imaging.</div>
+      </div>
+      <div class="callout exam"><div class="c-head">✦ Details that earn marks</div>
+        <p><strong>Label vs one-hot encoding.</strong> F = 1 with integer labels is cheap; F = number of classes with one-hot is expensive but sometimes necessary. Usually label encoding, for compute. <strong>Don't confuse input channels C with output classes F</strong> — they are unrelated, and a custom loss is needed when they differ. <strong>Keep per-class scores per pixel</strong> — don't collapse to a max before the loss. <strong>Resize image and mask together.</strong> <strong>Low loss ≠ good mask</strong>, because per-pixel loss is averaged over an image dominated by easy background — which is exactly why segmentation is accepted on IoU/Dice.</p>
+      </div>
+      <div class="callout intuition"><div class="c-head">◆ Multi-modal input, worth one line in a design answer</div><p>Nothing forces C = 3. Hyperspectral bands, X-ray, LiDAR, radar and ultrasonic all stack as extra input channels — an ADAS perception stack fuses them this way. Classical methods could not scale past 3-D feature spaces; this is the concrete reason deep learning took over.</p></div>
+
+      <!-- ============ 5 ============ -->
+      <h2 id="det">5 · Object detection — the two-stage line <span class="badge blue">Session 13</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ The problem</div>
+        <p>Predict class <em>and</em> a bounding box, for an unknown number of objects, at unknown scales and aspect ratios, with occlusion and viewpoint change. The naive solution — <strong>sliding windows</strong> — sweeps a window over the image at many scales and aspect ratios and classifies each crop. It is correct and unusable: the candidate count explodes, almost all the computation is redundant, and the class balance is catastrophic (6 objects among 330 windows).</p>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="s-title">HOG templates and DPM</div>Build an average gradient-orientation template (e.g. of a pedestrian) and convolve it to get a response map. <strong>Breaks because:</strong> gradients are low/mid-level features with no semantics — mannequins fire, side profiles fail, scale is handled badly. DPM optimises the same idea with deformable parts. Pre-2012 this plateaued around 33–40% mAP on PASCAL VOC.</div>
+        <div class="step"><div class="s-title">R-CNN</div><strong>Idea:</strong> attack the class imbalance by proposing only ~2000 <em>plausible</em> regions with <strong>selective search</strong> (bottom-up merging of segmented regions — Gestalt grouping again), warp each to a fixed size, run a pretrained CNN, classify with per-class SVMs plus box regression. mAP jumps to ~54–58%. <strong>Breaks because:</strong> 2000 CNN forward passes per image (~47 s inference, ~84 h training); it is three disconnected stages so errors accumulate; and the proposals themselves are only ~35% accurate.</div>
+        <div class="step"><div class="s-title">Fast R-CNN</div><strong>Fixes the 2000 passes.</strong> Run the CNN <em>once</em> over the whole image, then project each region of interest onto the shared feature map (divide coordinates by the network stride) and <strong>RoI-pool</strong> it into a fixed 7×7 grid. One forward pass feeds two heads: softmax classification and box regression. <strong>Breaks because:</strong> proposals still come from selective search, outside the network — and RoI pooling quantises coordinates, so a fractional half-cell becomes several pixels of error at a 16× stride.</div>
+        <div class="step"><div class="s-title">Faster R-CNN</div><strong>Fixes the external proposals.</strong> A <strong>Region Proposal Network</strong> runs on the same shared feature map, using <strong>anchor boxes</strong> at fixed scales and aspect ratios, so proposals are learned end-to-end. <strong>RoI Align</strong> drops the rounding and keeps fractional coordinates. Inference falls to ~140 ms. <strong>Breaks because:</strong> it is still fundamentally two-stage — propose, then classify.</div>
+        <div class="step"><div class="s-title">Mask R-CNN</div>Faster R-CNN plus a mask head — one network doing classification, detection and segmentation. The overlapping model: reach for it when a case study wants instance masks, not just boxes.</div>
+      </div>
+      <div class="callout key"><div class="c-head">◆ The sentence that ties it together</div><p>"The region-proposal stage is the bottleneck — we never removed it, and that is where YOLO steps in." Each refinement moved work <em>into</em> the network and shared more computation; the two-stage structure itself was the last thing standing.</p></div>
+
+      <!-- ============ 6 ============ -->
+      <h2 id="yolo">6 · YOLO — single-stage <span class="badge blue">Session 13</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ The idea</div>
+        <p>Delete the proposal stage. Divide the image into an S×S grid; each cell directly predicts an objectness probability, B bounding boxes with confidences, and conditional class probabilities P(class | object). Final score = P(object) × P(class | object). One forward pass, one network, box regression and classification as two heads on a shared stack.</p>
+        <p>Output tensor for PASCAL VOC: 7×7×(2×5 + 20) = 7×7×30. Then threshold on confidence and apply <strong>non-maximum suppression</strong> to collapse duplicates.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="s-title">Why it matters</div>~7× faster than the fastest region-proposal network; 45 FPS against camera rates of 12–30 FPS. That is the difference between a system that can brake in time and one that cannot — the entire ADAS and drone argument.</div>
+        <div class="step"><div class="s-title">The cost</div>"When you gain in speed, you lose out on accuracy and precision." Slightly lower mAP than Faster R-CNN, and in v1 each grid cell commits to <em>one class</em> — two different objects in the same cell means one is lost. Anchor boxes in v2 fix this (out of syllabus, but say the sentence).</div>
+        <div class="step"><div class="s-title">Generalisation — an underrated point</div>YOLO transfers unusually well. Fine-tuned on ~100 annotated images it starts performing; it survives domain shift to artwork and Picasso-style images. R-CNN variants need substantial retraining. Failure mode: it detects "person" in a painting but cannot tell you it is a painting.</div>
+        <div class="step"><div class="s-title">Tiers and tasks</div>nano / small / medium / large / extra-large — accuracy up, speed down, monotonically. The nano tier is the one you deploy on edge devices; it runs on CPU without a GPU. Task variants exist for segmentation, classification, pose/keypoints, and oriented bounding boxes for ADAS.</div>
+      </div>
+
+      <!-- ============ 7 ============ -->
+      <h2 id="metrics">7 · Metrics, as theory <span class="badge blue">Session 12 / 16</span></h2>
+      <div class="callout intuition"><div class="c-head">◆ Why accuracy is meaningless here</div>
+        <p>In detection, the overwhelming majority of candidate regions are background, so a model that predicts "nothing anywhere" scores above 90% accuracy. Class imbalance destroys accuracy as a measure. Everything below exists to route around that.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="s-title">IoU</div>Area of overlap over area of union. It measures <em>localisation quality</em> on a 0–1 scale, and it is the gate that converts a prediction into a TP or an FP at a chosen threshold. Same idea for irregular masks, counted by pixels. Dice is its close relative; IoU relates to F1 in the same way — both combine overlap against total extent.</div>
+        <div class="step"><div class="s-title">Precision and recall</div>Precision = of what I predicted, how much was right. Recall = of what existed, how much did I find. The asymmetry matters in design: a missed pedestrian is a fatality (recall-critical), a false alarm on a production line is a stopped line (precision-critical).</div>
+        <div class="step"><div class="s-title">The ranking discipline</div>Sort detections by descending confidence, then walk down assigning TP/FP. <strong>One ground truth admits one true positive</strong> — a second detection on an already-matched object is a false positive even at IoU 0.9, because the higher-confidence detection claimed it. This rule is the single most-tested subtlety in the topic.</div>
+        <div class="step"><div class="s-title">AP and mAP</div>Walking the ranked list traces a precision–recall curve, which comes out saw-toothed, so its area cannot be integrated directly. <strong>Interpolated precision</strong> — at each recall level take the maximum precision at that recall or beyond — straightens it. Average over 9 or 11 levels to get AP; average AP over classes to get mAP. Papers report mAP@0.5, mAP@0.75 and a small/medium/large breakdown, because one threshold hides where the model actually fails.</div>
+      </div>
+
+      <!-- ============ 8 ============ -->
+      <h2 id="track">8 · Tracking <span class="badge blue">Sessions 15–16</span></h2>
+      <div class="callout key"><div class="c-head">◆ The governing insight — say this in any tracking answer</div>
+        <p><strong>Tracking exists to reduce latency, not to improve accuracy.</strong> Detection is expensive; a camera delivers frames faster than a detector can consume them. So you detect on one frame, track cheaply for the next several, and re-detect — keeping the interval under human persistence of vision (~1/16 s) so nothing perceptible is dropped. "We actually do not care about accuracy so much. We care about speed." An approximate position is enough, because its job is to tell the next detection roughly where to look.</p>
+        <p>This is why tracking stayed classical. Putting a neural network into the stage whose purpose is removing latency defeats the stage. DeepSORT and FairMOT exist and are out of syllabus — and out of industrial practice for exactly this reason.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="s-title">Motion detection vs tracking</div>Motion detection is a binary trigger — something moved, sound the alarm. Tracking follows the object and yields speed, direction, trajectory. Different deliverables.</div>
+        <div class="step"><div class="s-title">Background subtraction</div>Model the background, subtract, threshold to a foreground mask. <strong>Breaks under:</strong> illumination change, threshold sensitivity, camera motion (which invalidates the background model entirely), noise. Partly fixed by adaptive/temporal background models keyed to time of day.</div>
+        <div class="step"><div class="s-title">Tracking by detection</div>Detect at t, detect at t+n, take displacement over time to get velocity — the speed-camera method, with image-to-world conversion via camera geometry. <strong>Breaks under:</strong> occlusion (the tunnel case), fast motion, camera shake, and the detector's own cost.</div>
+      </div>
+      <h4>Optical flow — the core theory</h4>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>Optical flow is the <strong>apparent</strong> motion of brightness patterns between frames — and "apparent" is load-bearing. A moving light source or a moving camera produces flow with no object motion at all. That gap between apparent and real motion is where most failure cases live.</p>
+        <p><strong>Three assumptions:</strong> brightness constancy (a point keeps its intensity between frames), small motion (so the Taylor expansion can drop higher-order terms), spatial coherence (neighbouring pixels move together). Every failure mode is one of these three breaking.</p>
+        <p><strong>The aperture problem:</strong> the brightness-constancy equation gives one equation in two unknowns (u, v) per pixel — unsolvable. Lucas–Kanade rescues it with spatial coherence: assume a whole window shares one (u, v), which turns one equation into an over-determined system solvable by least squares. Solvability requires the structure matrix to be invertible with both eigenvalues large — <strong>which is exactly the Harris corner condition</strong>. Both small = flat, no motion recoverable. One large = an edge, and you can only recover motion perpendicular to it. Both large = a corner, trackable. Hence Shi-Tomasi "good features to track."</p>
+        <p><strong>Pyramidal LK:</strong> large displacements violate the small-motion assumption, so downsample until the motion <em>is</em> small, estimate there, and propagate the estimate back up, rescaling. Coarse-to-fine.</p>
+        <p><strong>Families:</strong> Lucas–Kanade is local/sparse; Horn–Schunck is global/dense; Farnebäck is dense. Only LK is in syllabus. Applications: video stabilisation, super-resolution, activity recognition, facial-expression keypoints, visual SLAM.</p>
+      </div>
+      <h4>Mean-shift tracking</h4>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div><p>The same mode-seeking algorithm as in segmentation, repurposed. Build a colour-histogram model of the target in a reference frame; in each new frame, climb the density in a local neighbourhood to find where that colour distribution now peaks. <strong>Strength:</strong> assumption-light relative to optical flow, simple, efficient, and it handles non-rigid objects — people, animals — that a rigid box tracker cannot. <strong>Breaks under:</strong> uniform intensity, abrupt illumination change, motion blur, occlusion, and distractors with the same colour.</p></div>
+      <h4>Kalman filter</h4>
+      <div class="callout intuition"><div class="c-head">◆ Understand it</div>
+        <p>A recursive state estimator running <strong>predict → observe → correct</strong>. Predict the next state from a motion model; take a noisy measurement; blend them via the <strong>Kalman gain</strong>, which weights model against measurement according to their covariances. State = position, velocity and whatever physics matters; plus the state covariance, transition matrix, and Gaussian process and measurement noise.</p>
+        <p><strong>What it buys you:</strong> it survives noise and gaps. Radar blips intermittently, wind pushes the drone, the target manoeuvres, the object goes behind a bridge — prediction carries you through the gap and correction snaps you back when a measurement returns.</p>
+        <p><strong>Why no neural network:</strong> the system is linear, so a closed-form formulation suffices. There is no nonlinearity for a network to learn — and a network would add the latency you are trying to remove.</p>
+        <p><strong>IMM</strong> — interacting multiple models — is a bank of Kalman filters, one per axis or per motion mode (constant velocity, constant acceleration), because a single model cannot cover both cruising and manoeuvring. How many filters is bounded by compute; their outputs are consolidated in one ECU before acting. <em>The Kalman mathematics is out of syllabus — the predict/update cycle and this design reasoning are not.</em></p>
+      </div>
+
+      <!-- ============ 9 ============ -->
+      <h2 id="design">9 · System design and deployment <span class="badge blue">Sessions 13–17</span></h2>
+      <div class="callout key"><div class="c-head">◆ Convert latency into consequence</div>
+        <p>Never argue in FPS alone. Convert: at highway speed, detection latency becomes stopping distance. The ladder runs R-CNN → Fast R-CNN → Faster R-CNN → YOLO as roughly 1760 ft → 176 ft → 12 ft → under 2 ft, against a target inter-car gap of about 6 ft. Faster R-CNN at 140 ms is accurate <em>and</em> fatal. That reframing is what "latency removal" means in this course, and it transfers to drones, shop floors and surgical robots.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="s-title">Edge deployment</div>Edge means <strong>constrained memory</strong>. Choose the nano tier, not the large one. PyTorch <code>.pt</code> weights are not optimised for edge — export to <strong>ONNX</strong> and flash that. Optimise for memory and trainable parameter count. Recover accuracy by fine-tuning the small model on domain data rather than by growing it. Targets: Jetson Nano, Intel OpenVINO, ARM, Raspberry Pi. Fallbacks if it still misses: a SqueezeNet-based custom implementation, then move the runtime from Python to C/C++.</div>
+        <div class="step"><div class="s-title">Multi-camera: model vs data parallelism</div>Independent decisions → <strong>model parallelism</strong>, replicate the model per camera (a fleet of delivery drones). One joint decision over several views → <strong>data parallelism</strong>, coalesce the streams before predicting. For a car's ADAS, independent per-camera predictions are <em>forbidden</em> — front and rear views are evidence for the same judgement, so they must meet before the decision, not after. Accuracy is the same either way; the question is where the decision is made.</div>
+        <div class="step"><div class="s-title">YOLO vs VLM</div>VLM when you lack training infrastructure, need natural language and multiple modalities, want speed of delivery, and accept that someone else owns the data. Its pipeline is pre-training → SFT → RLHF → DPO, measured in years. YOLO when the use case is localised, latency-bound, and you want the IP. <strong>The decisive argument is risk asymmetry:</strong> in natural language a hallucination is an annoyance; on a shop floor it costs life and limb. The mature answer is hybrid — YOLO detects, an agent above it reasons, wired through ROS topics: camera → YOLO → agent.</div>
+        <div class="step"><div class="s-title">Data strategy</div>A population-versus-sample question, not a number. From scratch: ≥10,000, realistically ~1M images. With transfer learning: 100–200 can suffice, because the backbone has already seen the textures. And the honest caveat — 10M images may fail where 100 well-chosen ones work. Budget for an evaluation loop, not a fixed count.</div>
+        <div class="step"><div class="s-title">Build vs buy</div>Library U-Net and detection implementations are predefined. Organisations — healthcare especially — write custom implementations and custom feature extractors because that is what they can own. Worth one line whenever a case study mentions a client's IP.</div>
+      </div>
+
+      <!-- ============ 10 ============ -->
+      <h2 id="chains">10 · The five chains, compressed</h2>
+      <p>If you memorise nothing else, memorise these. Each is a complete answer skeleton.</p>
+      <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Chain</th><th>The sequence, with the bottleneck that forces each step</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Classification</strong></td><td>kNN <em>(inference cost, pixel distance ≠ semantic distance)</em> → linear <em>(one template per class; no nonlinear boundary)</em> → CNN <em>(learned hierarchy)</em> → ViT <em>(no built-in priors, so data-hungry, but modality-agnostic)</em></td></tr>
+          <tr><td><strong>Segmentation, classical</strong></td><td>thresholding <em>(no spatial info, modes arbitrary)</em> → k-means <em>(k by hand, hard assignment, linear boundaries, still no space)</em> → GMM/EM <em>(soft + elliptical, but k and the family by hand, slow)</em> → mean-shift <em>(adds (x,y) to the features and discovers k; dies in high dimensions)</em> → deep learning</td></tr>
+          <tr><td><strong>Segmentation, deep</strong></td><td>classification CNN <em>(outputs 1×1×F)</em> → encoder–decoder <em>(gets H×W×F but masks are blobby)</em> → skip connections / U-Net <em>(high-frequency detail bypasses the bottleneck)</em></td></tr>
+          <tr><td><strong>Detection</strong></td><td>sliding window <em>(explosion + class imbalance)</em> → HOG/DPM <em>(no semantics)</em> → R-CNN <em>(2000 CNN passes, 3 disjoint stages)</em> → Fast R-CNN <em>(shared feature map + RoI pooling; proposals still external, quantisation error)</em> → Faster R-CNN <em>(RPN + RoI Align; still two-stage)</em> → YOLO <em>(deletes the proposal stage; loses some precision, one class per cell)</em></td></tr>
+          <tr><td><strong>Tracking</strong></td><td>background subtraction <em>(camera motion, illumination)</em> → tracking-by-detection <em>(too slow, occlusion)</em> → optical flow / LK <em>(aperture problem, three assumptions)</em> → pyramidal LK <em>(large motion)</em> → mean-shift <em>(non-rigid, colour-based)</em> → Kalman/IMM <em>(noise, gaps, manoeuvres)</em></td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="callout exam"><div class="c-head">✦ How to deploy a chain in an answer</div><p>A case study gives you a constraint. Walk the relevant chain from the top, naming the bottleneck at each step, and <strong>stop at the first method whose remaining weaknesses the constraint can tolerate.</strong> Then say explicitly what you gave up and how you bound it. That structure — walk, stop, justify the stop, price the compromise — fits every design question on this paper.</p></div>
+
+      <!-- ============ 11 ============ -->
+      <h2 id="selftest">11 · Twenty-question self-test</h2>
+      <p>Answer each aloud in two sentences. If a sentence doesn't come, that's your gap — go back to the section, not to the slides.</p>
+      <div class="tbl-wrap">
+      <table>
+        <thead><tr><th class="num">#</th><th>Question</th><th>Section</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td>Why is a linear classifier's "one template per class" fatal, and what fixes it?</td><td>1</td></tr>
+          <tr><td class="num">2</td><td>Why is k-NN's cost structure wrong for deployment?</td><td>1</td></tr>
+          <tr><td class="num">3</td><td>What exactly does the fixed context vector bottleneck cost you?</td><td>2</td></tr>
+          <tr><td class="num">4</td><td>What do Q, K and V each represent, and why divide by √d<sub>k</sub>?</td><td>2</td></tr>
+          <tr><td class="num">5</td><td>Why does ViT need positional embeddings when a CNN does not?</td><td>2</td></tr>
+          <tr><td class="num">6</td><td>When would you choose a CNN over a ViT, and why?</td><td>2</td></tr>
+          <tr><td class="num">7</td><td>Name three Gestalt laws and the algorithm each one justifies.</td><td>3</td></tr>
+          <tr><td class="num">8</td><td>Why can two different images have the same histogram, and what does that rule out?</td><td>3</td></tr>
+          <tr><td class="num">9</td><td>What does GMM give you that k-means cannot, and what does it still not solve?</td><td>3</td></tr>
+          <tr><td class="num">10</td><td>How does mean-shift discover k, and why add (x, y) to the features?</td><td>3</td></tr>
+          <tr><td class="num">11</td><td>Why is transpose convolution not a true deconvolution?</td><td>4</td></tr>
+          <tr><td class="num">12</td><td>Why do skip connections fix blobby masks — mechanically, not by name?</td><td>4</td></tr>
+          <tr><td class="num">13</td><td>Why can a segmentation model have low loss and a bad mask?</td><td>4 / 7</td></tr>
+          <tr><td class="num">14</td><td>What does each of Fast and Faster R-CNN fix, and what does each leave?</td><td>5</td></tr>
+          <tr><td class="num">15</td><td>Why is RoI Align better than RoI pooling?</td><td>5</td></tr>
+          <tr><td class="num">16</td><td>What does YOLO delete, and what does it pay for that?</td><td>6</td></tr>
+          <tr><td class="num">17</td><td>Why is a duplicate detection a false positive even at IoU 0.9?</td><td>7</td></tr>
+          <tr><td class="num">18</td><td>State the three optical-flow assumptions and one failure caused by each.</td><td>8</td></tr>
+          <tr><td class="num">19</td><td>Why does Lucas–Kanade only work at corners?</td><td>8</td></tr>
+          <tr><td class="num">20</td><td>Why is tracking done with classical methods rather than neural networks?</td><td>8 / 9</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <div class="callout key"><div class="c-head">◆ Last five minutes before you walk in</div>
+        <p><strong>One:</strong> tracking exists to remove latency, not to add accuracy. <strong>Two:</strong> the region-proposal stage was detection's last bottleneck, and YOLO deleted it. <strong>Three:</strong> mean-shift adds position to the feature space and discovers the number of clusters. <strong>Four:</strong> skip connections carry the high-frequency detail the encoder threw away. <strong>Five:</strong> one ground truth, one true positive. <strong>Six:</strong> every design answer names the alternative it rejected and prices what it gave up.</p>
+      </div>
+
+      <div class="pager">
+        <a href="class-numericals.html"><div class="pg-dir">← Numericals</div><div class="pg-title">▶∑ Numericals Solved in Class</div></a>
+        <a class="next" href="exam-systems-latency.html"><div class="pg-dir">Next →</div><div class="pg-title">⚙ System Design &amp; Latency</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>

@@ -48,6 +48,7 @@
       { id: "exam-q14", ix: "Q14", label: "Q14 · AP & mAP", href: "exam-q14.html" },
       { id: "exam-q15", ix: "Q15", label: "Q15 · Edge, Face & OCR", href: "exam-q15.html" },
       { id: "practice", ix: "✎", label: "Questions for Practice", href: "practice.html" },
+      { id: "revision-theory", ix: "★", label: "Theory Revision (2 hrs)", href: "revision-theory.html" },
       { id: "exam-systems-latency", ix: "⚙", label: "System Design & Latency", href: "exam-systems-latency.html" },
       { id: "practice-ec3", ix: "✎", label: "EC-3 Practice Paper", href: "practice-ec3.html" },
       { id: "lectures", ix: "▶", label: "From the Lectures", href: "lectures.html" }
