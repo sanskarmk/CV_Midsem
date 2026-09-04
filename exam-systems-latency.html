@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>System Design &amp; Latency — Predicted Questions</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>window.CV_PAGE = { id: "exam-systems-latency", title: "System Design & Latency", crumb: "Exam Prep · System Design" };</script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="backdrop" id="backdrop"></div>
+  <main class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content">
+
+      <span class="page-tag">Exam Prep · final revision</span>
+      <h1>System design &amp; latency — predicted questions</h1>
+      <p class="lead">Built around one sentence from the last lecture: <em>“The questions can be around system design. The questions can be around, say, latency removal. There can be numericals.”</em> Twelve scenario questions in his mark bands, each with a model answer and the transcript anchor it comes from. This is the half of the paper the <a href="class-numericals.html">numericals page</a> doesn't cover.</p>
+
+      <div class="callout key"><div class="c-head">◆ What he told you about the paper</div>
+        <p><strong>40 marks, 6–7 questions, variable weight (4–10 each).</strong> 10–20% pre-midsem, 80–90% post-midsem. Open book from the watermarked slides. <em>“We are not going to test you for your rote learning… the questions are strictly from your PDFs or guides that you will carry — if you know how to use them.”</em> (00:59:53 – 01:00:25)</p>
+        <p>And the grading criterion, stated twice: <em>“Everything will boil down to your conceptual understanding of what you have learned, <strong>why you have done a certain approach, why have you not done a certain approach</strong>.”</em> (01:03:36)</p>
+      </div>
+
+      <div class="callout exam"><div class="c-head">✦ How to answer a system-design question here</div>
+        <p>Four moves, in this order. <strong>1 · State the constraint numerically</strong> — frame rate, latency budget, memory, stopping distance. <strong>2 · Name the bottleneck</strong> and show the arithmetic that proves it. <strong>3 · Choose, and reject.</strong> Every mark for “why not the other approach” is a mark most students leave on the table. <strong>4 · State the cost of your choice</strong> and how you bound it. A design answer with no rejected alternative and no acknowledged cost reads as a memorised list.</p>
+      </div>
+
+      <div class="toc">
+        <h4>The questions</h4>
+        <ul>
+          <li><a href="#q1">Q1 · Real-time ADAS latency budget <span class="badge marks">10</span></a></li>
+          <li><a href="#q2">Q2 · Why classical trackers, not DeepSORT <span class="badge marks">8</span></a></li>
+          <li><a href="#q3">Q3 · The R-CNN family comparison <span class="badge marks">6</span></a></li>
+          <li><a href="#q4">Q4 · Edge deployment on a Raspberry Pi <span class="badge marks">7</span></a></li>
+          <li><a href="#q5">Q5 · Multi-camera parallelism <span class="badge marks">6</span></a></li>
+          <li><a href="#q6">Q6 · YOLO vs VLM design decision <span class="badge marks">10</span></a></li>
+          <li><a href="#q7">Q7 · Choosing the acceptance metric <span class="badge marks">5</span></a></li>
+          <li><a href="#q8">Q8 · IoU threshold as a design knob <span class="badge marks">6</span></a></li>
+          <li><a href="#q9">Q9 · Data strategy and annotation pipeline <span class="badge marks">8</span></a></li>
+          <li><a href="#q10">Q10 · Kalman / IMM under a compute budget <span class="badge marks">7</span></a></li>
+          <li><a href="#q11">Q11 · Diagnosing a blobby U-Net mask <span class="badge marks">5</span></a></li>
+          <li><a href="#q12">Q12 · Latency levers, rapid fire <span class="badge marks">4</span></a></li>
+        </ul>
+      </div>
+
+      <!-- ================= Q1 ================= -->
+      <h2 id="q1">Q1 · Real-time ADAS latency budget <span class="badge marks">10 marks</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> A tier-1 supplier asks you to build a forward-collision-warning module. The camera streams at 30 FPS. Your current detector is a Faster R-CNN reaching good accuracy at <strong>140 ms per image</strong> on the target SoC.
+        <br>(a) Prove numerically that this fails the real-time requirement, and express the failure as a safety consequence rather than a frame count.
+        <br>(b) Redesign the pipeline to meet the requirement <em>without</em> training a new detector.
+        <br>(c) State what your redesign costs you and how you bound that cost.</p>
+
+        <h4>(a) The arithmetic</h4>
+        <div class="steps">
+          <div class="step"><div class="s-title">Throughput</div>140 ms/image ⇒ 1000/140 ≈ <strong>7.1 FPS</strong>. The camera delivers 30 FPS. The detector consumes one frame in the time four arrive, so the backlog grows without bound — the system is not merely slow, it is <em>divergent</em>.</div>
+          <div class="step"><div class="s-title">Safety translation</div>Latency becomes distance. On his ladder: R-CNN's ~1760 ft stopping distance → Fast R-CNN ~176 ft → <strong>Faster R-CNN ~12 ft</strong> → YOLO under 2 ft. The design target is the average inter-car gap, <strong>6 feet</strong>.</div>
+          <div class="step"><div class="s-title">Verdict</div>At 12 ft, "by the time I see and by the time I apply the brake, even if instantaneous, I've already crashed." 12 ft &gt; 6 ft ⇒ the module fails on safety, not on FPS.</div>
+        </div>
+
+        <h4>(b) The redesign — detect-then-track</h4>
+        <div class="steps">
+          <div class="step"><div class="s-title">Principle</div>The purpose of tracking is <em>latency reduction, not accuracy</em>. Detect on one frame; track the object across the next 5–10 frames with a cheap classical tracker; re-detect at the 10th or 12th frame.</div>
+          <div class="step"><div class="s-title">Cadence constraint</div>Keep the re-detect interval under human persistence of vision (~1/16 s) so no perceptible gap appears in the output.</div>
+          <div class="step"><div class="s-title">Tracker choice</div>Lucas–Kanade sparse optical flow on Shi-Tomasi corners for short-baseline motion; Kalman for the state estimate under occlusion; mean-shift where the target is non-rigid and colour-distinct.</div>
+          <div class="step"><div class="s-title">Effective throughput</div>One 140 ms detection amortised over ~10 frames of millisecond-scale tracking brings the pipeline inside the 30 FPS budget with the <em>same</em> detector weights.</div>
+          <div class="step"><div class="s-title">Alternative, if retraining were allowed</div>Swap the two-stage detector for single-stage YOLO — 45 FPS, ~7× faster than the fastest region-proposal network, stopping distance under 2 ft. State that you rejected it here only because the question forbids a new detector.</div>
+        </div>
+
+        <h4>(c) The cost, and how it is bounded</h4>
+        <div class="steps">
+          <div class="step"><div class="s-title">Cost</div>Tracker drift between detections; optical flow's three assumptions (brightness constancy, small motion, spatial coherence) all break under headlights, fast crossing traffic and camera shake.</div>
+          <div class="step"><div class="s-title">Bounds</div>Shorten the re-detect interval; gate the tracked box against the next detection by IoU and re-initialise on disagreement; use a constant-acceleration Kalman (or an IMM bank) so a manoeuvring target is still modelled; run the pyramidal coarse-to-fine LK variant so large displacements fall back into the small-motion regime.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Marks live in</span><p style="margin:4px 0">The 7.1-vs-30 arithmetic, the conversion of latency to stopping distance, the amortisation argument, and naming a rejected alternative with a reason.</p></div>
+      </div>
+      <div class="callout intuition"><div class="c-head">◆ Anchors</div><p>YOLO lecture 00:19:25–00:26:20 (the FPS/stopping-distance ladder), 00:15:54 (“7× faster… when you gain in speed, you lose out on accuracy”); revision lecture 00:50:46–00:56:29 (detect-then-track, persistence of vision).</p></div>
+
+      <!-- ================= Q2 ================= -->
+      <h2 id="q2">Q2 · Why classical trackers, not DeepSORT <span class="badge marks">8 marks</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> A shop-floor safety system must follow workers between detections. A colleague proposes DeepSORT. Argue for a conventional tracker instead, and state the one condition under which you would reverse the decision.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">The objective is inverted</div>Tracking is not a second detector. <em>“When it comes to tracking, we actually do not care about accuracy so much. We actually care about speed.”</em> An approximate position is sufficient — its job is to tell the next detection roughly where to look so the detector “does not have to do heavy lifting.”</div>
+          <div class="step"><div class="s-title">A DNN tracker attacks the wrong cost</div>Inserting a network into the stage whose entire purpose is latency removal defeats the stage. <em>“It will just increase my system latency, so I've never used it.”</em></div>
+          <div class="step"><div class="s-title">Deployability</div>Optical flow, mean-shift and Kalman are closed-form and CPU-friendly — they fit the same constrained edge box the detector already occupies. A DNN tracker wants the accelerator the detector is using.</div>
+          <div class="step"><div class="s-title">Assumption cost, honestly stated</div>The classical route buys speed by assuming brightness constancy, small motion and spatial coherence (LK), or a stable colour histogram (mean-shift), or linear-Gaussian motion (Kalman). Name these as the price.</div>
+          <div class="step"><div class="s-title">The reversal condition</div>When those assumptions genuinely fail and no amount of tuning recovers them — his example is particle/electron-movement tracking in cloud-chamber experiments, "where the conventional methodologies will fail." Highly specialised, not a shop floor.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Trap</span><p style="margin:4px 0">Don't answer “because DeepSORT is out of syllabus.” The examinable reason is the latency argument. Also worth one line: for intra-cardiac image-guided therapy he does <em>not</em> track at all — he segments with U-Net. Choosing the wrong <em>task</em> is a bigger error than choosing the wrong tracker.</p></div>
+      </div>
+      <div class="callout intuition"><div class="c-head">◆ Anchors</div><p>Revision lecture 00:50:46, 00:51:23, 00:53:03, 00:56:16, 00:56:30; YOLO lecture 01:47:45 (“in tracking we do not use any kind of deep learning models. Why? Because it needs to be faster.”).</p></div>
+
+      <!-- ================= Q3 ================= -->
+      <h2 id="q3">Q3 · The R-CNN family comparison <span class="badge marks">6 marks</span></h2>
+      <p>He flagged this one directly: <em>“this is one thing that covers the entirety of object detection, and you can assume there is a question around it… in past scenarios we have often seen that [students] are not able to answer this correctly.”</em> (YOLO lecture 00:11:01)</p>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Compare R-CNN, Fast R-CNN, Faster R-CNN and Mask R-CNN on proposal mechanism, what is shared, speed and the remaining bottleneck. Identify the single bottleneck that survives all three refinements and name the architecture that removes it.</p>
+        <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Model</th><th>Proposals</th><th>What is shared</th><th>Speed</th><th>Bottleneck left</th></tr></thead>
+          <tbody>
+            <tr><td><strong>R-CNN</strong></td><td>Selective search, ~2000, external</td><td>Nothing — one CNN pass <em>per proposal</em></td><td>~47 s/image inference, ~84 h training</td><td>2000 forward passes; 3 separate stages; error accumulates</td></tr>
+            <tr><td><strong>Fast R-CNN</strong></td><td>Selective search, still external</td><td>One CNN pass over the whole image; RoIs projected onto the shared feature map, <strong>RoI pooling</strong> to a fixed 7×7 grid</td><td>~2 s/image</td><td>Proposal generation is still outside the network; RoI pooling quantisation error</td></tr>
+            <tr><td><strong>Faster R-CNN</strong></td><td><strong>RPN</strong> — learned, on the same feature map, with anchor boxes</td><td>Feature map shared by RPN and both heads; <strong>RoI Align</strong> drops the rounding</td><td>~140 ms/image</td><td>Still two-stage: propose, then classify</td></tr>
+            <tr><td><strong>Mask R-CNN</strong></td><td>RPN, as Faster R-CNN</td><td>Adds a mask head — classification + detection + segmentation in one network</td><td>Slower than Faster R-CNN</td><td>Two-stage cost, plus per-instance mask cost</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer</span><p style="margin:4px 0">The surviving bottleneck is the <strong>region-proposal stage itself</strong> — <em>“that's my bottleneck. We still did not resolve, and this is where YOLO steps in.”</em> YOLO removes it by predicting class and box directly from an S×S grid in one pass.</p></div>
+      </div>
+
+      <!-- ================= Q4 ================= -->
+      <h2 id="q4">Q4 · Edge deployment on a Raspberry Pi <span class="badge marks">7 marks</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> A client needs on-device detection on a Raspberry Pi with a CMOS camera. No GPU. Cloud offload is contractually forbidden. Give the deployment plan and the fallback if it misses the budget.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">1 · Accept the constraint</div>“If your use case states that it needs to stay on the edge device, it needs to stay on the edge device.” Do not design a cloud escape hatch — the constraint is the question.</div>
+          <div class="step"><div class="s-title">2 · Pick the model tier, not the model</div>Nano, not large or extra-large. A YOLO nano checkpoint is ~5–6 MB and runs on CPU; large/XL are the most accurate but take the speed hit. Some nano-class models reach ~225 FPS.</div>
+          <div class="step"><div class="s-title">3 · Convert the weights</div>Training saves PyTorch <code>.pt</code> weights, which “are not optimized for edge devices.” Export to <strong>ONNX</strong> and flash that to the device. Optimise for memory <em>and</em> for trainable parameter count.</div>
+          <div class="step"><div class="s-title">4 · Recover accuracy without growing the model</div>Fine-tune the nano checkpoint on 100–200 annotated domain images. “You take a nano model which is barely 5 MB in size, and you fine tune it, and it gives you a performance equivalent to say a large model.”</div>
+          <div class="step"><div class="s-title">5 · Fallback if it still misses</div>Write a custom implementation on a <strong>SqueezeNet</strong> backbone — ~3 MB, or a 1.5 MB variant. Then move the runtime from Python to <strong>C/C++</strong>, which is what he found necessary running YOLO 11 on a Pi.</div>
+          <div class="step"><div class="s-title">6 · Name the alternatives you did not need</div>Jetson Nano, Intel OpenVINO, ARM kits — same family of targets if the client will change hardware. Say why you stayed on the Pi.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Answer shape</span><p style="margin:4px 0">Tier selection → runtime conversion → transfer learning to claw back accuracy → architectural fallback → language fallback. Four of the seven marks are in steps 2 and 3.</p></div>
+      </div>
+      <div class="callout warn"><div class="c-head">⚠ Don't over-claim</div><p>Quantization, pruning, LoRA/QLoRA and knowledge distillation are <em>not</em> discussed in either of these lectures — the only optimisation levers he actually names are model tier, ONNX export, memory/parameter budgeting, a smaller backbone, and the C/C++ runtime. Mentioning quantization isn't wrong, but build the answer on what the course taught.</p></div>
+
+      <!-- ================= Q5 ================= -->
+      <h2 id="q5">Q5 · Multi-camera parallelism <span class="badge marks">6 marks</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Six cameras stream in real time. For each deployment, choose model parallelism or data parallelism and justify: (a) a fleet of six delivery drones, one camera each; (b) one car's ADAS with six cameras around the body.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">The two options</div><strong>Model parallelism</strong> — train one model, replicate it across cameras, each producing an independent prediction. <strong>Data parallelism</strong> — merge the incoming streams and feed the combined data to one model.</div>
+          <div class="step"><div class="s-title">(a) Drone fleet → model parallelism</div>Each drone's decision is genuinely independent — nothing camera 3 sees changes what drone 1 should do. Replicate the model per drone.</div>
+          <div class="step"><div class="s-title">(b) ADAS → data parallelism, and model parallelism is <em>forbidden</em></div>“You cannot have independent predictions. You need to coalesce all the information coming in from multiple cameras at one point, and then you need to predict: okay, there is an obstacle, there's an obstacle left, right.” One vehicle, one decision — the front and rear views are evidence for the same judgement, so they must meet before the prediction, not after.</div>
+          <div class="step"><div class="s-title">Accuracy note</div>Asked whether the two differ in accuracy, he said they should be identical. The choice is not about accuracy — it is about <em>where the decision is made</em>.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">The distinguishing principle</span><p style="margin:4px 0">Independent decisions ⇒ replicate the model. One joint decision over several views ⇒ consolidate the data first. The same logic appears on the drone side of the Kalman discussion: multiple filters, but their predictions are brought together “in one consolidated CPU or the ECU unit” before the drone acts.</p></div>
+      </div>
+
+      <!-- ================= Q6 ================= -->
+      <h2 id="q6">Q6 · YOLO vs VLM design decision <span class="badge marks">10 marks</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> A manufacturing client wants to query their shop floor in natural language — “show me PPE violations in bay 3 this shift.” Recommend an architecture. Cover training cost, risk, data ownership and what you would deliver first.</p>
+        <h4>The case for a VLM</h4>
+        <div class="steps">
+          <div class="step"><div class="s-title">When it is right</div>The organisation lacks training infrastructure; the task genuinely needs multiple modalities plus natural language; they are willing to let someone else own the data and just fine-tune on top; delivery speed matters more than dataset curation.</div>
+        </div>
+        <h4>The case against, on this client</h4>
+        <div class="steps">
+          <div class="step"><div class="s-title">Training cost</div>Pre-training → use-case-specific <strong>SFT</strong> → <strong>RLHF</strong> → <strong>DPO</strong>. “Multiple steps. It takes like years to train a VLM model.” Plus heavy annotation.</div>
+          <div class="step"><div class="s-title">Risk profile — the decisive argument</div>“In natural language you can get away with hallucination — okay, you make an error. But in a manufacturing plant, on a shop floor, you make one error and that can cost you life and limb.” A safety-relevant detector cannot sit on a component that invents content.</div>
+          <div class="step"><div class="s-title">Intellectual property</div>“If you want to own the intellectual property rights of a certain algorithm, you'll go with YOLO.” And the commercial risk of depending on someone else's product: “tomorrow they can jack up the prices for.”</div>
+          <div class="step"><div class="s-title">Maturity</div>“Right now we are in the nascent stages of VLM… YOLO is going to stay for the next few years. YOLO is pretty standard till date within manufacturing industry.”</div>
+        </div>
+        <h4>The recommendation — the hybrid he actually lands on</h4>
+        <div class="steps">
+          <div class="step"><div class="s-title">Split perception from reasoning</div>YOLO detects, but “it does not have a thought process associated with it.” So put the language model above it, not in place of it.</div>
+          <div class="step"><div class="s-title">The stack</div>Wire it through <strong>ROS topics</strong>: camera topic → YOLO → an autonomous AI agent that reasons over the detections and answers the natural-language query. Detection stays deterministic, auditable and in-house; the probabilistic layer is confined to a place where a mistake is a bad answer, not an injury.</div>
+          <div class="step"><div class="s-title">Delivery order</div>Ship the YOLO detector and the violation log first — it is the safety-bearing part and the part the client owns. Layer the NL query interface on top once the detector's precision/recall are accepted.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Marks live in</span><p style="margin:4px 0">Naming the four VLM training stages, the hallucination/safety argument, the IP argument, and refusing the false binary — the credit is in the hybrid, not in picking a side.</p></div>
+      </div>
+
+      <!-- ================= Q7 ================= -->
+      <h2 id="q7">Q7 · Choosing the acceptance metric <span class="badge marks">5 marks</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> State the acceptance metric you would write into the contract for each, and explain in one line why plain accuracy is the wrong choice in all three. (i) Tumour segmentation on MRI. (ii) Pedestrian detection for ADAS. (iii) A defect-counting station on a production line.</p>
+        <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>System</th><th>Metric</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td><strong>(i) Tumour segmentation</strong></td><td>IoU per pixel, and Dice</td><td>The deliverable is a region, and its <em>area</em> is clinically meaningful — tumour size drives the decision. Compute by pixel counting over the irregular blob, not by box geometry.</td></tr>
+            <tr><td><strong>(ii) Pedestrian detection</strong></td><td>mAP@0.5, with recall weighted above precision</td><td>A missed pedestrian is a fatality; a false positive is an unnecessary brake. Asymmetric costs mean you tune the operating point, not just report AP.</td></tr>
+            <tr><td><strong>(iii) Defect counting</strong></td><td>Precision and recall with the one-GT-one-TP rule enforced</td><td>The output is a <em>count</em>, so duplicate detections on the same defect corrupt the deliverable directly — the duplicate-suppression rule is the metric, not a detail of it.</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <div class="answer-box"><span class="a-tag">Why accuracy fails everywhere</span><p style="margin:4px 0">Class imbalance. In detection, a model that predicts “no object” everywhere scores above 90% accuracy — his own example — because the overwhelming majority of candidate windows are background. Accuracy measures the easy negatives.</p></div>
+      </div>
+
+      <!-- ================= Q8 ================= -->
+      <h2 id="q8">Q8 · IoU threshold as a design knob <span class="badge marks">6 marks</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> You raise the acceptance threshold from IoU 0.5 to IoU 0.75. Describe the effect on the TP/FP labelling, on the precision and recall columns, and on AP. Name a use case that justifies the change and one that does not.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Labelling</div>Detections with IoU between 0.5 and 0.75 flip from TP to FP. The ranking by confidence is unchanged — only the verdict column moves.</div>
+          <div class="step"><div class="s-title">Precision</div>Falls at every rank below the first flipped detection, because ΣFP grows while ΣTP shrinks.</div>
+          <div class="step"><div class="s-title">Recall</div>Falls, and its ceiling falls: the denominator is still the ground-truth count, but fewer ground truths are ever matched.</div>
+          <div class="step"><div class="s-title">AP</div>Falls — the interpolated curve is pulled down and its right-hand extent shortens. Report it as <strong>mAP@0.75</strong>; the convention exists precisely because the threshold is a reporting parameter, not a constant.</div>
+          <div class="step"><div class="s-title">Justified</div>Where localisation precision <em>is</em> the deliverable — robotic grasping, surgical guidance, dimensional measurement, oriented bounding boxes for ADAS lane geometry.</div>
+          <div class="step"><div class="s-title">Not justified</div>Presence/absence alarms — an intrusion detector, a "is anyone in the cell" interlock. Tightening the threshold there discards correct detections and buys nothing the system uses.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">One more line worth writing</span><p style="margin:4px 0">Papers report mAP@0.5, mAP@0.75 and a small/medium/large object breakdown together for exactly this reason — a single threshold hides where the model actually fails.</p></div>
+      </div>
+
+      <!-- ================= Q9 ================= -->
+      <h2 id="q9">Q9 · Data strategy and annotation pipeline <span class="badge marks">8 marks</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> A client asks “how many images do we need?” Give a defensible answer, then specify the annotation pipeline you would set up.</p>
+        <h4>The sizing answer</h4>
+        <div class="steps">
+          <div class="step"><div class="s-title">Reframe it</div>It is a population-versus-sample question, not a number question: how much sample is representative of the population you will deploy into? Buildings against sky need a small sample; a specific person in a crowd, or a sequence of operations on a robotics floor, needs far more.</div>
+          <div class="step"><div class="s-title">From scratch</div>Greater than 10,000, and realistically <strong>1 million images minimum</strong>.</div>
+          <div class="step"><div class="s-title">With transfer learning</div><strong>100–200 images</strong> can be enough, because the pretrained backbone has already seen the textures and formats. This is the single biggest lever in the answer.</div>
+          <div class="step"><div class="s-title">The honest caveat</div>“There are projects even if you give 10 million images they won't perform that well, but 100 defined images might just work.” Sizing is about when the model becomes <em>generalisable</em>, not about volume — so budget for an evaluation loop, not for a fixed image count.</div>
+        </div>
+        <h4>The pipeline</h4>
+        <div class="steps">
+          <div class="step"><div class="s-title">Annotate</div>Roboflow for detection; Label Studio or CVAT for polygon/segmentation work. Define the class list before annotation starts, not during.</div>
+          <div class="step"><div class="s-title">Export</div>COCO or PASCAL VOC — or a client-specific custom format, which is common in industry.</div>
+          <div class="step"><div class="s-title">Split</div>Train / validation / test, with k-fold cross-validation if the set is small enough that a single split would be unrepresentative.</div>
+          <div class="step"><div class="s-title">The format gotcha worth a mark</div>Box conventions differ <em>between YOLO versions</em> — some expect (x<sub>min</sub>, y<sub>min</sub>, x<sub>max</sub>, y<sub>max</sub>), others (centre-x, centre-y, w, h). Converting wrongly trains a model that silently learns offset boxes.</div>
+          <div class="step"><div class="s-title">Preprocessing note for segmentation</div>Resize the image and its mask together, and keep prediction and mask dimensions identical, or the per-pixel loss is meaningless.</div>
+        </div>
+      </div>
+
+      <!-- ================= Q10 ================= -->
+      <h2 id="q10">Q10 · Kalman / IMM under a compute budget <span class="badge marks">7 marks</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Design the state estimation for an autonomous quadcopter delivering payloads in variable wind. Specify the filter, the state, the noise sources, how many filters and why, and justify not using a neural network.</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Filter and cycle</div>Kalman filter, run as <strong>predict → observe → correct</strong>. Predict the next state from the motion model; take the (noisy) measurement; correct via the Kalman gain, which weights model against measurement by their covariances.</div>
+          <div class="step"><div class="s-title">State</div>Position and velocity per axis, with the state covariance matrix, state transition matrix, and Gaussian process and measurement noise.</div>
+          <div class="step"><div class="s-title">Noise sources to name</div>Wind and headwind resistance, drag, manoeuvres the linear model does not anticipate, occlusion or intermittent measurement, and battery fade — which does not just add noise but shifts the plan: a 100 km range becomes 80 km.</div>
+          <div class="step"><div class="s-title">How many filters</div>Not one. An <strong>IMM</strong> bank — interacting multiple models — with one filter per axis. For offline proof-of-concept work, three: X (climb from ground), Y (lateral yaw), Z. The count is bounded by available compute, which is the design constraint to state explicitly.</div>
+          <div class="step"><div class="s-title">Keep the models linear</div>Constant velocity and constant acceleration models, treated as hyperparameters to test. Because “the entire system is linear, which means we can implement it using simple mathematical formulation. We do not need deep learning networks to learn the nonlinear nature behind it.”</div>
+          <div class="step"><div class="s-title">Consolidate</div>Bring every filter's prediction together in one ECU before acting — the same principle as the ADAS camera fusion in Q5.</div>
+        </div>
+        <div class="answer-box"><span class="a-tag">Scope note</span><p style="margin:4px 0">The full Kalman mathematics is explicitly out of syllabus. Only the predict/update cycle and the design reasoning above are examinable — so spend your words on the design, not on deriving the gain.</p></div>
+      </div>
+
+      <!-- ================= Q11 ================= -->
+      <h2 id="q11">Q11 · Diagnosing a blobby U-Net mask <span class="badge marks">5 marks</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> Your segmentation network trains to a low loss but produces low-frequency, blobby masks with poor boundaries. Diagnose the cause and give the fix. Why does a low loss coexist with a bad mask?</p>
+        <div class="steps">
+          <div class="step"><div class="s-title">Diagnosis</div>The encoder discards spatial detail as it downsamples; naive upsampling in the decoder cannot invent it back. Max-index unpooling zero-fills everywhere it did not record a maximum, destroying data; transpose convolution learns its own kernels but has no access to the lost high-frequency content.</div>
+          <div class="step"><div class="s-title">Fix</div><strong>Skip connections.</strong> Concatenate each encoder stage's feature map into the matching decoder stage — the U-Net pattern — so boundary detail bypasses the bottleneck. Additive residuals also smooth the loss landscape, but concatenation is what restores the edges.</div>
+          <div class="step"><div class="s-title">Why low loss ≠ good mask</div>Per-pixel loss is averaged over the whole image, which is dominated by easy background. A mask that is right in the interior and wrong along a thin boundary barely moves the average. That is exactly why segmentation is accepted on <strong>IoU or Dice</strong>, not on loss or accuracy.</div>
+          <div class="step"><div class="s-title">Check the plumbing too</div>Symmetric depth — N downsampling stages need N upsampling stages; image and mask resized together; per-pixel softmax retained per class rather than collapsed to a max.</div>
+        </div>
+      </div>
+
+      <!-- ================= Q12 ================= -->
+      <h2 id="q12">Q12 · Latency levers, rapid fire <span class="badge marks">4 marks</span></h2>
+      <div class="card">
+        <p style="margin-top:0"><strong>Q.</strong> List four levers for cutting inference latency in a deployed CV pipeline <em>without</em> changing the task, and state the cost of each.</p>
+        <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Lever</th><th>Mechanism</th><th>Cost</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Drop a model tier</strong></td><td>XL → large → medium → small → nano</td><td>Accuracy; recover some of it by fine-tuning the small model on domain data</td></tr>
+            <tr><td><strong>Single-stage instead of two-stage</strong></td><td>Removes the region-proposal stage entirely</td><td>Lower precision, and one class per grid cell in YOLO v1</td></tr>
+            <tr><td><strong>Detect-then-track</strong></td><td>Amortise one detection over 5–10 tracked frames</td><td>Tracker drift; bounded by re-detect cadence and an IoU gate</td></tr>
+            <tr><td><strong>Larger stride / smaller input</strong></td><td>Fewer positions evaluated per convolution pass</td><td>Loses fine detail and small objects</td></tr>
+            <tr><td><strong>Edge-optimised runtime</strong></td><td><code>.pt</code> → ONNX; Python → C/C++</td><td>Engineering effort, and a conversion step that must be re-validated</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <div class="answer-box"><span class="a-tag">Four is enough</span><p style="margin:4px 0">Pick four and give each a real cost. A list of five levers with no costs attached scores lower than three with them — the marks are in the trade-off, not the enumeration.</p></div>
+      </div>
+
+      <!-- ================= numbers ================= -->
+      <h2 id="numbers">Numbers worth carrying into the hall</h2>
+      <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Quantity</th><th>Value</th><th>Use it for</th></tr></thead>
+        <tbody>
+          <tr><td>DPM / HOG</td><td>33.7 mAP, 14 s per image</td><td>The pre-CNN baseline in any speed argument</td></tr>
+          <tr><td>Faster R-CNN</td><td>140 ms per image → ~7 FPS</td><td>The "fails real time" arithmetic</td></tr>
+          <tr><td>YOLO v1</td><td>45 FPS, ~7× faster than the fastest RPN</td><td>The single-stage payoff</td></tr>
+          <tr><td>Camera baselines</td><td>12 FPS slow-mo, 30 FPS typical</td><td>The real-time target: 30 frames in 1 second</td></tr>
+          <tr><td>Stopping-distance ladder</td><td>1760 ft → 176 ft → 12 ft → under 2 ft</td><td>Converting latency into a safety consequence</td></tr>
+          <tr><td>Safety target</td><td>~6 ft inter-car gap</td><td>The number the design must beat</td></tr>
+          <tr><td>Persistence of vision</td><td>~1/16 s</td><td>Bounding the re-detect cadence (every 5–10 frames)</td></tr>
+          <tr><td>YOLO nano checkpoint</td><td>~5–6 MB; some tiers to ~225 FPS</td><td>Edge feasibility</td></tr>
+          <tr><td>SqueezeNet fallback</td><td>~3 MB, and a 1.5 MB variant</td><td>When nano still misses the budget</td></tr>
+          <tr><td>YOLO v1 output tensor</td><td>7×7×(2×5 + 20) = 7×7×30 = 1470</td><td>Any YOLO structure question</td></tr>
+          <tr><td>Data sizing</td><td>≥10,000 (realistically 1M) from scratch; 100–200 with transfer learning</td><td>The data-strategy answer</td></tr>
+          <tr><td>Paper shape</td><td>40 marks, 6–7 questions, 4–10 each, 80–90% post-midsem</td><td>Time allocation on the day</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="callout warn"><div class="c-head">⚠ Numbers he himself was unsure of</div><p>YOLO's Pascal VOC mAP — he says <strong>63.4</strong>, then immediately doubts it: “It should be 69, not 63.4. I think so.” R-CNN's speed is given both as <strong>5 FPS</strong> and as <strong>one frame in 20 seconds</strong> in the same passage. He also says the output tensor is <strong>1430</strong> once, having earlier said <strong>1470</strong> — 1470 is the arithmetically correct one. If a question turns on any of these, show the calculation rather than the recalled figure. Separately: he describes Ultralytics as owned by Meta / maintained by FAIR — that is not correct, so don't build an answer on it.</p></div>
+
+      <div class="callout key"><div class="c-head">◆ If you only rehearse three things</div>
+        <p><strong>1.</strong> The latency-to-stopping-distance conversion (Q1) — it is the clearest instance of what he means by "latency removal," and it recurs across ADAS, drones and shop floors.
+        <br><strong>2.</strong> The R-CNN → Fast → Faster → YOLO bottleneck story (Q3) — he said outright to expect a question on it and that students get it wrong.
+        <br><strong>3.</strong> Rejecting an alternative out loud. Every question above is really the same question: <em>why this approach and why not the other one.</em></p>
+      </div>
+
+      <div class="pager">
+        <a href="class-numericals.html"><div class="pg-dir">← Numericals</div><div class="pg-title">▶∑ Numericals Solved in Class</div></a>
+        <a class="next" href="practice-ec3.html"><div class="pg-dir">Next →</div><div class="pg-title">✎ EC-3 Practice Paper</div></a>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="assets/demos.js"></script>
+<script src="assets/layout.js"></script>
+</body>
+</html>
